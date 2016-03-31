@@ -3,24 +3,12 @@
 
 #include "config.h"
 
-#if defined(USE_GIT_VERSION) && defined(GIT_VERSION)
-#undef VERSION
-#define VERSION GIT_VERSION
-#endif
-
-#ifdef BUILD_NUMBER
-#define CGMINER_VERSION VERSION "-" BUILD_NUMBER
-#else
-#define CGMINER_VERSION VERSION
-#endif
-
-#include "algorithm.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <jansson.h>
+#include <ccan/opt/opt.h>
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
 #else
@@ -34,20 +22,27 @@ extern char *curly;
 #endif
 #include <sched.h>
 
+#if defined(USE_GIT_VERSION) && defined(GIT_VERSION)
+#undef VERSION
+#define VERSION GIT_VERSION
+#endif
+
+#ifdef BUILD_NUMBER
+#define CGMINER_VERSION VERSION "-" BUILD_NUMBER
+#else
+#define CGMINER_VERSION VERSION
+#endif
+
 #include "elist.h"
 #include "uthash.h"
 #include "logging.h"
 #include "util.h"
+#include "algorithm.h"
+
 #include <sys/types.h>
 #ifndef WIN32
 # include <sys/socket.h>
 # include <netdb.h>
-#endif
-
-#ifdef __APPLE_CC__
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
 #endif
 
 #ifdef STDC_HEADERS
@@ -134,8 +129,6 @@ static inline int fsync (int fd)
 #ifdef HAVE_ADL
  #include "ADL_SDK/adl_sdk.h"
 #endif
-
-#include <ccan/opt/opt.h>
 
 #if (!defined(WIN32) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))) \
     || (defined(WIN32) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))
