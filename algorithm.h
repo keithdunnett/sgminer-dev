@@ -36,6 +36,7 @@ typedef enum {
   ALGO_YESCRYPT_MULTI,
   ALGO_BLAKECOIN,
   ALGO_BLAKE,
+  ALGO_DECRED,
   ALGO_VANILLA
 } algorithm_type_t;
 
