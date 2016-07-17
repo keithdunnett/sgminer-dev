@@ -40,6 +40,7 @@
 #include "algorithm/blake256.h"
 #include "algorithm/blakecoin.h"
 #include "algorithm/decred.h"
+#include "algorithm/lbry.h"
 
 #include "compat.h"
 
@@ -72,7 +73,8 @@ const char *algorithm_type_str[] = {
   "Blakecoin",
   "Blake",
   "Decred",
-  "Vanilla"
+  "Vanilla",
+  "Lbry"
 };
 
 void sha256(const unsigned char *message, unsigned int len, unsigned char *digest)
@@ -1007,6 +1009,31 @@ static cl_int queue_decred_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_u
   return status;
 }
 
+static cl_int queue_lbry_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+  cl_kernel *kernel = &clState->kernel;
+  unsigned int num = 0;
+  cl_ulong le_target;
+  cl_int status = 0;
+
+  le_target = *(cl_ulong *)(blk->work->target + 24);
+  flip112(clState->cldata, blk->work->data);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 112, clState->cldata, 0, NULL, NULL);
+
+  CL_SET_ARG(clState->CLbuffer0);
+  CL_SET_ARG(clState->padbuffer8);
+  num = 0;
+  kernel = clState->extra_kernels;
+  CL_SET_ARG_0(clState->padbuffer8);
+  num = 0;
+  
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(le_target);
+
+  return status;
+}
+
 static algorithm_settings_t algos[] = {
   // kernels starting from this will have difficulty calculated by using litecoin algorithm
 #define A_SCRYPT(a) \
@@ -1103,6 +1130,8 @@ static algorithm_settings_t algos[] = {
   { "blake256r8",  ALGO_BLAKECOIN, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x000000ffUL, 0, 128, 0, blakecoin_regenhash, blakecoin_midstate, blakecoin_prepare_work, queue_blake_kernel, sha256,   NULL },
   { "blake256r14", ALGO_BLAKE,     "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x00000000UL, 0, 128, 0, blake256_regenhash, blake256_midstate, blake256_prepare_work, queue_blake_kernel, gen_hash, NULL },
   { "vanilla",     ALGO_VANILLA,   "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x000000ffUL, 0, 128, 0, blakecoin_regenhash, blakecoin_midstate, blakecoin_prepare_work, queue_blake_kernel, gen_hash, NULL },
+
+  { "lbry", ALGO_LBRY, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 2, 4 * 8 * 4194304, 0, lbry_regenhash, NULL, NULL, queue_lbry_kernel, gen_hash, NULL },
 
   // Terminator (do not remove)
   { NULL, ALGO_UNK, "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL }

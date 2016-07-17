@@ -1505,34 +1505,42 @@ static char *blank_merkel = "000000000000000000000000000000000000000000000000000
 static bool parse_notify(struct pool *pool, json_t *val)
 {
   char *job_id, *prev_hash, *coinbase1, *coinbase2, *bbversion, *nbit,
-       *ntime, *header;
+       *ntime, *header, *trie;
   size_t cb1_len, cb2_len, alloc_len, header_len;
   unsigned char *cb1, *cb2;
-  bool clean, ret = false;
-  int merkles, i;
+  bool clean, ret = false, has_trie = false;
+  int merkles, i = 0;
   json_t *arr;
 
-  arr = json_array_get(val, 4);
+  has_trie = json_array_size(val) == 10;
+
+  job_id = json_array_string(val, i++);
+  prev_hash = json_array_string(val, i++);
+  if (has_trie) {
+    trie = json_array_string(val, i++);
+  }
+  coinbase1 = json_array_string(val, i++);
+  coinbase2 = json_array_string(val, i++);
+
+  arr = json_array_get(val, i++);
   if (!arr || !json_is_array(arr))
     goto out;
 
   merkles = json_array_size(arr);
 
-  job_id = json_array_string(val, 0);
-  prev_hash = json_array_string(val, 1);
-  coinbase1 = json_array_string(val, 2);
-  coinbase2 = json_array_string(val, 3);
-  bbversion = json_array_string(val, 5);
-  nbit = json_array_string(val, 6);
-  ntime = json_array_string(val, 7);
-  clean = json_is_true(json_array_get(val, 8));
+  bbversion = json_array_string(val, i++);
+  nbit = json_array_string(val, i++);
+  ntime = json_array_string(val, i++);
+  clean = json_is_true(json_array_get(val, i));
 
-  if (!job_id || !prev_hash || !coinbase1 || !coinbase2 || !bbversion || !nbit || !ntime) {
+  if (!job_id || !prev_hash || !coinbase1 || !coinbase2 || !bbversion || !nbit || !ntime || (has_trie && !trie)) {
     /* Annoying but we must not leak memory */
     if (job_id)
       free(job_id);
     if (prev_hash)
       free(prev_hash);
+    if (trie)
+      free(trie);
     if (coinbase1)
       free(coinbase1);
     if (coinbase2)
@@ -1589,10 +1597,11 @@ static bool parse_notify(struct pool *pool, json_t *val)
   pool->merkle_offset /= 2;
   header = (char *)alloca(257);
   snprintf(header, 257,
-    "%s%s%s%s%s%s",
+    "%s%s%s%s%s%s%s",
     pool->swork.bbversion,
     pool->swork.prev_hash,
     blank_merkel,
+    has_trie ? trie : "",
     pool->swork.ntime,
     pool->swork.nbit,
     "00000000" /* nonce */

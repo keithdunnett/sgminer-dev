@@ -5627,6 +5627,9 @@ static void *stratum_sthread(void *userdata)
     else if (pool->algorithm.type == ALGO_DECRED) {
       nonce = *((uint32_t *)(work->data + 140));
     }
+    else if (pool->algorithm.type == ALGO_LBRY) {
+      nonce = *((uint32_t *)(work->data + 108));
+    }
     else {
       nonce = *((uint32_t *)(work->data + 76));
     }
@@ -7149,6 +7152,7 @@ static void rebuild_nonce(struct work *work, uint32_t nonce)
   uint32_t nonce_pos = 76;
   if (work->pool->algorithm.type == ALGO_CRE) nonce_pos = 140;
   else if (work->pool->algorithm.type == ALGO_DECRED) nonce_pos = 140;
+  else if (work->pool->algorithm.type == ALGO_LBRY) nonce_pos = 108;
 
   uint32_t *work_nonce = (uint32_t *)(work->data + nonce_pos);
 
