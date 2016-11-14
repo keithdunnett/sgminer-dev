@@ -897,8 +897,6 @@ int gpu_fanpercent(int gpu)
       ga->twin = NULL;
     }
 #endif
-    if (opt_restart)
-      app_restart();
     ga->has_fanspeed = false;
     if (ga->twin) {
       ga->twin->twin = NULL;;
@@ -1184,7 +1182,7 @@ int set_fanspeed(int gpu, int iFanSpeed)
   ga->targetfan = iFanSpeed;
 
   lock_adl();
-  ga->lpFanSpeedValue.iSpeedType = ADL_DL_FANCTRL_SPEED_TYPE_RPM;
+  ga->lpFanSpeedValue.iSpeedType = ADL_DL_FANCTRL_SPEED_TYPE_PERCENT;
   if (ADL_Overdrive5_FanSpeed_Get(ga->iAdapterIndex, 0, &ga->lpFanSpeedValue) != ADL_OK) {
     applog(LOG_DEBUG, "GPU %d call to fanspeed get failed", gpu);
   }
@@ -1207,7 +1205,6 @@ int set_fanspeed(int gpu, int iFanSpeed)
   return ret;
 }
 
-#ifdef HAVE_CURSES
 int set_powertune(int gpu, int iPercentage)
 {
   struct gpu_adl *ga;
@@ -1229,7 +1226,6 @@ int set_powertune(int gpu, int iPercentage)
   unlock_adl();
   return ret;
 }
-#endif
 
 /* Returns whether the fanspeed is optimal already or not. The fan_window bool
  * tells us whether the current fanspeed is in the target range for fanspeeds.
