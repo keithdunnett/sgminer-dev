@@ -1,0 +1,11 @@
+submodules/Makefile.in
+autom4te.cache/
+configure
+Makefile.in
+missing
+depcomp
+compile
+config.sub
+config.guess
+aclocal.m4
+config.h.in
