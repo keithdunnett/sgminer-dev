@@ -21,7 +21,7 @@ sgminer_LDADD    = $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ 
 sgminer_CPPFLAGS += -I$(top_builddir)/lib -I$(top_srcdir)/lib @OPENCL_FLAGS@ @LIBCURL_CFLAGS@
 
 if HAVE_WINDOWS
-sgminer_LDFLAGS += -all-static
+sgminer_LDFLAGS += -all-static -Wl,--stack,4194304
 endif
 
 sgminer_CPPFLAGS += $(ADL_CPPFLAGS)
@@ -83,6 +83,8 @@ sgminer_SOURCES += algorithm/blake256.c algorithm/blake256.h
 sgminer_SOURCES += algorithm/blakecoin.c algorithm/blakecoin.h
 sgminer_SOURCES += algorithm/decred.c algorithm/decred.h
 sgminer_SOURCES += algorithm/lbry.c algorithm/lbry.h
+sgminer_SOURCES += algorithm/ethash.c algorithm/ethgencache.c algorithm/ethash.h algorithm/eth-sha3.c algorithm/eth-sha3.h
+sgminer_SOURCES += algorithm/cryptonight.c algorithm/cryptonight.h algorithm/cn-aes-tbls.h
 
 bin_SCRIPTS	= $(top_srcdir)/kernel/*.cl
 
