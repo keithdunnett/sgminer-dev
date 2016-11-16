@@ -1243,7 +1243,7 @@ extern int total_getworks, total_stale, total_discarded;
 extern double total_diff_accepted, total_diff_rejected, total_diff_stale;
 extern unsigned int local_work;
 extern unsigned int total_go, total_ro;
-extern const int opt_cutofftemp;
+extern int opt_cutofftemp;
 extern int opt_log_interval;
 extern unsigned long long global_hashrate;
 extern char current_hash[68];
@@ -1306,7 +1306,7 @@ struct stratum_work {
   char *nbit;
   char *ntime;
   bool clean;
-
+  
   size_t cb_len;
   size_t header_len;
   int merkles;
@@ -1332,7 +1332,18 @@ struct pool {
   int quota_gcd;
   int quota_used;
   int works;
+  uint8_t SeedHash[32];
+  uint32_t EpochNumber;
+  uint8_t Target[32];
+  uint8_t EthWork[32];
 
+  //XMR stuff
+  char XMRAuthID[64];
+  uint32_t XMRTarget;
+  uint8_t XMRBlob[76];
+  pthread_mutex_t XMRGlobalNonceLock;
+  uint32_t XMRGlobalNonce;
+  
   double diff_accepted;
   double diff_rejected;
   double diff_stale;
@@ -1474,17 +1485,29 @@ struct work {
   unsigned char data[256];
   unsigned char midstate[32];
   unsigned char target[32];
+  unsigned char seedhash[32];
   unsigned char hash[32];
-
+  unsigned char mixhash[32];
+    
   unsigned char device_target[32];
   double    device_diff;
   double    share_diff;
-
+  double	network_diff;
+  
+  uint32_t EpochNumber;
+  uint64_t Nonce;
+  
+  /* cryptonight stuff */
+  uint32_t XMRTarget;
+  uint8_t XMRBlob[76];
+    
+  uint32_t XMRNonce;
+  
   int   rolls;
   int   drv_rolllimit; /* How much the driver can roll ntime */
 
   dev_blk_ctx blk;
-
+  
   struct thr_info *thr;
   int   thr_id;
   struct pool *pool;

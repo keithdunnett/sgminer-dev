@@ -312,7 +312,7 @@ void pluckrehash(void *state, const void *input)
 	uint32_t data[20];
 	
 	const int HASH_MEMORY = 128 * 1024;
-	uint8_t * scratchbuf = (uint8_t*)malloc(HASH_MEMORY);
+//	uint8_t * scratchbuf = (uint8_t*)malloc(HASH_MEMORY);
 	memcpy(data,input,80);
 
 	uint8_t hashbuffer[128*1024]; //don't allocate this on stack, since it's huge.. 

@@ -1,11 +1,14 @@
-cgminer
-cgminer.exe
+sgminer
+sgminer.exe
 minerd
 minerd.exe
 *.o
+*.a
 *.lo
 *.bin
-
+*.dirstamp
+*.orig
+*.rej
 autom4te.cache
 .deps
 

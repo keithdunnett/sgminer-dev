@@ -43,6 +43,8 @@
 #include "algorithm/decred.h"
 #include "algorithm/lbry.h"
 #include "algorithm/sibcoin.h"
+#include "algorithm/ethash.h"
+#include "algorithm/cryptonight.h"
 
 #include "compat.h"
 
@@ -78,6 +80,8 @@ const char *algorithm_type_str[] = {
   "Decred",
   "Vanilla",
   "Lbry"
+  "Ethash",
+  "cryptonight"
 };
 
 void sha256(const unsigned char *message, unsigned int len, unsigned char *digest)
@@ -133,6 +137,8 @@ static void append_scrypt_compiler_options(struct _build_kernel_data *data, stru
   sprintf(buf, "lg%utc%unf%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, algorithm->nfactor);
   strcat(data->binary_filename, buf);
 }
+
+extern uint32_t EthereumEpochNumber;
 
 static void append_neoscrypt_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
 {
@@ -1004,9 +1010,8 @@ static cl_int queue_blake_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_un
   cl_kernel *kernel = &clState->kernel;
   unsigned int num = 0;
   cl_int status = 0;
-  cl_ulong le_target;
-
-  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+//  cl_ulong le_target;
+//  le_target = (cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
   status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
@@ -1103,6 +1108,179 @@ static cl_int queue_lbry_kernel(struct __clState *clState, struct _dev_blk_ctx *
   return status;
 }
 
+extern cglock_t EthCacheLock[2];
+extern uint8_t* EthCache[2];
+extern pthread_mutex_t eth_nonce_lock;
+extern uint32_t eth_nonce;
+static cl_int queue_ethash_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+	cl_kernel *kernel;
+	unsigned int num = 0;
+	cl_int status = 0;
+	cl_ulong le_target;
+	cl_uint HighNonce, Isolate = 0xFFFFFFFFUL;
+	cl_ulong DAGSize = EthGetDAGSize(blk->work->EpochNumber);
+	size_t DAGItems = (size_t) (DAGSize / 64);
+	
+	le_target = *(cl_ulong *)(blk->work->device_target + 24);
+	
+	// DO NOT flip80.
+	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 32, blk->work->data, 0, NULL, NULL);
+	if (clState->EpochNumber != blk->work->EpochNumber)
+	{
+		clState->EpochNumber = blk->work->EpochNumber;
+		cl_ulong CacheSize = EthGetCacheSize(blk->work->EpochNumber);
+		cl_event DAGGenEvent;
+		
+		applog(LOG_DEBUG, "DAG being regenerated.");
+		if (clState->EthCache)
+			clReleaseMemObject(clState->EthCache);
+		if (clState->DAG)
+			clReleaseMemObject(clState->DAG);
+
+		clState->DAG = clCreateBuffer(clState->context, CL_MEM_READ_WRITE, DAGSize, NULL, &status);	
+		if (status != CL_SUCCESS)
+		{
+			applog(LOG_ERR, "Error %d: Creating the DAG buffer.", status);
+			return(status);
+		}
+	
+		clState->EthCache = clCreateBuffer(clState->context, CL_MEM_READ_ONLY, CacheSize, NULL, &status);
+	
+		int idx = blk->work->EpochNumber % 2;
+		cg_ilock(&EthCacheLock[idx]);
+		bool update = (EthCache[idx] == NULL || *(uint32_t*) EthCache[idx] != blk->work->EpochNumber);
+		if (update)
+		{
+			cg_ulock(&EthCacheLock[idx]);	
+			EthCache[idx] = realloc(EthCache[idx], sizeof(uint8_t) * CacheSize + 64);
+			*(uint32_t*) EthCache[idx] = blk->work->EpochNumber;
+			EthGenerateCache(EthCache[idx] + 64, blk->work->seedhash, CacheSize);
+		}
+		else
+			cg_dlock(&EthCacheLock[idx]);
+
+		if (status == CL_SUCCESS)
+			status = clEnqueueWriteBuffer(clState->commandQueue, clState->EthCache, true, 0, sizeof(cl_uchar) * CacheSize, EthCache[idx] + 64, 0, NULL, NULL);
+
+		if (update)
+			cg_wunlock(&EthCacheLock[idx]);
+		else
+			cg_runlock(&EthCacheLock[idx]);
+		
+		if (status != CL_SUCCESS)
+		{
+			applog(LOG_ERR, "Error %d: Creating the cache buffer and/or writing to it.", status);
+			return(status);
+		}
+		
+		// enqueue DAG gen kernel
+		kernel = &clState->GenerateDAG;
+		
+		cl_uint zero = 0;
+		cl_uint CacheSize64 = CacheSize / 64;
+		
+		CL_SET_ARG(zero);
+		CL_SET_ARG(clState->EthCache);
+		CL_SET_ARG(clState->DAG);
+		CL_SET_ARG(CacheSize64);
+		CL_SET_ARG(Isolate);
+		
+		status |= clEnqueueNDRangeKernel(clState->commandQueue, clState->GenerateDAG, 1, NULL, &DAGItems, NULL, 0, NULL, &DAGGenEvent);
+		status |= clWaitForEvents(1, &DAGGenEvent);
+		clReleaseEvent(DAGGenEvent);
+		
+		if(status != CL_SUCCESS)
+		{
+			applog(LOG_ERR, "Error %d: Setting args for the DAG kernel and/or executing it.", status);
+			return(status);
+		}
+	}
+	
+	mutex_lock(&eth_nonce_lock);
+	HighNonce = eth_nonce++;
+	blk->work->Nonce = (cl_ulong) HighNonce << 32;
+	mutex_unlock(&eth_nonce_lock);
+		
+	num = 0;
+	kernel = &clState->kernel;
+	
+	// Not nodes now (64 bytes), but DAG entries (128 bytes)
+	cl_uint ItemsArg = DAGItems >> 1;
+	
+	CL_SET_ARG(clState->outputBuffer);
+	CL_SET_ARG(clState->CLbuffer0);
+	CL_SET_ARG(clState->DAG);
+	CL_SET_ARG(ItemsArg);
+	CL_SET_ARG(blk->work->Nonce);
+	CL_SET_ARG(le_target);
+	CL_SET_ARG(Isolate);
+	
+	return(status);
+}
+
+static cl_int queue_cryptonight_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+	cl_kernel *kernel = &clState->kernel;
+	unsigned int num = 0;
+	cl_int status = 0, tgt32 = (blk->work->XMRTarget);
+//	cl_ulong le_target;
+//	le_target = (blk->work->XMRTarget);
+
+	//le_target = *(cl_ulong *)(blk->work->device_target + 24);
+	memcpy(clState->cldata, blk->work->data, 76);
+		
+	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 76, clState->cldata , 0, NULL, NULL);
+	
+	CL_SET_ARG(clState->CLbuffer0);
+	CL_SET_ARG(clState->Scratchpads);
+	CL_SET_ARG(clState->States);
+	
+	num = 0;
+	kernel = clState->extra_kernels;
+	CL_SET_ARG(clState->Scratchpads);
+	CL_SET_ARG(clState->States);
+	
+	num = 0;
+	CL_NEXTKERNEL_SET_ARG(clState->Scratchpads);
+	CL_SET_ARG(clState->States);
+	CL_SET_ARG(clState->BranchBuffer[0]);
+	CL_SET_ARG(clState->BranchBuffer[1]);
+	CL_SET_ARG(clState->BranchBuffer[2]);
+	CL_SET_ARG(clState->BranchBuffer[3]);
+	
+	num = 0;
+	CL_NEXTKERNEL_SET_ARG(clState->States);
+	CL_SET_ARG(clState->BranchBuffer[0]);
+	CL_SET_ARG(clState->outputBuffer);
+	CL_SET_ARG(tgt32);
+	
+	// last to be set in driver-opencl.c
+	
+	num = 0;
+	CL_NEXTKERNEL_SET_ARG(clState->States);
+	CL_SET_ARG(clState->BranchBuffer[1]);
+	CL_SET_ARG(clState->outputBuffer);
+	CL_SET_ARG(tgt32);
+	
+	
+	num = 0;
+	CL_NEXTKERNEL_SET_ARG(clState->States);
+	CL_SET_ARG(clState->BranchBuffer[2]);
+	CL_SET_ARG(clState->outputBuffer);
+	CL_SET_ARG(tgt32);
+	
+	
+	num = 0;
+	CL_NEXTKERNEL_SET_ARG(clState->States);
+	CL_SET_ARG(clState->BranchBuffer[3]);
+	CL_SET_ARG(clState->outputBuffer);
+	CL_SET_ARG(tgt32);
+	
+	return(status);
+}
+
+
 static algorithm_settings_t algos[] = {
   // kernels starting from this will have difficulty calculated by using litecoin algorithm
 #define A_SCRYPT(a) \
@@ -1170,7 +1348,6 @@ static algorithm_settings_t algos[] = {
   { "darkcoin-mod", ALGO_X11, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, darkcoin_regenhash, NULL, NULL, queue_darkcoin_mod_kernel, gen_hash, append_x11_compiler_options },
 
   { "sibcoin-mod", ALGO_X11, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 11, 2 * 16 * 4194304, 0, sibcoin_regenhash, NULL, NULL, queue_sibcoin_mod_kernel, gen_hash, append_x11_compiler_options },
-  
   { "marucoin", ALGO_X13, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, marucoin_regenhash, NULL, NULL, queue_sph_kernel, gen_hash, append_x13_compiler_options },
   { "marucoin-mod", ALGO_X13, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 12, 8 * 16 * 4194304, 0, marucoin_regenhash, NULL, NULL, queue_marucoin_mod_kernel, gen_hash, append_x13_compiler_options },
   { "marucoin-modold", ALGO_X13, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, marucoin_regenhash, NULL, NULL, queue_marucoin_mod_old_kernel, gen_hash, append_x13_compiler_options },
@@ -1203,8 +1380,10 @@ static algorithm_settings_t algos[] = {
   { "blake256r14", ALGO_BLAKE,     "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x00000000UL, 0, 128, 0, blake256_regenhash, blake256_midstate, blake256_prepare_work, queue_blake_kernel, gen_hash, NULL },
   { "sia",         ALGO_SIA,       "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000FFFFUL, 0, 128, 0, sia_regenhash, NULL, NULL, queue_sia_kernel, NULL, NULL },
   { "vanilla",     ALGO_VANILLA,   "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x000000ffUL, 0, 128, 0, blakecoin_regenhash, blakecoin_midstate, blakecoin_prepare_work, queue_blake_kernel, gen_hash, NULL },
-
-  { "lbry", ALGO_LBRY, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 2, 4 * 8 * 4194304, 0, lbry_regenhash, NULL, NULL, queue_lbry_kernel, gen_hash, NULL },
+  { "lbry", 	ALGO_LBRY, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 2, 4 * 8 * 4194304, 0, lbry_regenhash, NULL, NULL, queue_lbry_kernel, gen_hash, NULL },
+  { "ethash",        ALGO_ETHASH,   "", (1ULL << 32), (1ULL << 32), 1, 0, 0, 0xFF, 0xFFFF000000000000ULL, 0, 0, 128, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, ethash_regenhash, NULL, NULL, queue_ethash_kernel, gen_hash, NULL },
+  { "ethash-genoil", ALGO_ETHASH,   "", (1ULL << 32), (1ULL << 32), 1, 0, 0, 0xFF, 0xFFFF000000000000ULL, 0, 0, 128, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, ethash_regenhash, NULL, NULL, queue_ethash_kernel, gen_hash, NULL },
+  { "cryptonight", ALGO_CRYPTONIGHT, "", (1ULL << 32), (1ULL << 32), (1ULL << 32), 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 6, 0, 0, cryptonight_regenhash, NULL, NULL, queue_cryptonight_kernel, gen_hash, NULL },
 
   // Terminator (do not remove)
   { NULL, ALGO_UNK, "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL }

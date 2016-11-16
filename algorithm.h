@@ -40,7 +40,9 @@ typedef enum {
   ALGO_DECRED,
   ALGO_VANILLA,
   ALGO_LBRY,
-  ALGO_SIBCOIN 
+  ALGO_SIBCOIN,
+  ALGO_ETHASH,
+  ALGO_CRYPTONIGHT
 } algorithm_type_t;
 
 extern const char *algorithm_type_str[];
