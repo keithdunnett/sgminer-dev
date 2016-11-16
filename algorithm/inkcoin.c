@@ -62,7 +62,7 @@ typedef struct {
 static Xhash_context_holder base_contexts;
 
 
-static void init_Xhash_contexts()
+static inline void init_Xhash_contexts()
 {
     sph_blake512_init(&base_contexts.blake1);
     sph_bmw512_init(&base_contexts.bmw1);

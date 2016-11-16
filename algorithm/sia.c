@@ -221,7 +221,7 @@ void sia_regenhash(struct work *work)
 {
   uint32_t data[20];
   uint32_t hash[16];
-  char *scratchbuf;
+//  char *scratchbuf;
   uint32_t *nonce = (uint32_t *)(work->data + 32);
   uint32_t *ohash = (uint32_t *)(work->hash);
 

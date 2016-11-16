@@ -1010,9 +1010,8 @@ static cl_int queue_blake_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_un
   cl_kernel *kernel = &clState->kernel;
   unsigned int num = 0;
   cl_int status = 0;
-  cl_ulong le_target;
-
-  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+//  cl_ulong le_target;
+//  le_target = (cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
   status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
@@ -1225,7 +1224,8 @@ static cl_int queue_cryptonight_kernel(_clState *clState, dev_blk_ctx *blk, __ma
 	cl_kernel *kernel = &clState->kernel;
 	unsigned int num = 0;
 	cl_int status = 0, tgt32 = (blk->work->XMRTarget);
-	cl_ulong le_target = ((cl_ulong)(blk->work->XMRTarget));
+//	cl_ulong le_target;
+//	le_target = (blk->work->XMRTarget);
 
 	//le_target = *(cl_ulong *)(blk->work->device_target + 24);
 	memcpy(clState->cldata, blk->work->data, 76);

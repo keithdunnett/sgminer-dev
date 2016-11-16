@@ -1665,7 +1665,7 @@ out:
 }
 
 
-bool parse_diff_ethash(char* Target, char* TgtStr)
+bool parse_diff_ethash(unsigned char* Target, char* TgtStr)
 {
   bool ret = false;
   int len = strlen(TgtStr);
@@ -1694,7 +1694,7 @@ static bool parse_notify_ethash(struct pool *pool, json_t *val)
   char *job_id;
   bool clean;
   uint8_t EthWork[32], SeedHash[32], Target[32], NetDiff[32];
-  char *EthWorkStr, *SeedHashStr, *TgtStr, *BlockHeightStr, *NetDiffStr = NULL;
+  char *EthWorkStr, *SeedHashStr, *TgtStr, *NetDiffStr = NULL;
   int ret = true;
 
   /*json_t *arr = json_array_get(val, 0);
@@ -1785,10 +1785,10 @@ out:
   return ret;
 }
 
-bool parse_notify_cn(struct pool *pool, json_t *val)
+extern bool parse_notify_cn(struct pool *pool, json_t *val)
 {
-  char *job_id = NULL;
-  bool clean;
+  char *job_id;
+//  bool clean;
   uint32_t XMRTarget;
   uint8_t XMRBlob[76];
   int ret = true;
@@ -1821,7 +1821,7 @@ bool parse_notify_cn(struct pool *pool, json_t *val)
     goto out;
   }
   
-  job_id = json_string_value(jid);
+  job_id = (char * const) json_string_value(jid);
   XMRTarget = bswap_32(strtoul(json_string_value(target), NULL, 16));
 
   cg_wlock(&pool->data_lock);
@@ -2189,7 +2189,7 @@ bool subscribe_extranonce(struct pool *pool)
     }
     else
       ss = strdup("(unknown reason)");
-    applog(LOG_INFO, "%s JSON stratum auth failed: %s", get_pool_name(pool), ss);
+    applog(LOG_INFO, "%s JSON stratum auth failed in subscribe_extranonce: %s", get_pool_name(pool), ss);
     free(ss);
 
     goto out;
@@ -2253,7 +2253,7 @@ bool auth_stratum(struct pool *pool)
       ss = json_dumps(err_val, JSON_INDENT(3));
     else
       ss = strdup("(unknown reason)");
-    applog(LOG_INFO, "%s JSON stratum auth failed: %s", get_pool_name(pool), ss);
+    applog(LOG_INFO, "%s JSON stratum auth failed im auth_stratum: %s", get_pool_name(pool), ss);
     free(ss);
 
     suspend_stratum(pool);

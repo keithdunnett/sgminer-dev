@@ -72,7 +72,7 @@ void LightEthash(uint8_t *restrict OutHash, uint8_t *restrict MixHash, const uin
 {
 	uint32_t MixState[32], TmpBuf[24], NodeCount = EthGetCacheSize(EpochNumber) / sizeof(Node);
 	uint64_t DagSize;
-	Node *EthCache = Cache;
+	Node *EthCache = (union _Node * const) Cache;
 	
 	// Initial hash - append nonce to header PoW hash and
 	// run it through SHA3 - this becomes the initial value

@@ -115,7 +115,7 @@ static event_t *add_event(unsigned int id)
 }
 
 // remove event from the list
-static void remove_event(event_t *event)
+static inline void remove_event(event_t *event)
 {
   // only event?
   if(event == events && event == last_event)
