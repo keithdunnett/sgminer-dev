@@ -330,6 +330,12 @@ struct schedtime schedstart;
 struct schedtime schedstop;
 bool sched_paused;
 
+inline void ignore_result_helper(int __attribute__((unused)) dummy, ...)
+{
+}
+
+#define IGNORE_RESULT(X) ignore_result_helper(0, (X))
+
 static bool time_before(struct tm *tm1, struct tm *tm2)
 {
 	if (tm1->tm_hour < tm2->tm_hour)
@@ -3163,7 +3169,7 @@ static bool submit_upstream_work(struct work *work, CURL * curl, char *curl_err_
 		uint64_t tmp = bswap_64(work->Nonce);
 		char *ASCIIMixHash = bin2hex(work->mixhash, 32);
 		char *ASCIIPoWHash = bin2hex(work->data, 32);
-		char *ASCIINonce = bin2hex(&tmp, 8);
+		char *ASCIINonce = bin2hex((const unsigned char *) &tmp, 8);
 		snprintf(s, 128 + 16 + 512,
 			 "{\"jsonrpc\":\"2.0\", \"method\":\"eth_submitWork\", \"params\":[\"0x%s\", \"0x%s\", \"0x%s\"],\"id\":1}",
 			 ASCIINonce, ASCIIPoWHash, ASCIIMixHash);
@@ -5871,7 +5877,7 @@ static void *stratum_sthread(void *userdata)
 			uint64_t tmp = bswap_64(work->Nonce);
 			char *ASCIIMixHash = bin2hex(work->mixhash, 32);
 			char *ASCIIPoWHash = bin2hex(work->data, 32);
-			char *ASCIINonce = bin2hex(&tmp, 8);
+			char *ASCIINonce = bin2hex(((const unsigned char *) &tmp), 8);
 			snprintf(s, sizeof(s),
 				 "{\"id\": %d, \"method\": \"mining.submit\", \"params\": [\"%s\", \"%s\", \"0x%s\", \"0x%s\", \"0x%s\"]}",
 				 sshare->id, pool->rpc_user, work->job_id,
@@ -5880,7 +5886,7 @@ static void *stratum_sthread(void *userdata)
 			free(ASCIIMixHash);
 			free(ASCIIPoWHash);
 		} else if (pool->algorithm.type == ALGO_CRYPTONIGHT) {
-			char *ASCIINonce = bin2hex(&work->XMRNonce, 4);
+			char *ASCIINonce = bin2hex(((const unsigned char *)&work->XMRNonce), 4);
 			char *ASCIIResult = bin2hex(work->hash, 32);
 			snprintf(s, sizeof(s),
 				 "{\"method\": \"submit\", \"params\": {\"id\": \"%s\", \"job_id\": \"%s\", \"nonce\": \"%s\", \"result\": \"%s\"}, \"id\":%d}",
@@ -8854,8 +8860,8 @@ int main(int argc, char *argv[])
 #else
 	int fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0)
-		fd = open("/dev/random", O_RDONLY);
-	read(fd, &eth_nonce, 4);
+	fd = open("/dev/random", O_RDONLY);
+	IGNORE_RESULT(read(fd, &eth_nonce, 4));
 	close(fd);
 #endif
 	mutex_init(&hash_lock);

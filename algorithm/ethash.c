@@ -33,7 +33,7 @@ uint32_t EthCalcEpochNumber(uint8_t *SeedHash)
 	
 	for(int Epoch = 0; Epoch < 2048; ++Epoch)
 	{
-		SHA3_256(TestSeedHash, TestSeedHash, 32);
+		SHA3_256(((const struct ethash_h256 *) TestSeedHash), TestSeedHash, 32);
 		if(!memcmp(TestSeedHash, SeedHash, 32)) return(Epoch + 1);
 	}
 	
@@ -125,7 +125,7 @@ void ethash_regenhash(struct work *work)
 	applog(LOG_DEBUG, "Regenhash: First qword of input: 0x%016llX.", work->Nonce);
 	int idx = work->EpochNumber % 2;
 	cg_rlock(&EthCacheLock[idx]);
-	LightEthash(work->hash, work->mixhash, work->data, EthCache[idx] + 64, work->EpochNumber, work->Nonce);
+	LightEthash(work->hash, work->mixhash, work->data, ((const union _Node *)EthCache[idx] + 64), work->EpochNumber, work->Nonce);
 	cg_runlock(&EthCacheLock[idx]);
 	
 	char *DbgHash = bin2hex(work->hash, 32);
