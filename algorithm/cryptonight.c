@@ -107,22 +107,16 @@ static void CNKeccakF1600(uint64_t *st)
 	}
 }
 
-void CNKeccak(uint64_t *output, uint64_t *input)
+void CNKeccak(uint64_t *output, unsigned int *input)
 {
 	uint64_t st[25];
-	
 	// Copy 72 bytes
 	for(int i = 0; i < 9; ++i) st[i] = input[i];
-	
 	st[9] = (input[9] & 0x00000000FFFFFFFFUL) | 0x0000000100000000UL;
-	
 	for(int i = 10; i < 25; ++i) st[i] = 0x00UL;
-	
 	// Last bit of padding
 	st[16] = 0x8000000000000000UL;
-	
 	CNKeccakF1600(st);
-	
 	memcpy(output, st, 200);
 }
 
@@ -142,7 +136,7 @@ static inline uint64_t mul128(uint64_t a, uint64_t b, uint64_t* product_hi)
 #define BYTE(x, y)		(((x) >> ((y) << 3)) & 0xFF)
 #define ROTL32(x, y)	(((x) << (y)) | ((x) >> (32 - (y))))
 
-void CNAESRnd(uint32_t *X, const uint32_t *key)
+void CNAESRnd(long unsigned int *X, long unsigned int *key)
 {
 	uint32_t Y[4];
 	
@@ -154,7 +148,7 @@ void CNAESRnd(uint32_t *X, const uint32_t *key)
 	for(int i = 0; i < 4; ++i) X[i] = Y[i] ^ key[i];
 }
 
-void CNAESTransform(uint32_t *X, const uint32_t *Key)
+void CNAESTransform(uint64_t *X, uint64_t *Key)
 {
 	for(int i = 0; i < 10; ++i)
 	{
@@ -164,7 +158,7 @@ void CNAESTransform(uint32_t *X, const uint32_t *Key)
 
 #define SubWord(inw)		((CNAESSbox[BYTE(inw, 3)] << 24) | (CNAESSbox[BYTE(inw, 2)] << 16) | (CNAESSbox[BYTE(inw, 1)] << 8) | CNAESSbox[BYTE(inw, 0)])
 
-void AESExpandKey256(uint32_t *keybuf)
+void AESExpandKey256(uint64_t *keybuf)
 {
 	for(uint32_t c = 8, i = 1; c < 60; ++c)
 	{
@@ -178,11 +172,11 @@ void AESExpandKey256(uint32_t *keybuf)
 	}
 }
 
-void cryptonight(uint8_t *Output, uint8_t *Input)
+void cryptonight(unsigned int *Output, unsigned int *Input)
 {
 	CryptonightCtx CNCtx;
 	uint64_t text[16], a[2], b[2];
-	uint32_t ExpandedKey1[64], ExpandedKey2[64];
+	uint64_t ExpandedKey1[64], ExpandedKey2[64];
 	
 	CNKeccak(CNCtx.State, Input);
 	
@@ -236,24 +230,18 @@ void cryptonight(uint8_t *Output, uint8_t *Input)
 		b[0] = c[0];
 		b[1] = c[1];
 	}
-	
 	memcpy(text, CNCtx.State + 8, 128);
-	
 	for(int i = 0; i < 0x4000; ++i)
 	{
 		for(int j = 0; j < 16; ++j) text[j] ^= CNCtx.Scratchpad[(i << 4) + j];
-		
 		for(int j = 0; j < 8; ++j)
 		{
 			CNAESTransform(text + (j << 1), ExpandedKey2);
 		}
 	}
-	
 	// Tail Keccak and arbitrary hash func here
 	memcpy(CNCtx.State + 8, text, 128);
-	
 	CNKeccakF1600(((uint64_t *)CNCtx.State));
-	
 	switch(CNCtx.State[0] & 3)
 	{
 		case 0:
@@ -295,7 +283,7 @@ void cryptonight_regenhash(struct work *work)
 {
 	uint32_t data[20];
 	uint32_t *nonce = (uint32_t *)(work->data + 39);
-	uint32_t *ohash = (uint32_t *)(work->hash);
+	unsigned int *ohash = (uint32_t *)(work->hash);
 	
 	work->XMRNonce = *nonce;
 	
@@ -303,7 +291,7 @@ void cryptonight_regenhash(struct work *work)
 		
 	cryptonight(ohash, data);
 	
-	char *tmpdbg = bin2hex(ohash, 32);
+	char *tmpdbg = bin2hex((const unsigned char *) ohash, 32);
 	
 	applog(LOG_DEBUG, "cryptonight_regenhash: %s\n", tmpdbg);
 	
