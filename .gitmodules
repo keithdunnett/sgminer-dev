@@ -1,16 +1,15 @@
 [submodule "jansson"]
   path = submodules/jansson
   url = https://github.com/akheron/jansson.git
-  
-[submodule "ocl/ocl12"]
-	path = ocl/ocl12
-	url = https://github.com/KhronosGroup/OpenCL-Headers.git
-	branch = opencl12
-[submodule "ocl/ocl20"]
-	path = ocl/ocl20
+[submodule "include/ocl20/CL"]
+	path = include/ocl20/CL
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
 	branch = opencl20
-[submodule "ocl/ocl21"]
-	path = ocl/ocl21
+[submodule "include/ocl21/CL"]
+	path = include/ocl21/CL
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
 	branch = opencl21
+[submodule "include/ocl12/CL"]
+	path = include/ocl12/CL
+	url = https://github.com/KhronosGroup/OpenCL-Headers.git
+	branch = opencl12
