@@ -131,6 +131,11 @@ if test "x$have_win32" != xtrue; then
 		OPENCL_FLAGS="-I./include/ocl12/ $OPENCL_FLAGS"
 		OPENCL_LIBS="-L$AMDAPPSDKROOT/lib/$ARCH_DIR $OPENCL_LIBS"
 	fi
+	if test -r "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so"; then
+// support amdgpu-pro driver default behaviour
+		OPENCL_FLAGS="-I./include/ocl12/ $OPENCL_FLAGS"
+		OPENCL_LIBS="-L/opt/amdgpu-pro/lib/${ARCH_DIR}-linux-gnu/ $OPENCL_LIBS"
+	fi
 fi
 
 have_sgminer_sdk=false
