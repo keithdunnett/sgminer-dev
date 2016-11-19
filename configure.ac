@@ -61,7 +61,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(syslog.h)
 
 AC_FUNC_ALLOCA
-OPENCL_FLAGS="-Iinclude/ocl20/"
+OPENCL_FLAGS="-Iinclude/ocl21/"
 
 have_win32=false
 PTHREAD_FLAGS="-lpthread"
@@ -127,8 +127,6 @@ if test "x$have_win32" != xtrue; then
 	fi
 
 	if test "x$AMDAPPSDKROOT" != x; then
-#		OPENCL_FLAGS="-I$AMDAPPSDKROOT/include $OPENCL_FLAGS"
-		OPENCL_FLAGS="-Iinclude/ocl12/ $OPENCL_FLAGS"
 		OPENCL_LIBS="-L$AMDAPPSDKROOT/lib/$ARCH_DIR $OPENCL_LIBS"
 	fi
 	if test -r "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so"; then

@@ -166,6 +166,12 @@ static float get_opencl_version(cl_device_id device)
     find = strstr(devoclver, "OpenCL 1.1");
     if (!find)
       version = 1.2;
+    find = strstr(devoclver, "OpenCL 1.2");
+    if (!find)
+      version = 2.0;
+    find = strstr(devoclver, "OpenCL 2.0");
+    if (!find)
+      version = 2.1;
   }
   return version;
 }
