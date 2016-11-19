@@ -2,8 +2,8 @@
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_maj], [5])
 m4_define([v_min], [5])
-m4_define([v_mic], [0])
-m4_define([v_rev], [nicehash])
+m4_define([v_mic], [1])
+m4_define([v_rev], [magick])
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_ifdef([v_rev], [m4_define([v_ver], [v_maj.v_min.v_mic-v_rev])], [m4_define([v_ver], [v_maj.v_min.v_mic])])
 m4_define([lt_rev], m4_eval(v_maj + v_min))
@@ -128,11 +128,11 @@ if test "x$have_win32" != xtrue; then
 
 	if test "x$AMDAPPSDKROOT" != x; then
 #		OPENCL_FLAGS="-I$AMDAPPSDKROOT/include $OPENCL_FLAGS"
-		OPENCL_FLAGS="-I./include/ocl12/ $OPENCL_FLAGS"
+		OPENCL_FLAGS="-Iinclude/ocl12/ $OPENCL_FLAGS"
 		OPENCL_LIBS="-L$AMDAPPSDKROOT/lib/$ARCH_DIR $OPENCL_LIBS"
 	fi
 	if test -r "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so"; then
-		OPENCL_FLAGS="-I./include/ocl12/ $OPENCL_FLAGS"
+		OPENCL_FLAGS="-Iinclude/ocl12/ $OPENCL_FLAGS"
 		OPENCL_LIBS="-L/opt/amdgpu-pro/lib/${ARCH_DIR}-linux-gnu/ $OPENCL_LIBS"
 	fi
 fi
@@ -261,8 +261,8 @@ AM_CONDITIONAL([HAVE_WINDOWS], [test x$have_win32 = xtrue])
 AM_CONDITIONAL([HAVE_x86_64], [test x$have_x86_64 = xtrue])
 
 AC_CONFIG_SUBDIRS([submodules/jansson])
-JANSSON_LIBS="submodules/jansson/src/.libs/libjansson.a"
-
+JANSSON_LIBS="submodules/jansson/src/.libs/libjansson.la"
+#JANSSON_LIBS="-ljansson"
 PKG_PROG_PKG_CONFIG()
 
 if test "x$have_sgminer_sdk" = "xtrue"; then
