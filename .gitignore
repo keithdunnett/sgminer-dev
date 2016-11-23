@@ -11,6 +11,7 @@ minerd.exe
 *.rej
 autom4te.cache
 .deps
+*.plist
 
 Makefile
 Makefile.in

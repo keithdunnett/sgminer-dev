@@ -34,7 +34,7 @@
 #include "events.h"
 #include "config_parser.h"
 
-inline void ignore_result_helper(int __attribute__((unused)) dummy, ...)
+static inline void ignore_result_helper(int __attribute__((unused)) dummy, ...)
 {
 }
 

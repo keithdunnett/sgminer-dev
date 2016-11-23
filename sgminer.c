@@ -330,7 +330,7 @@ struct schedtime schedstart;
 struct schedtime schedstop;
 bool sched_paused;
 
-inline void ignore_result_helper(int __attribute__((unused)) dummy, ...)
+static inline void ignore_result_helper(int __attribute__((unused)) dummy, ...)
 {
 }
 
