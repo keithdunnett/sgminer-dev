@@ -13,3 +13,6 @@
 	path = include/ocl12/CL
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
 	branch = opencl12
+[submodule "submodules/clinfo"]
+	path = submodules/clinfo
+	url = https://github.com/Oblomov/clinfo.git
