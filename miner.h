@@ -34,7 +34,7 @@ extern char *curly;
 #endif
 
 #include "include/elist.h"
-#include "uthash.h"
+#include "include/uthash/libut/include/libut.h"
 #include "logging.h"
 #include "util.h"
 #include "algorithm.h"

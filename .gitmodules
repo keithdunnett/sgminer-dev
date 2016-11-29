@@ -16,3 +16,6 @@
 [submodule "clinfo"]
 	path = clinfo
 	url = https://github.com/Oblomov/clinfo.git
+[submodule "include/uthash"]
+	path = include/uthash
+	url = https://github.com/troydhanson/uthash.git

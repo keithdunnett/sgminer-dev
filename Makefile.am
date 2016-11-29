@@ -7,7 +7,7 @@ EXTRA_DIST	= example.conf m4/gnulib-cache.m4 \
 		  API.class API.java api-example.c hexdump.c \
 		  doc/API doc/FAQ doc/GPU doc/SCRYPT doc/windows-build.txt
 
-SUBDIRS		= lib submodules ccan sph
+SUBDIRS		= lib submodules ccan sph include/uthash/libut
 
 bin_PROGRAMS     = sgminer
 
@@ -15,9 +15,9 @@ sgminer_CPPFLAGS = $(PTHREAD_FLAGS) $(JANSSON_CPPFLAGS)
 sgminer_LDFLAGS  = $(PTHREAD_FLAGS)
 sgminer_LDADD    = $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ \
 		  @OPENCL_LIBS@ @NCURSES_LIBS@ @PDCURSES_LIBS@ @WS2_LIBS@ \
-		  @MM_LIBS@ @RT_LIBS@ @MATH_LIBS@ lib/libgnu.a ccan/libccan.a sph/libsph.a
+		  @MM_LIBS@ @RT_LIBS@ @MATH_LIBS@ lib/libgnu.a ccan/libccan.a sph/libsph.a include/uthash/libut/libut.a
 
-sgminer_CPPFLAGS += -I$(top_builddir)/lib -I$(top_srcdir)/lib @OPENCL_FLAGS@ @LIBCURL_CFLAGS@
+sgminer_CPPFLAGS += -I$(top_builddir)/lib -I$(top_srcdir)/lib -I$(top_srcdir)/include/uthash/libut/include @OPENCL_FLAGS@ @LIBCURL_CFLAGS@
 
 if HAVE_WINDOWS
 sgminer_LDFLAGS += -all-static -Wl,--stack,4194304
@@ -37,7 +37,7 @@ endif
 sgminer_SOURCES := sgminer.c
 sgminer_SOURCES	+= api/api.c api/api.h
 sgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h
-sgminer_SOURCES	+= util.c util.h uthash.h
+sgminer_SOURCES	+= util.c util.h libut.h
 sgminer_SOURCES	+= logging.c logging.h
 sgminer_SOURCES += driver-opencl.c driver-opencl.h
 sgminer_SOURCES += ocl.c ocl.h
