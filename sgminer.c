@@ -54,7 +54,7 @@ char *curly = ":D";
 #include "compat.h"
 #include "miner.h"
 #include "findnonce.h"
-#include "adl.h"
+//#include "adl.h"
 #include "driver-opencl.h"
 #include "bench_block.h"
 

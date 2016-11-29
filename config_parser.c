@@ -31,7 +31,7 @@
 #include <ccan/opt/opt.h>
 #include <jansson.h>
 #include <libgen.h>
-#include <sha2.h>
+//#include <sha2.h>
 
 #include "compat.h"
 #include "miner.h"
@@ -42,9 +42,9 @@
 #include "algorithm.h"
 #include "pool.h"
 
-#ifdef HAVE_ADL
-#include "adl.h"
-#endif
+//#ifdef HAVE_ADL
+//#include "adl.h"
+//#endif
 
 #if defined(unix) || defined(__APPLE__)
   #include <errno.h>

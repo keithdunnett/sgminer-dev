@@ -32,7 +32,7 @@
 #include "driver-opencl.h"
 #include "findnonce.h"
 #include "ocl.h"
-#include "adl.h"
+//#include "adl.h"
 #include "util.h"
 
 /* TODO: cleanup externals ********************/
@@ -687,7 +687,7 @@ void print_ndevs(int *ndevs)
 {
   opt_verbose = true;
   opencl_drv.drv_detect();
-  clear_adl(*ndevs);
+//  clear_adl(*ndevs);
   applog(LOG_INFO, "%i GPU devices max detected", *ndevs);
 }
 
@@ -825,7 +825,8 @@ retry: // TODO: refactor
     wlog("\n");
   }
 
-  wlogprint("[E]nable  [D]isable  [R]estart GPU  %s\n", adl_active ? "[C]hange settings" : "");
+//  wlogprint("[E]nable  [D]isable  [R]estart GPU  %s\n", adl_active ? "[C]hange settings" : "");
+  wlogprint("[E]nable  [D]isable  [R]estart GPU");
   wlogprint("[I]ntensity  E[x]perimental intensity  R[a]w Intensity\n");
 
   wlogprint("Or press any other key to continue\n");
@@ -1008,16 +1009,16 @@ retry: // TODO: refactor
     wlogprint("Attempting to restart threads of GPU %d\n", selected);
     reinit_device(&gpus[selected]);
     goto retry;
-  }
-  else if (adl_active && (!strncasecmp(&input, "c", 1))) {
-    if (selected)
-      selected = curses_int("Select GPU to change settings on");
-    if (selected < 0 || selected >= nDevs) {
-      wlogprint("Invalid selection\n");
-      goto retry;
-    }
-    change_gpusettings(selected);
-    goto retry;
+//  }
+//  else if (adl_active && (!strncasecmp(&input, "c", 1))) {
+//    if (selected)
+//      selected = curses_int("Select GPU to change settings on");
+//    if (selected < 0 || selected >= nDevs) {
+//      wlogprint("Invalid selection\n");
+//      goto retry;
+//    }
+//    change_gpusettings(selected);
+//    goto retry;
   }
   else
     clear_logwin();
@@ -1212,8 +1213,8 @@ static void opencl_detect(void)
     add_cgpu(cgpu);
   }
 
-  if (!opt_noadl)
-    init_adl(nDevs);
+//  if (!opt_noadl)
+//    init_adl(nDevs);
 }
 
 static void reinit_opencl_device(struct cgpu_info *gpu)
