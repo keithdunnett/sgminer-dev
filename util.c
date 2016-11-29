@@ -1692,7 +1692,7 @@ static bool parse_notify_ethash(struct pool *pool, json_t * val)
 	char *job_id;
 	bool clean;
 	uint8_t EthWork[32], SeedHash[32], Target[32], NetDiff[32];
-	char *EthWorkStr, *SeedHashStr, *TgtStr, *NetDiffStr = NULL;
+	char *EthWorkStr, *SeedHashStr, *TgtStr = NULL, *NetDiffStr = NULL;
 	int ret = true;
 
 	/*json_t *arr = json_array_get(val, 0);
@@ -1733,16 +1733,6 @@ static bool parse_notify_ethash(struct pool *pool, json_t * val)
 //                                                p_farm->setWork(m_current);
 //                                        }
 
-	if (pool->extranonce_subscribe) {
-		// Use EthereunStratum/1.0.0
-		job_id = json_array_string(val, 0);
-		EthWorkStr = json_array_string(val, 0);
-		SeedHashStr = json_array_string(val, 1);
-//		TgtStr = json_array_string(val, 2);
-		clean = json_is_true(json_array_get(val, 2));
-// What that doesn't give us is a target string, we'll have to generate that
-	} else
-		// Use traditional stratum format without extranonce support
 	{
 		job_id = json_array_string(val, 0);
 		EthWorkStr = json_array_string(val, 1);
@@ -1851,17 +1841,10 @@ extern bool parse_notify_cn(struct pool *pool, json_t * val)
 	jid = json_object_get(val, "job_id");
 	target = json_object_get(val, "target");
 
-	if (!blob || !jid || !target) {
-		applog(LOG_DEBUG, "parse_notify_cn: bad params.");
-		ret = false;
-		goto out;
-	}
+	
 
 	const char *blobval = json_string_value(blob);
-	if (!hex2bin(XMRBlob, blobval, 76)) {
-		ret = false;
-		goto out;
-	}
+	
 
 	job_id = (char *const)json_string_value(jid);
 	XMRTarget = bswap_32(strtoul(json_string_value(target), NULL, 16));
@@ -1897,8 +1880,7 @@ extern bool parse_notify_cn(struct pool *pool, json_t * val)
 	total_getworks++;
 	if (pool == current_pool())
 		opt_work_update = true;
- out:
-	/* Annoying but we must not leak memory */
+ 	/* Annoying but we must not leak memory */
 	if (job_id != NULL)
 		free(job_id);
 	return ret;

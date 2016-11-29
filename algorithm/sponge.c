@@ -160,7 +160,7 @@ void absorbBlockBlake2Safe(uint64_t *state, const uint64_t *in) {
  */
 void reducedSqueezeRow0(uint64_t* state, uint64_t* rowOut, uint64_t nCols) {
     uint64_t* ptrWord = rowOut + (nCols-1)*BLOCK_LEN_INT64; //In Lyra2: pointer to M[0][C-1]
-    int i;
+    unsigned long i;
     //M[row][C-1-col] = H.reduced_squeeze()    
     for (i = 0; i < nCols; i++) {
 	ptrWord[0] = state[0];
@@ -196,7 +196,7 @@ void reducedSqueezeRow0(uint64_t* state, uint64_t* rowOut, uint64_t nCols) {
 void reducedDuplexRow1(uint64_t *state, uint64_t *rowIn, uint64_t *rowOut, uint64_t nCols) {
     uint64_t* ptrWordIn = rowIn;				//In Lyra2: pointer to prev
     uint64_t* ptrWordOut = rowOut + (nCols-1)*BLOCK_LEN_INT64; //In Lyra2: pointer to row
-    int i;
+    unsigned long i;
 
     for (i = 0; i < nCols; i++) {
 
@@ -257,7 +257,7 @@ void reducedDuplexRowSetup(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOut,
     uint64_t* ptrWordIn = rowIn;				//In Lyra2: pointer to prev
     uint64_t* ptrWordInOut = rowInOut;				//In Lyra2: pointer to row*
     uint64_t* ptrWordOut = rowOut + (nCols-1)*BLOCK_LEN_INT64; //In Lyra2: pointer to row
-    int i;
+    unsigned long i;
 
     for (i = 0; i < nCols; i++) {
 	//Absorbing "M[prev] [+] M[row*]"
@@ -331,7 +331,7 @@ void reducedDuplexRow(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOut, uint
     uint64_t* ptrWordInOut = rowInOut; //In Lyra2: pointer to row*
     uint64_t* ptrWordIn = rowIn; //In Lyra2: pointer to prev
     uint64_t* ptrWordOut = rowOut; //In Lyra2: pointer to row
-    int i;
+    unsigned long i;
 
     for (i = 0; i < nCols; i++) {
 
@@ -731,7 +731,7 @@ void reducedDuplexRowd(uint64_t *state, uint64_t *rowIn, uint64_t *rowInOut, uin
  Prints an array of unsigned chars
  */
 void printArray(unsigned char *array, unsigned int size, char *name) {
-    int i;
+    unsigned int i;
     printf("%s: ", name);
     for (i = 0; i < size; i++) {
 	printf("%2x|", array[i]);
