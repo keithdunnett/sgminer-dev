@@ -64,7 +64,7 @@ AC_FUNC_ALLOCA
 OPENCL_FLAGS="-Iinclude/ocl21/"
 
 have_win32=false
-PTHREAD_FLAGS="-lpthread"
+#PTHREAD_FLAGS="-lpthread"
 DLOPEN_FLAGS="-ldl"
 OPENCL_LIBS="-lOpenCL"
 WS2_LIBS=""

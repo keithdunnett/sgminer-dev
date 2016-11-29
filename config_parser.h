@@ -2,7 +2,7 @@
 #define CONFIG_PARSER_H
 
 #include "miner.h"
-#include "api.h"
+#include "api/api.h"
 
 //profile structure
 struct profile {

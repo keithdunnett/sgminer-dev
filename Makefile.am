@@ -35,7 +35,7 @@ sgminer_CPPFLAGS += -DBUILD_NUMBER=\"$(BUILD_NUMBER)\"
 endif
 
 sgminer_SOURCES := sgminer.c
-sgminer_SOURCES	+= api.c api.h
+sgminer_SOURCES	+= api/api.c api/api.h
 sgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h
 sgminer_SOURCES	+= util.c util.h uthash.h
 sgminer_SOURCES	+= logging.c logging.h
