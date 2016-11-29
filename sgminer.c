@@ -56,7 +56,7 @@ char *curly = ":D";
 #include "findnonce.h"
 //#include "adl.h"
 #include "driver-opencl.h"
-#include "bench_block.h"
+#include "include/bench_block.h"
 
 #include "algorithm.h"
 #include "algorithm/ethash.h"

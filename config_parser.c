@@ -37,7 +37,7 @@
 #include "miner.h"
 #include "config_parser.h"
 #include "driver-opencl.h"
-#include "bench_block.h"
+#include "include/bench_block.h"
 
 #include "algorithm.h"
 #include "pool.h"

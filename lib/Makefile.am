@@ -46,17 +46,17 @@ EXTRA_libgnu_a_SOURCES =
 BUILT_SOURCES += arg-nonnull.h
 # The arg-nonnull.h that gets inserted into generated .h files is the same as
 # build-aux/arg-nonnull.h, except that it has the copyright header cut off.
-arg-nonnull.h: $(top_srcdir)/./arg-nonnull.h
+arg-nonnull.h: $(top_srcdir)/include/arg-nonnull.h
 	$(AM_V_GEN)rm -f $@-t $@ && \
 	sed -n -e '/GL_ARG_NONNULL/,$$p' \
-	  < $(top_srcdir)/./arg-nonnull.h \
+	  < $(top_srcdir)/include/arg-nonnull.h \
 	  > $@-t && \
 	mv $@-t $@
 MOSTLYCLEANFILES += arg-nonnull.h arg-nonnull.h-t
 
 ARG_NONNULL_H=arg-nonnull.h
 
-EXTRA_DIST += $(top_srcdir)/./arg-nonnull.h
+EXTRA_DIST += $(top_srcdir)/include/arg-nonnull.h
 
 ## end   gnulib module arg-nonnull
 
@@ -70,17 +70,17 @@ EXTRA_DIST += $(top_srcdir)/./arg-nonnull.h
 BUILT_SOURCES += c++defs.h
 # The c++defs.h that gets inserted into generated .h files is the same as
 # build-aux/c++defs.h, except that it has the copyright header cut off.
-c++defs.h: $(top_srcdir)/./c++defs.h
+c++defs.h: $(top_srcdir)/include/c++defs.h
 	$(AM_V_GEN)rm -f $@-t $@ && \
 	sed -n -e '/_GL_CXXDEFS/,$$p' \
-	  < $(top_srcdir)/./c++defs.h \
+	  < $(top_srcdir)/include/c++defs.h \
 	  > $@-t && \
 	mv $@-t $@
 MOSTLYCLEANFILES += c++defs.h c++defs.h-t
 
 CXXDEFS_H=c++defs.h
 
-EXTRA_DIST += $(top_srcdir)/./c++defs.h
+EXTRA_DIST += $(top_srcdir)/include/c++defs.h
 
 ## end   gnulib module c++defs
 
@@ -337,17 +337,17 @@ EXTRA_DIST += string.in.h
 BUILT_SOURCES += warn-on-use.h
 # The warn-on-use.h that gets inserted into generated .h files is the same as
 # build-aux/warn-on-use.h, except that it has the copyright header cut off.
-warn-on-use.h: $(top_srcdir)/./warn-on-use.h
+warn-on-use.h: $(top_srcdir)/include/warn-on-use.h
 	$(AM_V_GEN)rm -f $@-t $@ && \
 	sed -n -e '/^.ifndef/,$$p' \
-	  < $(top_srcdir)/./warn-on-use.h \
+	  < $(top_srcdir)/include/warn-on-use.h \
 	  > $@-t && \
 	mv $@-t $@
 MOSTLYCLEANFILES += warn-on-use.h warn-on-use.h-t
 
 WARN_ON_USE_H=warn-on-use.h
 
-EXTRA_DIST += $(top_srcdir)/./warn-on-use.h
+EXTRA_DIST += $(top_srcdir)/include/warn-on-use.h
 
 ## end   gnulib module warn-on-use
 

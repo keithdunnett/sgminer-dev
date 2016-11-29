@@ -33,7 +33,7 @@ extern char *curly;
 #define CGMINER_VERSION VERSION
 #endif
 
-#include "elist.h"
+#include "include/elist.h"
 #include "uthash.h"
 #include "logging.h"
 #include "util.h"
