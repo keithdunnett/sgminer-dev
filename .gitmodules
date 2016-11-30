@@ -1,6 +1,3 @@
-[submodule "jansson"]
-  path = submodules/jansson
-  url = https://github.com/akheron/jansson.git
 [submodule "include/ocl20/CL"]
 	path = include/ocl20/CL
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
@@ -13,9 +10,6 @@
 	path = include/ocl12/CL
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
 	branch = opencl12
-[submodule "clinfo"]
-	path = clinfo
-	url = https://github.com/Oblomov/clinfo.git
 [submodule "include/uthash"]
 	path = include/uthash
 	url = https://github.com/troydhanson/uthash.git
