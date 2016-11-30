@@ -1,5 +1,6 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.5)
 
+INCLUDE(ExternalProject)
 
 # ==================
 # Define Our Project
@@ -115,6 +116,23 @@ project (${My_Project_Title})
 add_subdirectory(ccan)
 add_subdirectory(sph)
 add_subdirectory(include)
+
+# Handle GNUlib source dir as an external project, for now. We likely don't need it in this build.
+#ExternalProject_Add(gnulib
+#  SOURCE_DIR lib
+#  BUILD_IN_SOURCE 1
+#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/lib
+#  CONFIGURE_COMMAND ""
+#  BUILD_COMMAND make
+#  INSTALL_COMMAND make install PREFIX=${CMAKE_CURRENT_BINARY_DIR}/lib
+#)
+#ExternalProject_Get_Property(gnulib install_dir)
+#add_library(gnu STATIC IMPORTED)
+#set_property(TARGET gnu PROPERTY IMPORTED_LOCATION ${install_dir}/lib/libgnu.a)
+#add_dependencies(gnulib gnu)
+#include_directories(${install_dir}/lib)
+#target_link_libraries(gnulib gnu)
+
 #add_subdirectory(lib)
 #add_subdirectory(submodules)
 
