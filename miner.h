@@ -24,10 +24,10 @@ extern char *curly;
 #endif
 #include <sched.h>
 
-#if defined(USE_GIT_VERSION) && defined(GIT_VERSION)
-#undef VERSION
-#define VERSION GIT_VERSION
-#endif
+//#if defined(USE_GIT_VERSION) && defined(GIT_VERSION)
+//#undef VERSION
+//#define VERSION GIT_VERSION
+//#endif
 
 #ifdef BUILD_NUMBER
 #define CGMINER_VERSION VERSION "-" BUILD_NUMBER

@@ -61,7 +61,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(syslog.h)
 
 AC_FUNC_ALLOCA
-OPENCL_FLAGS="-Iinclude/ocl21/"
+OPENCL_FLAGS="-Iinclude/ocl12/"
 
 have_win32=false
 #PTHREAD_FLAGS="-lpthread"
