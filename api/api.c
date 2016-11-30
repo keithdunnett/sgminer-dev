@@ -25,7 +25,7 @@
 #include <limits.h>
 #include <sys/types.h>
 
-#include "compat.h"
+#include "include/compat.h"
 #include "api.h"
 #include "miner.h"
 #include "pool.h"

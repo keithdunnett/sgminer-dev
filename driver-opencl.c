@@ -26,7 +26,7 @@
 #endif
 #include <ccan/opt/opt.h>
 
-#include "compat.h"
+#include "include/compat.h"
 #include "miner.h"
 #include "config_parser.h"
 #include "driver-opencl.h"

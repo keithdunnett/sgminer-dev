@@ -42,7 +42,7 @@
 #include "algorithm/ethash.h"
 #include "miner.h"
 #include "include/elist.h"
-#include "compat.h"
+#include "include/compat.h"
 #include "util.h"
 #include "pool.h"
 

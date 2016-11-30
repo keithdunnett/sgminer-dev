@@ -46,7 +46,7 @@
 #include "algorithm/ethash.h"
 #include "algorithm/cryptonight.h"
 
-#include "compat.h"
+#include "include/compat.h"
 
 #include <inttypes.h>
 #include <string.h>

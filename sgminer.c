@@ -51,7 +51,7 @@ char *curly = ":D";
 #include "sph/sph_sha2.h"
 #include "sph/sph_blake.h"
 
-#include "compat.h"
+#include "include/compat.h"
 #include "miner.h"
 #include "findnonce.h"
 //#include "adl.h"
