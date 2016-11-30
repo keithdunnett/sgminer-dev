@@ -12,8 +12,8 @@
 
 #include <unistd.h>
 
-#include "miner.h"
 #include "logging.h"
+#include "miner.h"
 
 bool opt_debug = false;
 bool opt_debug_console = false;
@@ -24,22 +24,20 @@ int opt_log_show_date = false;
 /* per default priorities higher than LOG_NOTICE are logged */
 int opt_log_level = LOG_NOTICE;
 
-static void _my_log_curses(int prio, const char *datetime, const char *str)
-{
-	if (opt_quiet && prio != LOG_ERR)
-		return;
+static void _my_log_curses(int prio, const char *datetime, const char *str) {
+  if (opt_quiet && prio != LOG_ERR)
+    return;
 
 #ifdef HAVE_CURSES
-	extern bool use_curses;
-	if (use_curses && _log_curses_only(prio, datetime, str))
-		;
-	else
+  extern bool use_curses;
+  if (use_curses && _log_curses_only(prio, datetime, str))
+    ;
+  else
 #endif
-		printf("%s%s%s", datetime, str, "                    \n");
+    printf("%s%s%s", datetime, str, "                    \n");
 }
 
-void applog(int prio, const char* fmt, ...)
-{
+void applog(int prio, const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
@@ -47,8 +45,7 @@ void applog(int prio, const char* fmt, ...)
   va_end(args);
 }
 
-void applogsiz(int prio, int size, const char* fmt, ...)
-{
+void applogsiz(int prio, int size, const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
@@ -57,8 +54,7 @@ void applogsiz(int prio, int size, const char* fmt, ...)
 }
 
 /* high-level logging function, based on global opt_log_level */
-void vapplogsiz(int prio, int size, const char* fmt, va_list args)
-{
+void vapplogsiz(int prio, int size, const char *fmt, va_list args) {
   if ((opt_debug || prio != LOG_DEBUG)) {
     char *tmp42 = (char *)calloc(size + 1, 1);
     vsnprintf(tmp42, size, fmt, args);
@@ -66,7 +62,7 @@ void vapplogsiz(int prio, int size, const char* fmt, va_list args)
     free(tmp42);
   }
 #ifdef DEV_DEBUG_MODE
-  else if(prio == LOG_DEBUG) {
+  else if (prio == LOG_DEBUG) {
     char *tmp42 = (char *)calloc(size + 1, 1);
     vsnprintf(tmp42, size, fmt, args);
     __debug("", tmp42);
@@ -78,24 +74,26 @@ void vapplogsiz(int prio, int size, const char* fmt, va_list args)
 /*
  * log function
  */
-void _applog(int prio, const char *str, bool force)
-{
+void _applog(int prio, const char *str, bool force) {
 #ifdef HAVE_SYSLOG_H
   if (use_syslog) {
     syslog(prio, "%s", str);
   }
 #else
-  if (0) {}
+  if (0) {
+  }
 #endif
   else {
 
 #ifdef DEV_DEBUG_MODE
-    if(prio == LOG_DEBUG) {
+    if (prio == LOG_DEBUG) {
       __debug("", str);
     }
 #endif
 
-    bool write_console = opt_debug_console || (opt_verbose && prio != LOG_DEBUG) || prio <= opt_log_level;
+    bool write_console = opt_debug_console ||
+                         (opt_verbose && prio != LOG_DEBUG) ||
+                         prio <= opt_log_level;
     bool write_stderr = !isatty(fileno((FILE *)stderr));
     if (!(write_console || write_stderr))
       return;
@@ -113,27 +111,19 @@ void _applog(int prio, const char *str, bool force)
     if (opt_log_show_date && (last_date_output_day != tm->tm_mday)) {
       last_date_output_day = tm->tm_mday;
       char date_output_str[64];
-      snprintf(date_output_str, sizeof(date_output_str), "Log date is now %d-%02d-%02d",
-        tm->tm_year + 1900,
-        tm->tm_mon + 1,
-        tm->tm_mday);
+      snprintf(date_output_str, sizeof(date_output_str),
+               "Log date is now %d-%02d-%02d", tm->tm_year + 1900,
+               tm->tm_mon + 1, tm->tm_mday);
       _applog(prio, date_output_str, force);
     }
 
     if (opt_log_show_date) {
       snprintf(datetime, sizeof(datetime), "[%d-%02d-%02d %02d:%02d:%02d] ",
-        tm->tm_year + 1900,
-        tm->tm_mon + 1,
-        tm->tm_mday,
-        tm->tm_hour,
-        tm->tm_min,
-        tm->tm_sec);
-    }
-    else {
-      snprintf(datetime, sizeof(datetime), "[%02d:%02d:%02d] ",
-        tm->tm_hour,
-        tm->tm_min,
-        tm->tm_sec);
+               tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour,
+               tm->tm_min, tm->tm_sec);
+    } else {
+      snprintf(datetime, sizeof(datetime), "[%02d:%02d:%02d] ", tm->tm_hour,
+               tm->tm_min, tm->tm_sec);
     }
 
     if (write_console || write_stderr) {
@@ -159,16 +149,16 @@ void _applog(int prio, const char *str, bool force)
   }
 }
 
-void __debug(const char *filename, const char *fmt, ...)
-{
+void __debug(const char *filename, const char *fmt, ...) {
   FILE *f;
   va_list args;
 
-  if (!(f = fopen(((!empty_string(filename))?filename:"debug.log"), "a+"))) {
+  if (!(f = fopen(((!empty_string(filename)) ? filename : "debug.log"),
+                  "a+"))) {
     return;
   }
 
-  //prepend timestamp
+  // prepend timestamp
   struct timeval tv = {0, 0};
   struct tm *tm;
 
@@ -177,19 +167,14 @@ void __debug(const char *filename, const char *fmt, ...)
   const time_t tmp_time = tv.tv_sec;
   tm = localtime(&tmp_time);
 
-  fprintf(f, "[%d-%02d-%02d %02d:%02d:%02d] ",
-    tm->tm_year + 1900,
-    tm->tm_mon + 1,
-    tm->tm_mday,
-    tm->tm_hour,
-    tm->tm_min,
-    tm->tm_sec);
+  fprintf(f, "[%d-%02d-%02d %02d:%02d:%02d] ", tm->tm_year + 1900,
+          tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 
   va_start(args, fmt);
   vfprintf(f, fmt, args);
   va_end(args);
 
-  //add \n
+  // add \n
   fprintf(f, "\n");
 
   fclose(f);

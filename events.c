@@ -12,34 +12,32 @@
 
 #include "config.h"
 
+#include <assert.h>
+#include <limits.h>
+#include <math.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <unistd.h>
 #include <sys/time.h>
 #include <time.h>
-#include <math.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <signal.h>
-#include <limits.h>
+#include <unistd.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "config_parser.h"
+#include "events.h"
 #include "include/compat.h"
 #include "miner.h"
-#include "events.h"
-#include "config_parser.h"
 
-static inline void ignore_result_helper(int __attribute__((unused)) dummy, ...)
-{
-}
+static inline void ignore_result_helper(int __attribute__((unused)) dummy,
+                                        ...) {}
 
 #define IGNORE_RESULT(X) ignore_result_helper(0, (X))
-
 
 // global event list
 event_t *events = NULL, *last_event = NULL;
@@ -47,36 +45,32 @@ event_t *events = NULL, *last_event = NULL;
 /***************************************************
  * Helper functions
  **************************************************/
-static void *cmd_thread(void *cmdp)
-{
-	const char *cmd = (const char*)cmdp;
+static void *cmd_thread(void *cmdp) {
+  const char *cmd = (const char *)cmdp;
 
-	applog(LOG_DEBUG, "Executing command: %s", cmd);
-	IGNORE_RESULT(system(cmd));
+  applog(LOG_DEBUG, "Executing command: %s", cmd);
+  IGNORE_RESULT(system(cmd));
 
-	return NULL;
+  return NULL;
 }
 
-static void runcmd(const char *cmd)
-{
-	if (empty_string(cmd))
-		return;
+static void runcmd(const char *cmd) {
+  if (empty_string(cmd))
+    return;
 
-	pthread_t pth;
-	pthread_create(&pth, NULL, cmd_thread, (void*)cmd);
+  pthread_t pth;
+  pthread_create(&pth, NULL, cmd_thread, (void *)cmd);
 }
 
 /****************************************************
 * Event list functions
 ****************************************************/
-//find an event by event_type
-static event_t *get_event(const char *event_type)
-{
+// find an event by event_type
+static event_t *get_event(const char *event_type) {
   event_t *p = events;
 
-  while (p != NULL)
-  {
-    if(!strcasecmp(p->event_type, event_type))
+  while (p != NULL) {
+    if (!strcasecmp(p->event_type, event_type))
       return p;
 
     p = p->next;
@@ -86,8 +80,7 @@ static event_t *get_event(const char *event_type)
 }
 
 // add event to the list
-static event_t *add_event(unsigned int id)
-{
+static event_t *add_event(unsigned int id) {
   event_t *event;
 
   // allocate memory
@@ -105,14 +98,12 @@ static event_t *add_event(unsigned int id)
   event->prev = event->next = NULL;
 
   // first event?
-  if(events == NULL)
-  {
+  if (events == NULL) {
     events = event;
     last_event = event;
   }
   // no, append to the list
-  else
-  {
+  else {
     last_event->next = event;
     event->prev = last_event;
     last_event = event;
@@ -122,26 +113,22 @@ static event_t *add_event(unsigned int id)
 }
 
 // remove event from the list
-static inline void remove_event(event_t *event)
-{
+static inline void remove_event(event_t *event) {
   // only event?
-  if(event == events && event == last_event)
+  if (event == events && event == last_event)
     events = last_event = NULL;
   // first event?
-  else if(event == events)
-  {
+  else if (event == events) {
     event->next->prev = NULL;
     events = event->next;
   }
   // last event?
-  else if(event == last_event)
-  {
+  else if (event == last_event) {
     event->prev->next = NULL;
     last_event = event->prev;
   }
   // in the middle
-  else
-  {
+  else {
     event->prev->next = event->next;
     event->next->prev = event->prev;
   }
@@ -151,14 +138,15 @@ static inline void remove_event(event_t *event)
 }
 
 #ifndef EVENT_ADD_CHECK
-  #define EVENT_ADD_CHECK if (!last_event || (last_event->id != json_array_index)) add_event(json_array_index);
+#define EVENT_ADD_CHECK                                                        \
+  if (!last_event || (last_event->id != json_array_index))                     \
+    add_event(json_array_index);
 #endif
 
 /********************************************
 * Config functions
 *********************************************/
-char *set_event_type(const char *event_type)
-{
+char *set_event_type(const char *event_type) {
   event_t *event;
 
   // make sure event type doesn't already exist
@@ -172,8 +160,7 @@ char *set_event_type(const char *event_type)
   return NULL;
 }
 
-char *set_event_runcmd(const char *cmd)
-{
+char *set_event_runcmd(const char *cmd) {
   EVENT_ADD_CHECK;
 
   last_event->runcmd = cmd;
@@ -181,8 +168,7 @@ char *set_event_runcmd(const char *cmd)
   return NULL;
 }
 
-char *set_event_reboot(const char *arg)
-{
+char *set_event_reboot(const char *arg) {
   EVENT_ADD_CHECK;
 
   if (empty_string(arg))
@@ -190,13 +176,13 @@ char *set_event_reboot(const char *arg)
 
   last_event->reboot = strtobool(arg);
 
-  applog(LOG_NOTICE, "Event %s reboot = %s", last_event->event_type, ((last_event->reboot)?"true":"false"));
+  applog(LOG_NOTICE, "Event %s reboot = %s", last_event->event_type,
+         ((last_event->reboot) ? "true" : "false"));
 
   return NULL;
 }
 
-char *set_event_reboot_delay(const char *delay)
-{
+char *set_event_reboot_delay(const char *delay) {
   EVENT_ADD_CHECK;
 
   last_event->reboot_delay = atoi(delay);
@@ -208,8 +194,7 @@ char *set_event_reboot_delay(const char *delay)
   return NULL;
 }
 
-char *set_event_quit(const char *arg)
-{
+char *set_event_quit(const char *arg) {
   EVENT_ADD_CHECK;
 
   if (empty_string(arg))
@@ -217,13 +202,13 @@ char *set_event_quit(const char *arg)
 
   last_event->quit = strtobool(arg);
 
-  applog(LOG_DEBUG, "Event %s quit = %s", last_event->event_type, ((last_event->quit)?"true":"false"));
+  applog(LOG_DEBUG, "Event %s quit = %s", last_event->event_type,
+         ((last_event->quit) ? "true" : "false"));
 
   return NULL;
 }
 
-char *set_event_quit_message(const char *msg)
-{
+char *set_event_quit_message(const char *msg) {
   EVENT_ADD_CHECK;
 
   last_event->quit_msg = msg;
@@ -238,8 +223,7 @@ char *set_event_quit_message(const char *msg)
 /******************************************
 * Event functions
 *******************************************/
-void event_notify(const char *event_type)
-{
+void event_notify(const char *event_type) {
   event_t *event;
 
   // find an event of the specified type
@@ -253,25 +237,23 @@ void event_notify(const char *event_type)
     runcmd(event->runcmd);
 
   // reboot if set
-  if (event->reboot == true)
-  {
-    //wait specified amount of time
-    if (event->reboot_delay > 0)
-    {
+  if (event->reboot == true) {
+    // wait specified amount of time
+    if (event->reboot_delay > 0) {
       applog(LOG_NOTICE, "waiting %d to reboot", event->reboot_delay);
       sleep(event->reboot_delay);
     }
 
-    #ifdef WIN32
-      runcmd("shutdown /r /t 0");
-    #else
-      applog(LOG_NOTICE, "running shutdown -r now");
-      runcmd("/sbin/shutdown -r now");
-    #endif
+#ifdef WIN32
+    runcmd("shutdown /r /t 0");
+#else
+    applog(LOG_NOTICE, "running shutdown -r now");
+    runcmd("/sbin/shutdown -r now");
+#endif
   }
 
   // quit sgminer if set
   if (event->quit == true)
-    quit(0, "%s", (empty_string(event->quit_msg))?event_type:event->quit_msg);
-
+    quit(0, "%s",
+         (empty_string(event->quit_msg)) ? event_type : event->quit_msg);
 }

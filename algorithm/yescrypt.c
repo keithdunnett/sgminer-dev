@@ -1,5 +1,5 @@
 /*-
- * Copyright 2015 djm34 
+ * Copyright 2015 djm34
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 #include "config.h"
 #include "miner.h"
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "algorithm/yescrypt_core.h"
@@ -36,84 +36,79 @@
 static const uint32_t diff1targ = 0x0000ffff;
 
 /* Used externally as confirmation of correct OCL code */
-int yescrypt_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
-{
-	uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	uint32_t data[20], ohash[8];
+int yescrypt_test(unsigned char *pdata, const unsigned char *ptarget,
+                  uint32_t nonce) {
+  uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
+  uint32_t data[20], ohash[8];
 
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
-	data[19] = htobe32(nonce);
-	yescrypt_hash((unsigned char*)data,(unsigned char*)ohash);
+  be32enc_vect(data, (const uint32_t *)pdata, 19);
+  data[19] = htobe32(nonce);
+  yescrypt_hash((unsigned char *)data, (unsigned char *)ohash);
 
-	tmp_hash7 = be32toh(ohash[7]);
+  tmp_hash7 = be32toh(ohash[7]);
 
-	applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
-		(long unsigned int)Htarg,
-		(long unsigned int)diff1targ,
-		(long unsigned int)tmp_hash7);
+  applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
+         (long unsigned int)Htarg, (long unsigned int)diff1targ,
+         (long unsigned int)tmp_hash7);
 
-	if (tmp_hash7 > diff1targ)
-		return -1;
+  if (tmp_hash7 > diff1targ)
+    return -1;
 
-	if (tmp_hash7 > Htarg)
-		return 0;
+  if (tmp_hash7 > Htarg)
+    return 0;
 
-	return 1;
+  return 1;
 }
 
-void yescrypt_regenhash(struct work *work)
-{
-        uint32_t data[20];
-        uint32_t *nonce = (uint32_t *)(work->data + 76);
-        uint32_t *ohash = (uint32_t *)(work->hash);
+void yescrypt_regenhash(struct work *work) {
+  uint32_t data[20];
+  uint32_t *nonce = (uint32_t *)(work->data + 76);
+  uint32_t *ohash = (uint32_t *)(work->hash);
 
-        be32enc_vect(data, (const uint32_t *)work->data, 19);
-        data[19] = htobe32(*nonce);	
+  be32enc_vect(data, (const uint32_t *)work->data, 19);
+  data[19] = htobe32(*nonce);
 
-		yescrypt_hash((unsigned char*)data, (unsigned char*)ohash);
-        
+  yescrypt_hash((unsigned char *)data, (unsigned char *)ohash);
 }
 
+bool scanhash_yescrypt(struct thr_info *thr,
+                       const unsigned char __maybe_unused *pmidstate,
+                       unsigned char *pdata,
+                       unsigned char __maybe_unused *phash1,
+                       unsigned char __maybe_unused *phash,
+                       const unsigned char *ptarget, uint32_t max_nonce,
+                       uint32_t *last_nonce, uint32_t n) {
+  uint32_t *nonce = (uint32_t *)(pdata + 76);
+  uint32_t data[20];
+  uint32_t tmp_hash7;
+  uint32_t Htarg = le32toh(((const uint32_t *)ptarget)[7]);
+  bool ret = false;
 
-bool scanhash_yescrypt(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
-	unsigned char *pdata, unsigned char __maybe_unused *phash1,
-	unsigned char __maybe_unused *phash, const unsigned char *ptarget,
-	uint32_t max_nonce, uint32_t *last_nonce, uint32_t n)
-{
-	uint32_t *nonce = (uint32_t *)(pdata + 76);
-	uint32_t data[20];
-	uint32_t tmp_hash7;
-	uint32_t Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	bool ret = false;
+  be32enc_vect(data, (const uint32_t *)pdata, 19);
 
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
-	
-	while (1)
-	{
-		uint32_t ostate[8];
+  while (1) {
+    uint32_t ostate[8];
 
-		*nonce = ++n;
-		data[19] = (n);
+    *nonce = ++n;
+    data[19] = (n);
 
-		yescrypt_hash((unsigned char*)data, (unsigned char*)ostate);
-		tmp_hash7 = (ostate[7]);
+    yescrypt_hash((unsigned char *)data, (unsigned char *)ostate);
+    tmp_hash7 = (ostate[7]);
 
-		applog(LOG_INFO, "data7 %08lx", (long unsigned int)data[7]);
+    applog(LOG_INFO, "data7 %08lx", (long unsigned int)data[7]);
 
-		if (unlikely(tmp_hash7 <= Htarg))
-		{
-			((uint32_t *)pdata)[19] = htobe32(n);
-			*last_nonce = n;
-			ret = true;
-			break;
-		}
+    if (unlikely(tmp_hash7 <= Htarg)) {
+      ((uint32_t *)pdata)[19] = htobe32(n);
+      *last_nonce = n;
+      ret = true;
+      break;
+    }
 
-		if (unlikely((n >= max_nonce) || thr->work_restart))
-		{
-			*last_nonce = n;
-			break;
-		}
-	}
+    if (unlikely((n >= max_nonce) || thr->work_restart)) {
+      *last_nonce = n;
+      break;
+    }
+  }
 
-	return ret;
+  return ret;
 }

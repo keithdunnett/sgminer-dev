@@ -30,13 +30,14 @@
 #include "config.h"
 #include "miner.h"
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "sph/sph_whirlpool.h"
 
-/* Move init out of loop, so init once externally, and then use one single memcpy with that bigger memory block */
+/* Move init out of loop, so init once externally, and then use one single
+ * memcpy with that bigger memory block */
 typedef struct {
   sph_whirlpool1_context whirlpool1;
   sph_whirlpool1_context whirlpool2;
@@ -46,9 +47,7 @@ typedef struct {
 
 Whash_context_holder base_contexts;
 
-
-void init_whirlcoin_hash_contexts()
-{
+void init_whirlcoin_hash_contexts() {
   sph_whirlpool1_init(&base_contexts.whirlpool1);
   sph_whirlpool1_init(&base_contexts.whirlpool2);
   sph_whirlpool1_init(&base_contexts.whirlpool3);
@@ -58,8 +57,8 @@ void init_whirlcoin_hash_contexts()
 #ifdef __APPLE_CC__
 static
 #endif
-void whirlcoin_hash(void *state, const void *input)
-{
+    void
+    whirlcoin_hash(void *state, const void *input) {
   init_whirlcoin_hash_contexts();
 
   Whash_context_holder ctx;
@@ -85,30 +84,28 @@ void whirlcoin_hash(void *state, const void *input)
 static const uint32_t diff1targ = 0x0000ffff;
 
 /* Used externally as confirmation of correct OCL code */
-int whirlcoin_test_old(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
-{
-	uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	uint32_t data[20], ohash[8];
+int whirlcoin_test_old(unsigned char *pdata, const unsigned char *ptarget,
+                       uint32_t nonce) {
+  uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
+  uint32_t data[20], ohash[8];
 
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
-	data[19] = htobe32(nonce);
+  be32enc_vect(data, (const uint32_t *)pdata, 19);
+  data[19] = htobe32(nonce);
 
-	whirlcoin_hash(ohash, data);
-	tmp_hash7 = be32toh(ohash[7]);
+  whirlcoin_hash(ohash, data);
+  tmp_hash7 = be32toh(ohash[7]);
 
-	applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
-				(long unsigned int)Htarg,
-				(long unsigned int)diff1targ,
-				(long unsigned int)tmp_hash7);
-	if (tmp_hash7 > diff1targ)
-		return -1;
-	if (tmp_hash7 > Htarg)
-		return 0;
-	return 1;
+  applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
+         (long unsigned int)Htarg, (long unsigned int)diff1targ,
+         (long unsigned int)tmp_hash7);
+  if (tmp_hash7 > diff1targ)
+    return -1;
+  if (tmp_hash7 > Htarg)
+    return 0;
+  return 1;
 }
 
-void whirlcoin_regenhash(struct work *work)
-{
+void whirlcoin_regenhash(struct work *work) {
   uint32_t data[20];
   uint32_t *nonce = (uint32_t *)(work->data + 76);
   uint32_t *ohash = (uint32_t *)(work->hash);
@@ -118,7 +115,8 @@ void whirlcoin_regenhash(struct work *work)
   whirlcoin_hash(ohash, data);
 }
 /*
-bool scanhash_whirlcoin(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
+bool scanhash_whirlcoin(struct thr_info *thr, const unsigned char __maybe_unused
+*pmidstate,
   unsigned char *pdata, unsigned char __maybe_unused *phash1,
   unsigned char __maybe_unused *phash, const unsigned char *ptarget,
   uint32_t max_nonce, uint32_t *last_nonce, uint32_t n)

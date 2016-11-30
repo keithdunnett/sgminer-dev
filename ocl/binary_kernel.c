@@ -1,11 +1,10 @@
-#include <sys/stat.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
-#include "miner.h"
 #include "binary_kernel.h"
+#include "miner.h"
 
-cl_program load_opencl_binary_kernel(build_kernel_data *data)
-{
+cl_program load_opencl_binary_kernel(build_kernel_data *data) {
   FILE *binaryfile = NULL;
   size_t binary_size;
   char **binaries = (char **)calloc(MAX_GPUDEVICES * 4, sizeof(char *));
@@ -38,9 +37,13 @@ cl_program load_opencl_binary_kernel(build_kernel_data *data)
       goto out;
     }
 
-    program = clCreateProgramWithBinary(data->context, 1, data->device, &binary_size, (const unsigned char **)binaries, &status, NULL);
+    program = clCreateProgramWithBinary(
+        data->context, 1, data->device, &binary_size,
+        (const unsigned char **)binaries, &status, NULL);
     if (status != CL_SUCCESS) {
-      applog(LOG_ERR, "Error %d: Loading Binary into cl_program (clCreateProgramWithBinary)", status);
+      applog(LOG_ERR, "Error %d: Loading Binary into cl_program "
+                      "(clCreateProgramWithBinary)",
+             status);
       goto out;
     }
 
@@ -51,10 +54,12 @@ cl_program load_opencl_binary_kernel(build_kernel_data *data)
     if (status != CL_SUCCESS) {
       applog(LOG_ERR, "Error %d: Building Program (clBuildProgram)", status);
       size_t log_size;
-      status = clGetProgramBuildInfo(program, *data->device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+      status = clGetProgramBuildInfo(program, *data->device,
+                                     CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
 
       char *sz_log = (char *)malloc(log_size + 1);
-      status = clGetProgramBuildInfo(program, *data->device, CL_PROGRAM_BUILD_LOG, log_size, sz_log, NULL);
+      status = clGetProgramBuildInfo(
+          program, *data->device, CL_PROGRAM_BUILD_LOG, log_size, sz_log, NULL);
       sz_log[log_size] = '\0';
       applog(LOG_ERR, "%s", sz_log);
       free(sz_log);
@@ -65,8 +70,11 @@ cl_program load_opencl_binary_kernel(build_kernel_data *data)
     ret = program;
   }
 out:
-  if (binaryfile) fclose(binaryfile);
-  if (binaries[0]) free(binaries[0]);
-  if (binaries) free(binaries);
+  if (binaryfile)
+    fclose(binaryfile);
+  if (binaries[0])
+    free(binaries[0]);
+  if (binaries)
+    free(binaries);
   return ret;
 }

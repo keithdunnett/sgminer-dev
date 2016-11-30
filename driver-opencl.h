@@ -3,7 +3,6 @@
 
 #include "miner.h"
 
-
 extern void print_ndevs(int *ndevs);
 extern void *reinit_gpu(void *userdata);
 extern char *set_gpu_map(char *arg);

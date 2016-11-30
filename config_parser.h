@@ -1,10 +1,10 @@
 #ifndef CONFIG_PARSER_H
 #define CONFIG_PARSER_H
 
-#include "miner.h"
 #include "api/api.h"
+#include "miner.h"
 
-//profile structure
+// profile structure
 struct profile {
   int profile_no;
   char *name;
@@ -54,12 +54,12 @@ extern char *set_default_xintensity(const char *arg);
 extern char *set_default_rawintensity(const char *arg);
 extern char *set_default_thread_concurrency(const char *arg);
 #ifdef HAVE_ADL
-  extern char *set_default_gpu_engine(const char *arg);
-  extern char *set_default_gpu_memclock(const char *arg);
-  extern char *set_default_gpu_threads(const char *arg);
-  extern char *set_default_gpu_fan(const char *arg);
-  extern char *set_default_gpu_powertune(const char *arg);
-  extern char *set_default_gpu_vddc(const char *arg);
+extern char *set_default_gpu_engine(const char *arg);
+extern char *set_default_gpu_memclock(const char *arg);
+extern char *set_default_gpu_threads(const char *arg);
+extern char *set_default_gpu_fan(const char *arg);
+extern char *set_default_gpu_powertune(const char *arg);
+extern char *set_default_gpu_vddc(const char *arg);
 #endif
 extern char *set_default_profile(char *arg);
 extern char *set_default_shaders(const char *arg);
@@ -75,20 +75,22 @@ extern char *set_profile_xintensity(const char *arg);
 extern char *set_profile_rawintensity(const char *arg);
 extern char *set_profile_thread_concurrency(const char *arg);
 #ifdef HAVE_ADL
-  extern char *set_profile_gpu_engine(const char *arg);
-  extern char *set_profile_gpu_memclock(const char *arg);
-  extern char *set_profile_gpu_threads(const char *arg);
-  extern char *set_profile_gpu_fan(const char *arg);
-  extern char *set_profile_gpu_powertune(const char *arg);
-  extern char *set_profile_gpu_vddc(const char *arg);
+extern char *set_profile_gpu_engine(const char *arg);
+extern char *set_profile_gpu_memclock(const char *arg);
+extern char *set_profile_gpu_threads(const char *arg);
+extern char *set_profile_gpu_fan(const char *arg);
+extern char *set_profile_gpu_powertune(const char *arg);
+extern char *set_profile_gpu_vddc(const char *arg);
 #endif
 extern char *set_profile_nfactor(const char *arg);
 extern char *set_profile_shaders(const char *arg);
 extern char *set_profile_worksize(const char *arg);
 
 /* config parser functions */
-extern char *parse_config(json_t *val, const char *key, const char *parentkey, bool fileconf, int parent_iteration);
-extern char *load_config(const char *arg, const char *parentkey, void __maybe_unused *unused);
+extern char *parse_config(json_t *val, const char *key, const char *parentkey,
+                          bool fileconf, int parent_iteration);
+extern char *load_config(const char *arg, const char *parentkey,
+                         void __maybe_unused *unused);
 extern char *set_default_config(const char *arg);
 extern void load_default_config(void);
 
@@ -103,10 +105,19 @@ extern void apply_pool_profile(struct pool *pool);
 extern void write_config(const char *filename);
 
 /* API functions */
-extern void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group);
-extern void api_profile_add(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
-extern void api_profile_remove(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
-extern void api_pool_profile(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
+extern void api_profile_list(struct io_data *io_data,
+                             __maybe_unused SOCKETTYPE c,
+                             __maybe_unused char *param, bool isjson,
+                             __maybe_unused char group);
+extern void api_profile_add(struct io_data *io_data,
+                            __maybe_unused SOCKETTYPE c, char *param,
+                            bool isjson, __maybe_unused char group);
+extern void api_profile_remove(struct io_data *io_data,
+                               __maybe_unused SOCKETTYPE c, char *param,
+                               bool isjson, __maybe_unused char group);
+extern void api_pool_profile(struct io_data *io_data,
+                             __maybe_unused SOCKETTYPE c, char *param,
+                             bool isjson, __maybe_unused char group);
 
 /* API/UI config update functions */
 extern void update_config_intensity(struct profile *profile);

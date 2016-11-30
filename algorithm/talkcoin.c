@@ -27,8 +27,8 @@
 #include "config.h"
 #include "miner.h"
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "sph/sph_blake.h"
@@ -37,20 +37,19 @@
 #include "sph/sph_keccak.h"
 #include "sph/sph_skein.h"
 
-/* Move init out of loop, so init once externally, and then use one single memcpy with that bigger memory block */
-typedef struct 
-{
-  sph_blake512_context    blake1;
-  sph_groestl512_context  groestl1;
-  sph_jh512_context       jh1;
-  sph_keccak512_context   keccak1;
-  sph_skein512_context    skein1;
+/* Move init out of loop, so init once externally, and then use one single
+ * memcpy with that bigger memory block */
+typedef struct {
+  sph_blake512_context blake1;
+  sph_groestl512_context groestl1;
+  sph_jh512_context jh1;
+  sph_keccak512_context keccak1;
+  sph_skein512_context skein1;
 } Xhash_context_holder;
 
 static Xhash_context_holder base_contexts;
 
-void init_Nhash_contexts()
-{
+void init_Nhash_contexts() {
   sph_blake512_init(&base_contexts.blake1);
   sph_groestl512_init(&base_contexts.groestl1);
   sph_jh512_init(&base_contexts.jh1);
@@ -61,29 +60,29 @@ void init_Nhash_contexts()
 #ifdef __APPLE_CC__
 static
 #endif
-void talkhash(void *state, const void *input)
-{
+    void
+    talkhash(void *state, const void *input) {
   init_Nhash_contexts();
 
   Xhash_context_holder ctx;
 
   uint32_t hashA[16], hashB[16];
-  //blake-bmw-groestl-sken-jh-meccak-luffa-cubehash-shivite-simd-echo
+  // blake-bmw-groestl-sken-jh-meccak-luffa-cubehash-shivite-simd-echo
   memcpy(&ctx, &base_contexts, sizeof(base_contexts));
 
-  sph_blake512 (&ctx.blake1, input, 80);
-  sph_blake512_close (&ctx.blake1, hashA);
+  sph_blake512(&ctx.blake1, input, 80);
+  sph_blake512_close(&ctx.blake1, hashA);
 
-  sph_groestl512 (&ctx.groestl1, hashA, 64);
+  sph_groestl512(&ctx.groestl1, hashA, 64);
   sph_groestl512_close(&ctx.groestl1, hashB);
 
-  sph_jh512 (&ctx.jh1, hashB, 64);
+  sph_jh512(&ctx.jh1, hashB, 64);
   sph_jh512_close(&ctx.jh1, hashA);
 
-  sph_keccak512 (&ctx.keccak1, hashA, 64);
+  sph_keccak512(&ctx.keccak1, hashA, 64);
   sph_keccak512_close(&ctx.keccak1, hashB);
 
-  sph_skein512 (&ctx.skein1, hashB, 64);
+  sph_skein512(&ctx.skein1, hashB, 64);
   sph_skein512_close(&ctx.skein1, hashA);
 
   memcpy(state, hashA, 32);
@@ -92,33 +91,31 @@ void talkhash(void *state, const void *input)
 static const uint32_t diff1targ = 0x0000ffff;
 
 /* Used externally as confirmation of correct OCL code */
-int talkcoin_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
-{
-	uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	uint32_t data[20], ohash[8];
+int talkcoin_test(unsigned char *pdata, const unsigned char *ptarget,
+                  uint32_t nonce) {
+  uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
+  uint32_t data[20], ohash[8];
 
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
-	data[19] = htobe32(nonce);
-	talkhash(ohash, data);
+  be32enc_vect(data, (const uint32_t *)pdata, 19);
+  data[19] = htobe32(nonce);
+  talkhash(ohash, data);
 
-	tmp_hash7 = be32toh(ohash[7]);
+  tmp_hash7 = be32toh(ohash[7]);
 
-	applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx", 
-    (long unsigned int)Htarg,
-		(long unsigned int)diff1targ,
-		(long unsigned int)tmp_hash7);
-    
-	if (tmp_hash7 > diff1targ)
-		return -1;
-    
-	if (tmp_hash7 > Htarg)
-		return 0;
-    
-	return 1;
+  applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
+         (long unsigned int)Htarg, (long unsigned int)diff1targ,
+         (long unsigned int)tmp_hash7);
+
+  if (tmp_hash7 > diff1targ)
+    return -1;
+
+  if (tmp_hash7 > Htarg)
+    return 0;
+
+  return 1;
 }
 
-void talkcoin_regenhash(struct work *work)
-{
+void talkcoin_regenhash(struct work *work) {
   uint32_t data[20];
   uint32_t *nonce = (uint32_t *)(work->data + 76);
   uint32_t *ohash = (uint32_t *)(work->hash);
@@ -128,21 +125,22 @@ void talkcoin_regenhash(struct work *work)
   talkhash(ohash, data);
 }
 
-bool scanhash_talkcoin(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
-		     unsigned char *pdata, unsigned char __maybe_unused *phash1,
-		     unsigned char __maybe_unused *phash, const unsigned char *ptarget,
-		     uint32_t max_nonce, uint32_t *last_nonce, uint32_t n)
-{
-	uint32_t *nonce = (uint32_t *)(pdata + 76);
-	uint32_t data[20];
-	uint32_t tmp_hash7;
-	uint32_t Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	bool ret = false;
+bool scanhash_talkcoin(struct thr_info *thr,
+                       const unsigned char __maybe_unused *pmidstate,
+                       unsigned char *pdata,
+                       unsigned char __maybe_unused *phash1,
+                       unsigned char __maybe_unused *phash,
+                       const unsigned char *ptarget, uint32_t max_nonce,
+                       uint32_t *last_nonce, uint32_t n) {
+  uint32_t *nonce = (uint32_t *)(pdata + 76);
+  uint32_t data[20];
+  uint32_t tmp_hash7;
+  uint32_t Htarg = le32toh(((const uint32_t *)ptarget)[7]);
+  bool ret = false;
 
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
+  be32enc_vect(data, (const uint32_t *)pdata, 19);
 
-	while(1) 
-  {
+  while (1) {
     uint32_t ostate[8];
 
     *nonce = ++n;
@@ -150,22 +148,20 @@ bool scanhash_talkcoin(struct thr_info *thr, const unsigned char __maybe_unused 
     talkhash(ostate, data);
     tmp_hash7 = (ostate[7]);
 
-    applog(LOG_INFO, "data7 %08lx",	(long unsigned int)data[7]);
+    applog(LOG_INFO, "data7 %08lx", (long unsigned int)data[7]);
 
-    if (unlikely(tmp_hash7 <= Htarg)) 
-    {
+    if (unlikely(tmp_hash7 <= Htarg)) {
       ((uint32_t *)pdata)[19] = htobe32(n);
       *last_nonce = n;
       ret = true;
       break;
     }
 
-    if (unlikely((n >= max_nonce) || thr->work_restart)) 
-    {
+    if (unlikely((n >= max_nonce) || thr->work_restart)) {
       *last_nonce = n;
       break;
     }
-	}
+  }
 
-	return ret;
+  return ret;
 }

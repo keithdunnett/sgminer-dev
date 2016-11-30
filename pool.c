@@ -24,15 +24,15 @@
  * SUCH DAMAGE.
  */
 
+#include "pool.h"
 #include "config.h"
 #include "miner.h"
-#include "pool.h"
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
-char* get_pool_name(struct pool *pool) {
+char *get_pool_name(struct pool *pool) {
   if (opt_incognito) {
     return "<pool>";
   }
@@ -44,7 +44,7 @@ char* get_pool_name(struct pool *pool) {
   return pool->name;
 }
 
-char* get_pool_user(struct pool *pool) {
+char *get_pool_user(struct pool *pool) {
   if (opt_incognito) {
     return "<user>";
   }

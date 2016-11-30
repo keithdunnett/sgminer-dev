@@ -6,7 +6,7 @@
 #define PLUCK_SECBUF_SIZE (64 * 1024)
 
 extern int pluck_test(unsigned char *pdata, const unsigned char *ptarget,
-			uint32_t nonce);
+                      uint32_t nonce);
 extern void pluck_regenhash(struct work *work);
 
 #endif /* PLUCK_H */

@@ -15,23 +15,22 @@
 
 #include "config.h"
 
-#include <stdio.h>
 #include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <unistd.h>
-#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 
-#include "include/compat.h"
+#include "algorithm.h"
 #include "api.h"
+#include "include/compat.h"
 #include "miner.h"
 #include "pool.h"
 #include "util.h"
-#include "pool.h"
-#include "algorithm.h"
 
 #include "config_parser.h"
 
@@ -41,59 +40,57 @@ static char WSAbuf[1024];
 struct WSAERRORS {
   int id;
   char *code;
-} WSAErrors[] = {
-  { 0,      "No error" },
-  { WSAEINTR,   "Interrupted system call" },
-  { WSAEBADF,   "Bad file number" },
-  { WSAEACCES,    "Permission denied" },
-  { WSAEFAULT,    "Bad address" },
-  { WSAEINVAL,    "Invalid argument" },
-  { WSAEMFILE,    "Too many open sockets" },
-  { WSAEWOULDBLOCK, "Operation would block" },
-  { WSAEINPROGRESS, "Operation now in progress" },
-  { WSAEALREADY,    "Operation already in progress" },
-  { WSAENOTSOCK,    "Socket operation on non-socket" },
-  { WSAEDESTADDRREQ,  "Destination address required" },
-  { WSAEMSGSIZE,    "Message too long" },
-  { WSAEPROTOTYPE,  "Protocol wrong type for socket" },
-  { WSAENOPROTOOPT, "Bad protocol option" },
-  { WSAEPROTONOSUPPORT, "Protocol not supported" },
-  { WSAESOCKTNOSUPPORT, "Socket type not supported" },
-  { WSAEOPNOTSUPP,  "Operation not supported on socket" },
-  { WSAEPFNOSUPPORT,  "Protocol family not supported" },
-  { WSAEAFNOSUPPORT,  "Address family not supported" },
-  { WSAEADDRINUSE,  "Address already in use" },
-  { WSAEADDRNOTAVAIL, "Can't assign requested address" },
-  { WSAENETDOWN,    "Network is down" },
-  { WSAENETUNREACH, "Network is unreachable" },
-  { WSAENETRESET,   "Net connection reset" },
-  { WSAECONNABORTED,  "Software caused connection abort" },
-  { WSAECONNRESET,  "Connection reset by peer" },
-  { WSAENOBUFS,   "No buffer space available" },
-  { WSAEISCONN,   "Socket is already connected" },
-  { WSAENOTCONN,    "Socket is not connected" },
-  { WSAESHUTDOWN,   "Can't send after socket shutdown" },
-  { WSAETOOMANYREFS,  "Too many references, can't splice" },
-  { WSAETIMEDOUT,   "Connection timed out" },
-  { WSAECONNREFUSED,  "Connection refused" },
-  { WSAELOOP,   "Too many levels of symbolic links" },
-  { WSAENAMETOOLONG,  "File name too long" },
-  { WSAEHOSTDOWN,   "Host is down" },
-  { WSAEHOSTUNREACH,  "No route to host" },
-  { WSAENOTEMPTY,   "Directory not empty" },
-  { WSAEPROCLIM,    "Too many processes" },
-  { WSAEUSERS,    "Too many users" },
-  { WSAEDQUOT,    "Disc quota exceeded" },
-  { WSAESTALE,    "Stale NFS file handle" },
-  { WSAEREMOTE,   "Too many levels of remote in path" },
-  { WSASYSNOTREADY, "Network system is unavailable" },
-  { WSAVERNOTSUPPORTED, "Winsock version out of range" },
-  { WSANOTINITIALISED,  "WSAStartup not yet called" },
-  { WSAEDISCON,   "Graceful shutdown in progress" },
-  { WSAHOST_NOT_FOUND,  "Host not found" },
-  { WSANO_DATA,   "No host data of that type was found" },
-  { -1,     "Unknown error code" }
-};
+} WSAErrors[] = {{0, "No error"},
+                 {WSAEINTR, "Interrupted system call"},
+                 {WSAEBADF, "Bad file number"},
+                 {WSAEACCES, "Permission denied"},
+                 {WSAEFAULT, "Bad address"},
+                 {WSAEINVAL, "Invalid argument"},
+                 {WSAEMFILE, "Too many open sockets"},
+                 {WSAEWOULDBLOCK, "Operation would block"},
+                 {WSAEINPROGRESS, "Operation now in progress"},
+                 {WSAEALREADY, "Operation already in progress"},
+                 {WSAENOTSOCK, "Socket operation on non-socket"},
+                 {WSAEDESTADDRREQ, "Destination address required"},
+                 {WSAEMSGSIZE, "Message too long"},
+                 {WSAEPROTOTYPE, "Protocol wrong type for socket"},
+                 {WSAENOPROTOOPT, "Bad protocol option"},
+                 {WSAEPROTONOSUPPORT, "Protocol not supported"},
+                 {WSAESOCKTNOSUPPORT, "Socket type not supported"},
+                 {WSAEOPNOTSUPP, "Operation not supported on socket"},
+                 {WSAEPFNOSUPPORT, "Protocol family not supported"},
+                 {WSAEAFNOSUPPORT, "Address family not supported"},
+                 {WSAEADDRINUSE, "Address already in use"},
+                 {WSAEADDRNOTAVAIL, "Can't assign requested address"},
+                 {WSAENETDOWN, "Network is down"},
+                 {WSAENETUNREACH, "Network is unreachable"},
+                 {WSAENETRESET, "Net connection reset"},
+                 {WSAECONNABORTED, "Software caused connection abort"},
+                 {WSAECONNRESET, "Connection reset by peer"},
+                 {WSAENOBUFS, "No buffer space available"},
+                 {WSAEISCONN, "Socket is already connected"},
+                 {WSAENOTCONN, "Socket is not connected"},
+                 {WSAESHUTDOWN, "Can't send after socket shutdown"},
+                 {WSAETOOMANYREFS, "Too many references, can't splice"},
+                 {WSAETIMEDOUT, "Connection timed out"},
+                 {WSAECONNREFUSED, "Connection refused"},
+                 {WSAELOOP, "Too many levels of symbolic links"},
+                 {WSAENAMETOOLONG, "File name too long"},
+                 {WSAEHOSTDOWN, "Host is down"},
+                 {WSAEHOSTUNREACH, "No route to host"},
+                 {WSAENOTEMPTY, "Directory not empty"},
+                 {WSAEPROCLIM, "Too many processes"},
+                 {WSAEUSERS, "Too many users"},
+                 {WSAEDQUOT, "Disc quota exceeded"},
+                 {WSAESTALE, "Stale NFS file handle"},
+                 {WSAEREMOTE, "Too many levels of remote in path"},
+                 {WSASYSNOTREADY, "Network system is unavailable"},
+                 {WSAVERNOTSUPPORTED, "Winsock version out of range"},
+                 {WSANOTINITIALISED, "WSAStartup not yet called"},
+                 {WSAEDISCON, "Graceful shutdown in progress"},
+                 {WSAHOST_NOT_FOUND, "Host not found"},
+                 {WSANO_DATA, "No host data of that type was found"},
+                 {-1, "Unknown error code"}};
 
 char *WSAErrorMsg(void) {
   int i;
@@ -110,121 +107,144 @@ char *WSAErrorMsg(void) {
 }
 #endif
 
-
 struct CODES codes[] = {
- { SEVERITY_ERR,   MSG_INVGPU,  PARAM_GPUMAX, "Invalid GPU id %d - range is 0 - %d" },
- { SEVERITY_INFO,  MSG_ALRENA,  PARAM_GPU,  "GPU %d already enabled" },
- { SEVERITY_INFO,  MSG_ALRDIS,  PARAM_GPU,  "GPU %d already disabled" },
- { SEVERITY_WARN,  MSG_GPUMRE,  PARAM_GPU,  "GPU %d must be restarted first" },
- { SEVERITY_INFO,  MSG_GPUREN,  PARAM_GPU,  "GPU %d sent enable message" },
- { SEVERITY_ERR,   MSG_GPUNON,  PARAM_NONE, "No GPUs" },
- { SEVERITY_SUCC,  MSG_POOL,  PARAM_PMAX, "%d Pool(s)" },
- { SEVERITY_ERR,   MSG_NOPOOL,  PARAM_NONE, "No pools" },
+    {SEVERITY_ERR, MSG_INVGPU, PARAM_GPUMAX,
+     "Invalid GPU id %d - range is 0 - %d"},
+    {SEVERITY_INFO, MSG_ALRENA, PARAM_GPU, "GPU %d already enabled"},
+    {SEVERITY_INFO, MSG_ALRDIS, PARAM_GPU, "GPU %d already disabled"},
+    {SEVERITY_WARN, MSG_GPUMRE, PARAM_GPU, "GPU %d must be restarted first"},
+    {SEVERITY_INFO, MSG_GPUREN, PARAM_GPU, "GPU %d sent enable message"},
+    {SEVERITY_ERR, MSG_GPUNON, PARAM_NONE, "No GPUs"},
+    {SEVERITY_SUCC, MSG_POOL, PARAM_PMAX, "%d Pool(s)"},
+    {SEVERITY_ERR, MSG_NOPOOL, PARAM_NONE, "No pools"},
 
- { SEVERITY_SUCC,  MSG_DEVS,  PARAM_DMAX,   "%d GPU(s)" },
- { SEVERITY_ERR,   MSG_NODEVS,  PARAM_NONE, "No GPUs"
- },
+    {SEVERITY_SUCC, MSG_DEVS, PARAM_DMAX, "%d GPU(s)"},
+    {SEVERITY_ERR, MSG_NODEVS, PARAM_NONE, "No GPUs"},
 
- { SEVERITY_SUCC,  MSG_SUMM,  PARAM_NONE, "Summary" },
- { SEVERITY_INFO,  MSG_GPUDIS,  PARAM_GPU,  "GPU %d set disable flag" },
- { SEVERITY_INFO,  MSG_GPUREI,  PARAM_GPU,  "GPU %d restart attempted" },
- { SEVERITY_ERR,   MSG_INVCMD,  PARAM_NONE, "Invalid command" },
- { SEVERITY_ERR,   MSG_MISID, PARAM_NONE, "Missing device id parameter" },
- { SEVERITY_SUCC,  MSG_GPUDEV,  PARAM_GPU,  "GPU%d" },
- { SEVERITY_SUCC,  MSG_NUMGPU,  PARAM_NONE, "GPU count" },
- { SEVERITY_SUCC,  MSG_VERSION, PARAM_NONE, "SGMiner versions" },
- { SEVERITY_ERR,   MSG_INVJSON, PARAM_NONE, "Invalid JSON" },
- { SEVERITY_ERR,   MSG_MISCMD,  PARAM_CMD,  "Missing JSON '%s'" },
- { SEVERITY_ERR,   MSG_MISPID,  PARAM_NONE, "Missing pool id parameter" },
- { SEVERITY_ERR,   MSG_INVPID,  PARAM_POOLMAX,  "Invalid pool id %d - range is 0 - %d" },
- { SEVERITY_SUCC,  MSG_SWITCHP, PARAM_POOL, "Switching to pool %d:'%s'" },
- { SEVERITY_ERR,   MSG_MISVAL,  PARAM_NONE, "Missing comma after GPU number" },
- { SEVERITY_ERR,   MSG_NOADL, PARAM_NONE, "ADL is not available" },
- { SEVERITY_ERR,   MSG_NOGPUADL,PARAM_GPU,  "GPU %d does not have ADL" },
- { SEVERITY_ERR,   MSG_INVINT,  PARAM_STR,  "Invalid intensity (%s) - must be '" _DYNAMIC  "' or range " MIN_INTENSITY_STR " - " MAX_INTENSITY_STR },
- { SEVERITY_INFO,  MSG_GPUINT,  PARAM_BOTH, "GPU %d set new intensity to %s" },
- { SEVERITY_ERR,   MSG_INVXINT,  PARAM_STR,  "Invalid xintensity (%s) - must be range " MIN_XINTENSITY_STR " - " MAX_XINTENSITY_STR },
- { SEVERITY_INFO,  MSG_GPUXINT,  PARAM_BOTH, "GPU %d set new xintensity to %s" },
- { SEVERITY_ERR,   MSG_INVRAWINT,  PARAM_STR,  "Invalid rawintensity (%s) - must be range " MIN_RAWINTENSITY_STR " - " MAX_RAWINTENSITY_STR },
- { SEVERITY_INFO,  MSG_GPURAWINT,  PARAM_BOTH, "GPU %d set new rawintensity to %s" },
- { SEVERITY_SUCC,  MSG_MINECONFIG,PARAM_NONE, "sgminer config" },
- { SEVERITY_ERR,   MSG_GPUMERR, PARAM_BOTH, "Setting GPU %d memoryclock to (%s) reported failure" },
- { SEVERITY_SUCC,  MSG_GPUMEM,  PARAM_BOTH, "Setting GPU %d memoryclock to (%s) reported success" },
- { SEVERITY_ERR,   MSG_GPUEERR, PARAM_BOTH, "Setting GPU %d clock to (%s) reported failure" },
- { SEVERITY_SUCC,  MSG_GPUENG,  PARAM_BOTH, "Setting GPU %d clock to (%s) reported success" },
- { SEVERITY_ERR,   MSG_GPUVERR, PARAM_BOTH, "Setting GPU %d vddc to (%s) reported failure" },
- { SEVERITY_SUCC,  MSG_GPUVDDC, PARAM_BOTH, "Setting GPU %d vddc to (%s) reported success" },
- { SEVERITY_ERR,   MSG_GPUFERR, PARAM_BOTH, "Setting GPU %d fan to (%s) reported failure" },
- { SEVERITY_SUCC,  MSG_GPUFAN,  PARAM_BOTH, "Setting GPU %d fan to (%s) reported success" },
- { SEVERITY_ERR,   MSG_MISFN, PARAM_NONE, "Missing save filename parameter" },
- { SEVERITY_ERR,   MSG_BADFN, PARAM_STR,  "Can't open or create save file '%s'" },
- { SEVERITY_SUCC,  MSG_SAVED, PARAM_STR,  "Configuration saved to file '%s'" },
- { SEVERITY_ERR,   MSG_ACCDENY, PARAM_STR,  "Access denied to '%s' command" },
- { SEVERITY_SUCC,  MSG_ACCOK, PARAM_NONE, "Privileged access OK" },
- { SEVERITY_SUCC,  MSG_ENAPOOL, PARAM_POOL, "Enabling pool %d:'%s'" },
- { SEVERITY_SUCC,  MSG_POOLPRIO,PARAM_NONE, "Changed pool priorities" },
- { SEVERITY_ERR,   MSG_DUPPID,  PARAM_PID,  "Duplicate pool specified %d" },
- { SEVERITY_SUCC,  MSG_DISPOOL, PARAM_POOL, "Disabling pool %d:'%s'" },
- { SEVERITY_INFO,  MSG_ALRENAP, PARAM_POOL, "Pool %d:'%s' already enabled" },
- { SEVERITY_INFO,  MSG_ALRDISP, PARAM_POOL, "Pool %d:'%s' already disabled" },
- { SEVERITY_ERR,   MSG_MISPDP,  PARAM_NONE, "Missing addpool details" },
- { SEVERITY_ERR,   MSG_INVPDP,  PARAM_STR,  "Invalid addpool details '%s'" },
- { SEVERITY_ERR,   MSG_TOOMANYP,PARAM_NONE, "Reached maximum number of pools (%d)" },
- { SEVERITY_SUCC,  MSG_ADDPOOL, PARAM_STR,  "Added pool '%s'" },
- { SEVERITY_ERR,   MSG_REMLASTP,PARAM_POOL, "Cannot remove last pool %d:'%s'" },
- { SEVERITY_ERR,   MSG_ACTPOOL, PARAM_POOL, "Cannot remove active pool %d:'%s'" },
- { SEVERITY_SUCC,  MSG_REMPOOL, PARAM_BOTH, "Removed pool %d:'%s'" },
- { SEVERITY_SUCC,  MSG_NOTIFY,  PARAM_NONE, "Notify" },
- { SEVERITY_SUCC,  MSG_DEVDETAILS,PARAM_NONE, "Device Details" },
- { SEVERITY_SUCC,  MSG_MINESTATS,PARAM_NONE,  "sgminer stats" },
- { SEVERITY_ERR,   MSG_MISCHK,  PARAM_NONE, "Missing check cmd" },
- { SEVERITY_SUCC,  MSG_CHECK, PARAM_NONE, "Check command" },
- { SEVERITY_ERR,   MSG_MISBOOL, PARAM_NONE, "Missing parameter: true/false" },
- { SEVERITY_ERR,   MSG_INVBOOL, PARAM_NONE, "Invalid parameter should be true or false" },
- { SEVERITY_SUCC,  MSG_FOO, PARAM_BOOL, "Failover-Only set to %s" },
- { SEVERITY_SUCC,  MSG_MINECOIN,PARAM_NONE, "sgminer coin" },
- { SEVERITY_SUCC,  MSG_DEBUGSET,PARAM_NONE, "Debug settings" },
- { SEVERITY_SUCC,  MSG_SETCONFIG,PARAM_SET, "Set config '%s' to %d" },
- { SEVERITY_ERR,   MSG_UNKCON,  PARAM_STR,  "Unknown config '%s'" },
- { SEVERITY_ERR,   MSG_INVNUM,  PARAM_BOTH, "Invalid number (%d) for '%s' range is 0-9999" },
- { SEVERITY_ERR,   MSG_INVNEG,  PARAM_BOTH, "Invalid negative number (%d) for '%s'" },
- { SEVERITY_SUCC,  MSG_SETQUOTA,PARAM_SET,  "Set pool '%s' to quota %d'" },
- { SEVERITY_ERR,   MSG_CONPAR,  PARAM_NONE, "Missing config parameters 'name,N'" },
- { SEVERITY_ERR,   MSG_CONVAL,  PARAM_STR,  "Missing config value N for '%s,N'" },
- { SEVERITY_INFO,  MSG_NOUSTA,  PARAM_NONE, "No USB Statistics" },
- { SEVERITY_ERR,   MSG_ZERMIS,  PARAM_NONE, "Missing zero parameters" },
- { SEVERITY_ERR,   MSG_ZERINV,  PARAM_STR,  "Invalid zero parameter '%s'" },
- { SEVERITY_SUCC,  MSG_ZERSUM,  PARAM_STR,  "Zeroed %s stats with summary" },
- { SEVERITY_SUCC,  MSG_ZERNOSUM, PARAM_STR, "Zeroed %s stats without summary" },
- { SEVERITY_SUCC,  MSG_LOCKOK,  PARAM_NONE, "Lock stats created" },
- { SEVERITY_WARN,  MSG_LOCKDIS, PARAM_NONE, "Lock stats not enabled" },
- { SEVERITY_SUCC,  MSG_CHSTRAT,  PARAM_STR, "Multipool strategy changed to '%s'" },
- { SEVERITY_ERR,   MSG_MISSTRAT, PARAM_NONE, "Missing multipool strategy" },
- { SEVERITY_ERR,   MSG_INVSTRAT, PARAM_NONE, "Invalid multipool strategy %d" },
- { SEVERITY_ERR,   MSG_MISSTRATINT, PARAM_NONE, "Missing rotate interval" },
+    {SEVERITY_SUCC, MSG_SUMM, PARAM_NONE, "Summary"},
+    {SEVERITY_INFO, MSG_GPUDIS, PARAM_GPU, "GPU %d set disable flag"},
+    {SEVERITY_INFO, MSG_GPUREI, PARAM_GPU, "GPU %d restart attempted"},
+    {SEVERITY_ERR, MSG_INVCMD, PARAM_NONE, "Invalid command"},
+    {SEVERITY_ERR, MSG_MISID, PARAM_NONE, "Missing device id parameter"},
+    {SEVERITY_SUCC, MSG_GPUDEV, PARAM_GPU, "GPU%d"},
+    {SEVERITY_SUCC, MSG_NUMGPU, PARAM_NONE, "GPU count"},
+    {SEVERITY_SUCC, MSG_VERSION, PARAM_NONE, "SGMiner versions"},
+    {SEVERITY_ERR, MSG_INVJSON, PARAM_NONE, "Invalid JSON"},
+    {SEVERITY_ERR, MSG_MISCMD, PARAM_CMD, "Missing JSON '%s'"},
+    {SEVERITY_ERR, MSG_MISPID, PARAM_NONE, "Missing pool id parameter"},
+    {SEVERITY_ERR, MSG_INVPID, PARAM_POOLMAX,
+     "Invalid pool id %d - range is 0 - %d"},
+    {SEVERITY_SUCC, MSG_SWITCHP, PARAM_POOL, "Switching to pool %d:'%s'"},
+    {SEVERITY_ERR, MSG_MISVAL, PARAM_NONE, "Missing comma after GPU number"},
+    {SEVERITY_ERR, MSG_NOADL, PARAM_NONE, "ADL is not available"},
+    {SEVERITY_ERR, MSG_NOGPUADL, PARAM_GPU, "GPU %d does not have ADL"},
+    {SEVERITY_ERR, MSG_INVINT, PARAM_STR,
+     "Invalid intensity (%s) - must be '" _DYNAMIC
+     "' or range " MIN_INTENSITY_STR " - " MAX_INTENSITY_STR},
+    {SEVERITY_INFO, MSG_GPUINT, PARAM_BOTH, "GPU %d set new intensity to %s"},
+    {SEVERITY_ERR, MSG_INVXINT, PARAM_STR,
+     "Invalid xintensity (%s) - must be range " MIN_XINTENSITY_STR
+     " - " MAX_XINTENSITY_STR},
+    {SEVERITY_INFO, MSG_GPUXINT, PARAM_BOTH, "GPU %d set new xintensity to %s"},
+    {SEVERITY_ERR, MSG_INVRAWINT, PARAM_STR,
+     "Invalid rawintensity (%s) - must be range " MIN_RAWINTENSITY_STR
+     " - " MAX_RAWINTENSITY_STR},
+    {SEVERITY_INFO, MSG_GPURAWINT, PARAM_BOTH,
+     "GPU %d set new rawintensity to %s"},
+    {SEVERITY_SUCC, MSG_MINECONFIG, PARAM_NONE, "sgminer config"},
+    {SEVERITY_ERR, MSG_GPUMERR, PARAM_BOTH,
+     "Setting GPU %d memoryclock to (%s) reported failure"},
+    {SEVERITY_SUCC, MSG_GPUMEM, PARAM_BOTH,
+     "Setting GPU %d memoryclock to (%s) reported success"},
+    {SEVERITY_ERR, MSG_GPUEERR, PARAM_BOTH,
+     "Setting GPU %d clock to (%s) reported failure"},
+    {SEVERITY_SUCC, MSG_GPUENG, PARAM_BOTH,
+     "Setting GPU %d clock to (%s) reported success"},
+    {SEVERITY_ERR, MSG_GPUVERR, PARAM_BOTH,
+     "Setting GPU %d vddc to (%s) reported failure"},
+    {SEVERITY_SUCC, MSG_GPUVDDC, PARAM_BOTH,
+     "Setting GPU %d vddc to (%s) reported success"},
+    {SEVERITY_ERR, MSG_GPUFERR, PARAM_BOTH,
+     "Setting GPU %d fan to (%s) reported failure"},
+    {SEVERITY_SUCC, MSG_GPUFAN, PARAM_BOTH,
+     "Setting GPU %d fan to (%s) reported success"},
+    {SEVERITY_ERR, MSG_MISFN, PARAM_NONE, "Missing save filename parameter"},
+    {SEVERITY_ERR, MSG_BADFN, PARAM_STR, "Can't open or create save file '%s'"},
+    {SEVERITY_SUCC, MSG_SAVED, PARAM_STR, "Configuration saved to file '%s'"},
+    {SEVERITY_ERR, MSG_ACCDENY, PARAM_STR, "Access denied to '%s' command"},
+    {SEVERITY_SUCC, MSG_ACCOK, PARAM_NONE, "Privileged access OK"},
+    {SEVERITY_SUCC, MSG_ENAPOOL, PARAM_POOL, "Enabling pool %d:'%s'"},
+    {SEVERITY_SUCC, MSG_POOLPRIO, PARAM_NONE, "Changed pool priorities"},
+    {SEVERITY_ERR, MSG_DUPPID, PARAM_PID, "Duplicate pool specified %d"},
+    {SEVERITY_SUCC, MSG_DISPOOL, PARAM_POOL, "Disabling pool %d:'%s'"},
+    {SEVERITY_INFO, MSG_ALRENAP, PARAM_POOL, "Pool %d:'%s' already enabled"},
+    {SEVERITY_INFO, MSG_ALRDISP, PARAM_POOL, "Pool %d:'%s' already disabled"},
+    {SEVERITY_ERR, MSG_MISPDP, PARAM_NONE, "Missing addpool details"},
+    {SEVERITY_ERR, MSG_INVPDP, PARAM_STR, "Invalid addpool details '%s'"},
+    {SEVERITY_ERR, MSG_TOOMANYP, PARAM_NONE,
+     "Reached maximum number of pools (%d)"},
+    {SEVERITY_SUCC, MSG_ADDPOOL, PARAM_STR, "Added pool '%s'"},
+    {SEVERITY_ERR, MSG_REMLASTP, PARAM_POOL, "Cannot remove last pool %d:'%s'"},
+    {SEVERITY_ERR, MSG_ACTPOOL, PARAM_POOL,
+     "Cannot remove active pool %d:'%s'"},
+    {SEVERITY_SUCC, MSG_REMPOOL, PARAM_BOTH, "Removed pool %d:'%s'"},
+    {SEVERITY_SUCC, MSG_NOTIFY, PARAM_NONE, "Notify"},
+    {SEVERITY_SUCC, MSG_DEVDETAILS, PARAM_NONE, "Device Details"},
+    {SEVERITY_SUCC, MSG_MINESTATS, PARAM_NONE, "sgminer stats"},
+    {SEVERITY_ERR, MSG_MISCHK, PARAM_NONE, "Missing check cmd"},
+    {SEVERITY_SUCC, MSG_CHECK, PARAM_NONE, "Check command"},
+    {SEVERITY_ERR, MSG_MISBOOL, PARAM_NONE, "Missing parameter: true/false"},
+    {SEVERITY_ERR, MSG_INVBOOL, PARAM_NONE,
+     "Invalid parameter should be true or false"},
+    {SEVERITY_SUCC, MSG_FOO, PARAM_BOOL, "Failover-Only set to %s"},
+    {SEVERITY_SUCC, MSG_MINECOIN, PARAM_NONE, "sgminer coin"},
+    {SEVERITY_SUCC, MSG_DEBUGSET, PARAM_NONE, "Debug settings"},
+    {SEVERITY_SUCC, MSG_SETCONFIG, PARAM_SET, "Set config '%s' to %d"},
+    {SEVERITY_ERR, MSG_UNKCON, PARAM_STR, "Unknown config '%s'"},
+    {SEVERITY_ERR, MSG_INVNUM, PARAM_BOTH,
+     "Invalid number (%d) for '%s' range is 0-9999"},
+    {SEVERITY_ERR, MSG_INVNEG, PARAM_BOTH,
+     "Invalid negative number (%d) for '%s'"},
+    {SEVERITY_SUCC, MSG_SETQUOTA, PARAM_SET, "Set pool '%s' to quota %d'"},
+    {SEVERITY_ERR, MSG_CONPAR, PARAM_NONE,
+     "Missing config parameters 'name,N'"},
+    {SEVERITY_ERR, MSG_CONVAL, PARAM_STR, "Missing config value N for '%s,N'"},
+    {SEVERITY_INFO, MSG_NOUSTA, PARAM_NONE, "No USB Statistics"},
+    {SEVERITY_ERR, MSG_ZERMIS, PARAM_NONE, "Missing zero parameters"},
+    {SEVERITY_ERR, MSG_ZERINV, PARAM_STR, "Invalid zero parameter '%s'"},
+    {SEVERITY_SUCC, MSG_ZERSUM, PARAM_STR, "Zeroed %s stats with summary"},
+    {SEVERITY_SUCC, MSG_ZERNOSUM, PARAM_STR, "Zeroed %s stats without summary"},
+    {SEVERITY_SUCC, MSG_LOCKOK, PARAM_NONE, "Lock stats created"},
+    {SEVERITY_WARN, MSG_LOCKDIS, PARAM_NONE, "Lock stats not enabled"},
+    {SEVERITY_SUCC, MSG_CHSTRAT, PARAM_STR,
+     "Multipool strategy changed to '%s'"},
+    {SEVERITY_ERR, MSG_MISSTRAT, PARAM_NONE, "Missing multipool strategy"},
+    {SEVERITY_ERR, MSG_INVSTRAT, PARAM_NONE, "Invalid multipool strategy %d"},
+    {SEVERITY_ERR, MSG_MISSTRATINT, PARAM_NONE, "Missing rotate interval"},
 
- { SEVERITY_SUCC,  MSG_PROFILE,  PARAM_PRMAX, "%d Profile(s)" },
- { SEVERITY_ERR,   MSG_NOPROFILE,  PARAM_NONE, "No profiles" },
+    {SEVERITY_SUCC, MSG_PROFILE, PARAM_PRMAX, "%d Profile(s)"},
+    {SEVERITY_ERR, MSG_NOPROFILE, PARAM_NONE, "No profiles"},
 
- { SEVERITY_ERR,   MSG_PROFILEEXIST,  PARAM_STR, "Profile '%s' already exists" },
- { SEVERITY_ERR,   MSG_MISPRD,  PARAM_NONE, "Missing addprofile details" },
- { SEVERITY_SUCC,  MSG_ADDPROFILE, PARAM_STR,  "Added profile '%s'" },
+    {SEVERITY_ERR, MSG_PROFILEEXIST, PARAM_STR, "Profile '%s' already exists"},
+    {SEVERITY_ERR, MSG_MISPRD, PARAM_NONE, "Missing addprofile details"},
+    {SEVERITY_SUCC, MSG_ADDPROFILE, PARAM_STR, "Added profile '%s'"},
 
- { SEVERITY_ERR,   MSG_MISPRID,  PARAM_STR, "Profile name missing" },
- { SEVERITY_ERR,   MSG_PRNOEXIST,  PARAM_STR, "Profile '%s' doesn't exist" },
- { SEVERITY_ERR,   MSG_PRISDEFAULT,  PARAM_STR, "Profile '%s' is the default profile" },
- { SEVERITY_ERR,   MSG_PRINUSE,  PARAM_STR, "Profile '%s' is used by a pool" },
- { SEVERITY_SUCC,  MSG_REMPROFILE, PARAM_BOTH, "Removed pool %d:'%s'" },
+    {SEVERITY_ERR, MSG_MISPRID, PARAM_STR, "Profile name missing"},
+    {SEVERITY_ERR, MSG_PRNOEXIST, PARAM_STR, "Profile '%s' doesn't exist"},
+    {SEVERITY_ERR, MSG_PRISDEFAULT, PARAM_STR,
+     "Profile '%s' is the default profile"},
+    {SEVERITY_ERR, MSG_PRINUSE, PARAM_STR, "Profile '%s' is used by a pool"},
+    {SEVERITY_SUCC, MSG_REMPROFILE, PARAM_BOTH, "Removed pool %d:'%s'"},
 
- { SEVERITY_SUCC,  MSG_CHPOOLPR, PARAM_BOTH, "Changed pool %d to profile '%s'" },
+    {SEVERITY_SUCC, MSG_CHPOOLPR, PARAM_BOTH,
+     "Changed pool %d to profile '%s'"},
 
- { SEVERITY_SUCC,  MSG_BYE,   PARAM_STR,  "%s" },
- { SEVERITY_FAIL, 0, (enum code_parameters)0, NULL }
-};
-
+    {SEVERITY_SUCC, MSG_BYE, PARAM_STR, "%s"},
+    {SEVERITY_FAIL, 0, (enum code_parameters)0, NULL}};
 
 static const char *UNAVAILABLE = " - API will not be available";
-static const char *MUNAVAILABLE = " - API multicast listener will not be available";
+static const char *MUNAVAILABLE =
+    " - API multicast listener will not be available";
 
 static const char *BLANK = "";
 static const char *COMMA = ",";
@@ -254,17 +274,17 @@ static const char *DEVICECODE = "GPU ";
 
 static const char *OSINFO =
 #if defined(__linux__)
-      "Linux";
+    "Linux";
 #elif defined(__APPLE__)
-      "Apple";
+    "Apple";
 #elif defined(WIN32)
-      "Windows";
+    "Windows";
 #elif defined(__CYGWIN__)
-      "Cygwin";
+    "Cygwin";
 #elif defined(__unix__)
-      "Unix";
+    "Unix";
 #else
-      "Unknown";
+    "Unknown";
 #endif
 
 static const char *JSON_COMMAND = "command";
@@ -293,15 +313,13 @@ struct APIGROUPS {
 
 static struct io_list *io_head = NULL;
 
-static void io_reinit(struct io_data *io_data)
-{
+static void io_reinit(struct io_data *io_data) {
   io_data->cur = io_data->ptr;
   *(io_data->ptr) = '\0';
   io_data->close = false;
 }
 
-static struct io_data *_io_new(size_t initial, bool socket_buf)
-{
+static struct io_data *_io_new(size_t initial, bool socket_buf) {
   struct io_data *io_data;
   struct io_list *io_list;
 
@@ -329,8 +347,7 @@ static struct io_data *_io_new(size_t initial, bool socket_buf)
   return io_data;
 }
 
-bool io_add(struct io_data *io_data, char *buf)
-{
+bool io_add(struct io_data *io_data, char *buf) {
   size_t len, dif, tot;
 
   len = strlen(buf);
@@ -342,7 +359,8 @@ bool io_add(struct io_data *io_data, char *buf)
     size_t newsize = io_data->siz + (2 * SOCKBUFALLOCSIZ);
 
     if (newsize < tot)
-      newsize = (2 + (size_t)((float)tot / (float)SOCKBUFALLOCSIZ)) * SOCKBUFALLOCSIZ;
+      newsize =
+          (2 + (size_t)((float)tot / (float)SOCKBUFALLOCSIZ)) * SOCKBUFALLOCSIZ;
 
     io_data->ptr = (char *)realloc(io_data->ptr, newsize);
     io_data->cur = io_data->ptr + dif;
@@ -355,13 +373,9 @@ bool io_add(struct io_data *io_data, char *buf)
   return true;
 }
 
-void io_close(struct io_data *io_data)
-{
-  io_data->close = true;
-}
+void io_close(struct io_data *io_data) { io_data->close = true; }
 
-void io_free()
-{
+void io_free() {
   struct io_list *io_list, *io_next;
 
   if (io_head) {
@@ -382,27 +396,26 @@ void io_free()
 
 // This is only called when expected to be needed (rarely)
 // i.e. strings outside of the codes control (input from the user)
-static char *escape_string(char *str, bool isjson)
-{
+static char *escape_string(char *str, bool isjson) {
   char *buf, *ptr;
   int count;
 
   count = 0;
   for (ptr = str; *ptr; ptr++) {
     switch (*ptr) {
-      case ',':
-      case '|':
-      case '=':
-        if (!isjson)
-          count++;
-        break;
-      case '"':
-        if (isjson)
-          count++;
-        break;
-      case '\\':
+    case ',':
+    case '|':
+    case '=':
+      if (!isjson)
         count++;
-        break;
+      break;
+    case '"':
+      if (isjson)
+        count++;
+      break;
+    case '\\':
+      count++;
+      break;
     }
   }
 
@@ -416,25 +429,25 @@ static char *escape_string(char *str, bool isjson)
   ptr = buf;
   while (*str)
     switch (*str) {
-      case ',':
-      case '|':
-      case '=':
-        if (!isjson)
-          *(ptr++) = '\\';
-        *(ptr++) = *(str++);
-        break;
-      case '"':
-        if (isjson)
-          *(ptr++) = '\\';
-        *(ptr++) = *(str++);
-        break;
-      case '\\':
+    case ',':
+    case '|':
+    case '=':
+      if (!isjson)
         *(ptr++) = '\\';
-        *(ptr++) = *(str++);
-        break;
-      default:
-        *(ptr++) = *(str++);
-        break;
+      *(ptr++) = *(str++);
+      break;
+    case '"':
+      if (isjson)
+        *(ptr++) = '\\';
+      *(ptr++) = *(str++);
+      break;
+    case '\\':
+      *(ptr++) = '\\';
+      *(ptr++) = *(str++);
+      break;
+    default:
+      *(ptr++) = *(str++);
+      break;
     }
 
   *ptr = '\0';
@@ -442,8 +455,8 @@ static char *escape_string(char *str, bool isjson)
   return buf;
 }
 
-static struct api_data *api_add_extra(struct api_data *root, struct api_data *extra)
-{
+static struct api_data *api_add_extra(struct api_data *root,
+                                      struct api_data *extra) {
   struct api_data *tmp;
 
   if (root) {
@@ -469,8 +482,9 @@ static struct api_data *api_add_extra(struct api_data *root, struct api_data *ex
   return root;
 }
 
-static struct api_data *api_add_data_full(struct api_data *root, char *name, enum api_data_type type, void *data, bool copy_data)
-{
+static struct api_data *api_add_data_full(struct api_data *root, char *name,
+                                          enum api_data_type type, void *data,
+                                          bool copy_data) {
   struct api_data *api_data;
 
   api_data = (struct api_data *)malloc(sizeof(struct api_data));
@@ -501,217 +515,217 @@ static struct api_data *api_add_data_full(struct api_data *root, char *name, enu
   if (!copy_data)
     api_data->data = data;
   else
-    switch(type) {
-      case API_ESCAPE:
-      case API_STRING:
-      case API_CONST:
-        api_data->data = (void *)malloc(strlen((char *)data) + 1);
-        strcpy((char*)(api_data->data), (char *)data);
-        break;
-      case API_UINT8:
-        /* Most OSs won't really alloc less than 4 */
-        api_data->data = malloc(4);
-        *(uint8_t *)api_data->data = *(uint8_t *)data;
-        break;
-      case API_UINT16:
-        /* Most OSs won't really alloc less than 4 */
-        api_data->data = malloc(4);
-        *(uint16_t *)api_data->data = *(uint16_t *)data;
-        break;
-      case API_INT:
-        api_data->data = (void *)malloc(sizeof(int));
-        *((int *)(api_data->data)) = *((int *)data);
-        break;
-      case API_UINT:
-        api_data->data = (void *)malloc(sizeof(unsigned int));
-        *((unsigned int *)(api_data->data)) = *((unsigned int *)data);
-        break;
-      case API_UINT32:
-        api_data->data = (void *)malloc(sizeof(uint32_t));
-        *((uint32_t *)(api_data->data)) = *((uint32_t *)data);
-        break;
-      case API_HEX32:
-        api_data->data = (void *)malloc(sizeof(uint32_t));
-        *((uint32_t *)(api_data->data)) = *((uint32_t *)data);
-        break;
-      case API_UINT64:
-        api_data->data = (void *)malloc(sizeof(uint64_t));
-        *((uint64_t *)(api_data->data)) = *((uint64_t *)data);
-        break;
-      case API_DOUBLE:
-      case API_ELAPSED:
-      case API_MHS:
-      case API_KHS:
-      case API_MHTOTAL:
-      case API_UTILITY:
-      case API_FREQ:
-      case API_HS:
-      case API_DIFF:
-      case API_PERCENT:
-        api_data->data = (void *)malloc(sizeof(double));
-        *((double *)(api_data->data)) = *((double *)data);
-        break;
-      case API_BOOL:
-        api_data->data = (void *)malloc(sizeof(bool));
-        *((bool *)(api_data->data)) = *((bool *)data);
-        break;
-      case API_TIMEVAL:
-        api_data->data = (void *)malloc(sizeof(struct timeval));
-        memcpy(api_data->data, data, sizeof(struct timeval));
-        break;
-      case API_TIME:
-        api_data->data = (void *)malloc(sizeof(time_t));
-        *(time_t *)(api_data->data) = *((time_t *)data);
-        break;
-      case API_VOLTS:
-      case API_TEMP:
-      case API_AVG:
-        api_data->data = (void *)malloc(sizeof(float));
-        *((float *)(api_data->data)) = *((float *)data);
-        break;
-      default:
-        applog(LOG_ERR, "API: unknown1 data type %d ignored", type);
-        api_data->type = API_STRING;
-        api_data->data_was_malloc = false;
-        api_data->data = (void *)UNKNOWN;
-        break;
+    switch (type) {
+    case API_ESCAPE:
+    case API_STRING:
+    case API_CONST:
+      api_data->data = (void *)malloc(strlen((char *)data) + 1);
+      strcpy((char *)(api_data->data), (char *)data);
+      break;
+    case API_UINT8:
+      /* Most OSs won't really alloc less than 4 */
+      api_data->data = malloc(4);
+      *(uint8_t *)api_data->data = *(uint8_t *)data;
+      break;
+    case API_UINT16:
+      /* Most OSs won't really alloc less than 4 */
+      api_data->data = malloc(4);
+      *(uint16_t *)api_data->data = *(uint16_t *)data;
+      break;
+    case API_INT:
+      api_data->data = (void *)malloc(sizeof(int));
+      *((int *)(api_data->data)) = *((int *)data);
+      break;
+    case API_UINT:
+      api_data->data = (void *)malloc(sizeof(unsigned int));
+      *((unsigned int *)(api_data->data)) = *((unsigned int *)data);
+      break;
+    case API_UINT32:
+      api_data->data = (void *)malloc(sizeof(uint32_t));
+      *((uint32_t *)(api_data->data)) = *((uint32_t *)data);
+      break;
+    case API_HEX32:
+      api_data->data = (void *)malloc(sizeof(uint32_t));
+      *((uint32_t *)(api_data->data)) = *((uint32_t *)data);
+      break;
+    case API_UINT64:
+      api_data->data = (void *)malloc(sizeof(uint64_t));
+      *((uint64_t *)(api_data->data)) = *((uint64_t *)data);
+      break;
+    case API_DOUBLE:
+    case API_ELAPSED:
+    case API_MHS:
+    case API_KHS:
+    case API_MHTOTAL:
+    case API_UTILITY:
+    case API_FREQ:
+    case API_HS:
+    case API_DIFF:
+    case API_PERCENT:
+      api_data->data = (void *)malloc(sizeof(double));
+      *((double *)(api_data->data)) = *((double *)data);
+      break;
+    case API_BOOL:
+      api_data->data = (void *)malloc(sizeof(bool));
+      *((bool *)(api_data->data)) = *((bool *)data);
+      break;
+    case API_TIMEVAL:
+      api_data->data = (void *)malloc(sizeof(struct timeval));
+      memcpy(api_data->data, data, sizeof(struct timeval));
+      break;
+    case API_TIME:
+      api_data->data = (void *)malloc(sizeof(time_t));
+      *(time_t *)(api_data->data) = *((time_t *)data);
+      break;
+    case API_VOLTS:
+    case API_TEMP:
+    case API_AVG:
+      api_data->data = (void *)malloc(sizeof(float));
+      *((float *)(api_data->data)) = *((float *)data);
+      break;
+    default:
+      applog(LOG_ERR, "API: unknown1 data type %d ignored", type);
+      api_data->type = API_STRING;
+      api_data->data_was_malloc = false;
+      api_data->data = (void *)UNKNOWN;
+      break;
     }
 
   return root;
 }
 
-struct api_data *api_add_escape(struct api_data *root, char *name, char *data, bool copy_data)
-{
+struct api_data *api_add_escape(struct api_data *root, char *name, char *data,
+                                bool copy_data) {
   return api_add_data_full(root, name, API_ESCAPE, (void *)data, copy_data);
 }
 
-struct api_data *api_add_string(struct api_data *root, char *name, char *data, bool copy_data)
-{
+struct api_data *api_add_string(struct api_data *root, char *name, char *data,
+                                bool copy_data) {
   return api_add_data_full(root, name, API_STRING, (void *)data, copy_data);
 }
 
-struct api_data *api_add_const(struct api_data *root, char *name, const char *data, bool copy_data)
-{
+struct api_data *api_add_const(struct api_data *root, char *name,
+                               const char *data, bool copy_data) {
   return api_add_data_full(root, name, API_CONST, (void *)data, copy_data);
 }
 
-struct api_data *api_add_uint8(struct api_data *root, char *name, uint8_t *data, bool copy_data)
-{
+struct api_data *api_add_uint8(struct api_data *root, char *name, uint8_t *data,
+                               bool copy_data) {
   return api_add_data_full(root, name, API_UINT8, (void *)data, copy_data);
 }
 
-struct api_data *api_add_uint16(struct api_data *root, char *name, uint16_t *data, bool copy_data)
-{
+struct api_data *api_add_uint16(struct api_data *root, char *name,
+                                uint16_t *data, bool copy_data) {
   return api_add_data_full(root, name, API_UINT16, (void *)data, copy_data);
 }
 
-struct api_data *api_add_int(struct api_data *root, char *name, int *data, bool copy_data)
-{
+struct api_data *api_add_int(struct api_data *root, char *name, int *data,
+                             bool copy_data) {
   return api_add_data_full(root, name, API_INT, (void *)data, copy_data);
 }
 
-struct api_data *api_add_uint(struct api_data *root, char *name, unsigned int *data, bool copy_data)
-{
+struct api_data *api_add_uint(struct api_data *root, char *name,
+                              unsigned int *data, bool copy_data) {
   return api_add_data_full(root, name, API_UINT, (void *)data, copy_data);
 }
 
-struct api_data *api_add_uint32(struct api_data *root, char *name, uint32_t *data, bool copy_data)
-{
+struct api_data *api_add_uint32(struct api_data *root, char *name,
+                                uint32_t *data, bool copy_data) {
   return api_add_data_full(root, name, API_UINT32, (void *)data, copy_data);
 }
 
-struct api_data *api_add_hex32(struct api_data *root, char *name, uint32_t *data, bool copy_data)
-{
+struct api_data *api_add_hex32(struct api_data *root, char *name,
+                               uint32_t *data, bool copy_data) {
   return api_add_data_full(root, name, API_HEX32, (void *)data, copy_data);
 }
 
-struct api_data *api_add_uint64(struct api_data *root, char *name, uint64_t *data, bool copy_data)
-{
+struct api_data *api_add_uint64(struct api_data *root, char *name,
+                                uint64_t *data, bool copy_data) {
   return api_add_data_full(root, name, API_UINT64, (void *)data, copy_data);
 }
 
-struct api_data *api_add_double(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_double(struct api_data *root, char *name, double *data,
+                                bool copy_data) {
   return api_add_data_full(root, name, API_DOUBLE, (void *)data, copy_data);
 }
 
-struct api_data *api_add_elapsed(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_elapsed(struct api_data *root, char *name,
+                                 double *data, bool copy_data) {
   return api_add_data_full(root, name, API_ELAPSED, (void *)data, copy_data);
 }
 
-struct api_data *api_add_bool(struct api_data *root, char *name, bool *data, bool copy_data)
-{
+struct api_data *api_add_bool(struct api_data *root, char *name, bool *data,
+                              bool copy_data) {
   return api_add_data_full(root, name, API_BOOL, (void *)data, copy_data);
 }
 
-struct api_data *api_add_timeval(struct api_data *root, char *name, struct timeval *data, bool copy_data)
-{
+struct api_data *api_add_timeval(struct api_data *root, char *name,
+                                 struct timeval *data, bool copy_data) {
   return api_add_data_full(root, name, API_TIMEVAL, (void *)data, copy_data);
 }
 
-struct api_data *api_add_time(struct api_data *root, char *name, time_t *data, bool copy_data)
-{
+struct api_data *api_add_time(struct api_data *root, char *name, time_t *data,
+                              bool copy_data) {
   return api_add_data_full(root, name, API_TIME, (void *)data, copy_data);
 }
 
-struct api_data *api_add_mhs(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_mhs(struct api_data *root, char *name, double *data,
+                             bool copy_data) {
   return api_add_data_full(root, name, API_MHS, (void *)data, copy_data);
 }
 
-struct api_data *api_add_khs(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_khs(struct api_data *root, char *name, double *data,
+                             bool copy_data) {
   return api_add_data_full(root, name, API_KHS, (void *)data, copy_data);
 }
 
-struct api_data *api_add_mhtotal(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_mhtotal(struct api_data *root, char *name,
+                                 double *data, bool copy_data) {
   return api_add_data_full(root, name, API_MHTOTAL, (void *)data, copy_data);
 }
 
-struct api_data *api_add_temp(struct api_data *root, char *name, float *data, bool copy_data)
-{
+struct api_data *api_add_temp(struct api_data *root, char *name, float *data,
+                              bool copy_data) {
   return api_add_data_full(root, name, API_TEMP, (void *)data, copy_data);
 }
 
-struct api_data *api_add_utility(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_utility(struct api_data *root, char *name,
+                                 double *data, bool copy_data) {
   return api_add_data_full(root, name, API_UTILITY, (void *)data, copy_data);
 }
 
-struct api_data *api_add_freq(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_freq(struct api_data *root, char *name, double *data,
+                              bool copy_data) {
   return api_add_data_full(root, name, API_FREQ, (void *)data, copy_data);
 }
 
-struct api_data *api_add_volts(struct api_data *root, char *name, float *data, bool copy_data)
-{
+struct api_data *api_add_volts(struct api_data *root, char *name, float *data,
+                               bool copy_data) {
   return api_add_data_full(root, name, API_VOLTS, (void *)data, copy_data);
 }
 
-struct api_data *api_add_hs(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_hs(struct api_data *root, char *name, double *data,
+                            bool copy_data) {
   return api_add_data_full(root, name, API_HS, (void *)data, copy_data);
 }
 
-struct api_data *api_add_diff(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_diff(struct api_data *root, char *name, double *data,
+                              bool copy_data) {
   return api_add_data_full(root, name, API_DIFF, (void *)data, copy_data);
 }
 
-struct api_data *api_add_percent(struct api_data *root, char *name, double *data, bool copy_data)
-{
+struct api_data *api_add_percent(struct api_data *root, char *name,
+                                 double *data, bool copy_data) {
   return api_add_data_full(root, name, API_PERCENT, (void *)data, copy_data);
 }
 
-struct api_data *api_add_avg(struct api_data *root, char *name, float *data, bool copy_data)
-{
+struct api_data *api_add_avg(struct api_data *root, char *name, float *data,
+                             bool copy_data) {
   return api_add_data_full(root, name, API_AVG, (void *)data, copy_data);
 }
 
-struct api_data *print_data(struct api_data *root, char *buf, bool isjson, bool precom)
-{
+struct api_data *print_data(struct api_data *root, char *buf, bool isjson,
+                            bool precom) {
   struct api_data *tmp;
   bool first = true;
   char *original, *escape;
@@ -741,87 +755,87 @@ struct api_data *print_data(struct api_data *root, char *buf, bool isjson, bool 
 
     buf = strchr(buf, '\0');
 
-    switch(root->type) {
-      case API_STRING:
-      case API_CONST:
-        sprintf(buf, "%s%s%s", quote, (char *)(root->data), quote);
-        break;
-      case API_ESCAPE:
-        original = (char *)(root->data);
-        escape = escape_string((char *)(root->data), isjson);
-        sprintf(buf, "%s%s%s", quote, escape, quote);
-        if (escape != original)
-          free(escape);
-        break;
-      case API_UINT8:
-        sprintf(buf, "%u", *(uint8_t *)root->data);
-        break;
-      case API_UINT16:
-        sprintf(buf, "%u", *(uint16_t *)root->data);
-        break;
-      case API_INT:
-        sprintf(buf, "%d", *((int *)(root->data)));
-        break;
-      case API_UINT:
-        sprintf(buf, "%u", *((unsigned int *)(root->data)));
-        break;
-      case API_UINT32:
-        sprintf(buf, "%"PRIu32, *((uint32_t *)(root->data)));
-        break;
-      case API_HEX32:
-        snprintf(buf, sizeof(buf), "0x%08x", *((uint32_t *)(root->data)));
-        break;
-      case API_UINT64:
-        sprintf(buf, "%"PRIu64, *((uint64_t *)(root->data)));
-        break;
-      case API_TIME:
-        sprintf(buf, "%lu", *((unsigned long *)(root->data)));
-        break;
-      case API_DOUBLE:
-        sprintf(buf, "%f", *((double *)(root->data)));
-        break;
-      case API_ELAPSED:
-        sprintf(buf, "%.0f", *((double *)(root->data)));
-        break;
-      case API_UTILITY:
-      case API_FREQ:
-      case API_MHS:
-        sprintf(buf, "%.4f", *((double *)(root->data)));
-        break;
-      case API_KHS:
-        sprintf(buf, "%.0f", *((double *)(root->data)));
-        break;
-      case API_VOLTS:
-      case API_AVG:
-        sprintf(buf, "%.3f", *((float *)(root->data)));
-        break;
-      case API_MHTOTAL:
-        sprintf(buf, "%.4f", *((double *)(root->data)));
-        break;
-      case API_HS:
-        sprintf(buf, "%.15f", *((double *)(root->data)));
-        break;
-      case API_DIFF:
-        sprintf(buf, "%.8f", *((double *)(root->data)));
-        break;
-      case API_BOOL:
-        sprintf(buf, "%s", *((bool *)(root->data)) ? TRUESTR : FALSESTR);
-        break;
-      case API_TIMEVAL:
-        sprintf(buf, "%"PRIu64".%06lu",
-          (uint64_t)((struct timeval *)(root->data))->tv_sec,
-          (unsigned long)((struct timeval *)(root->data))->tv_usec);
-        break;
-      case API_TEMP:
-        sprintf(buf, "%.2f", *((float *)(root->data)));
-        break;
-      case API_PERCENT:
-        sprintf(buf, "%.4f", *((double *)(root->data)) * 100.0);
-        break;
-      default:
-        applog(LOG_ERR, "API: unknown2 data type %d ignored", root->type);
-        sprintf(buf, "%s%s%s", quote, UNKNOWN, quote);
-        break;
+    switch (root->type) {
+    case API_STRING:
+    case API_CONST:
+      sprintf(buf, "%s%s%s", quote, (char *)(root->data), quote);
+      break;
+    case API_ESCAPE:
+      original = (char *)(root->data);
+      escape = escape_string((char *)(root->data), isjson);
+      sprintf(buf, "%s%s%s", quote, escape, quote);
+      if (escape != original)
+        free(escape);
+      break;
+    case API_UINT8:
+      sprintf(buf, "%u", *(uint8_t *)root->data);
+      break;
+    case API_UINT16:
+      sprintf(buf, "%u", *(uint16_t *)root->data);
+      break;
+    case API_INT:
+      sprintf(buf, "%d", *((int *)(root->data)));
+      break;
+    case API_UINT:
+      sprintf(buf, "%u", *((unsigned int *)(root->data)));
+      break;
+    case API_UINT32:
+      sprintf(buf, "%" PRIu32, *((uint32_t *)(root->data)));
+      break;
+    case API_HEX32:
+      snprintf(buf, sizeof(buf), "0x%08x", *((uint32_t *)(root->data)));
+      break;
+    case API_UINT64:
+      sprintf(buf, "%" PRIu64, *((uint64_t *)(root->data)));
+      break;
+    case API_TIME:
+      sprintf(buf, "%lu", *((unsigned long *)(root->data)));
+      break;
+    case API_DOUBLE:
+      sprintf(buf, "%f", *((double *)(root->data)));
+      break;
+    case API_ELAPSED:
+      sprintf(buf, "%.0f", *((double *)(root->data)));
+      break;
+    case API_UTILITY:
+    case API_FREQ:
+    case API_MHS:
+      sprintf(buf, "%.4f", *((double *)(root->data)));
+      break;
+    case API_KHS:
+      sprintf(buf, "%.0f", *((double *)(root->data)));
+      break;
+    case API_VOLTS:
+    case API_AVG:
+      sprintf(buf, "%.3f", *((float *)(root->data)));
+      break;
+    case API_MHTOTAL:
+      sprintf(buf, "%.4f", *((double *)(root->data)));
+      break;
+    case API_HS:
+      sprintf(buf, "%.15f", *((double *)(root->data)));
+      break;
+    case API_DIFF:
+      sprintf(buf, "%.8f", *((double *)(root->data)));
+      break;
+    case API_BOOL:
+      sprintf(buf, "%s", *((bool *)(root->data)) ? TRUESTR : FALSESTR);
+      break;
+    case API_TIMEVAL:
+      sprintf(buf, "%" PRIu64 ".%06lu",
+              (uint64_t)((struct timeval *)(root->data))->tv_sec,
+              (unsigned long)((struct timeval *)(root->data))->tv_usec);
+      break;
+    case API_TEMP:
+      sprintf(buf, "%.2f", *((float *)(root->data)));
+      break;
+    case API_PERCENT:
+      sprintf(buf, "%.4f", *((double *)(root->data)) * 100.0);
+      break;
+    default:
+      applog(LOG_ERR, "API: unknown2 data type %d ignored", root->type);
+      sprintf(buf, "%s%s%s", quote, UNKNOWN, quote);
+      break;
     }
 
     buf = strchr(buf, '\0');
@@ -850,8 +864,8 @@ struct api_data *print_data(struct api_data *root, char *buf, bool isjson, bool 
 // All replies (except BYE and RESTART) start with a message
 //  thus for JSON, message() inserts JSON_START at the front
 //  and send_result() adds JSON_END at the end
-void message(struct io_data *io_data, int messageid, int paramid, char *param2, bool isjson)
-{
+void message(struct io_data *io_data, int messageid, int paramid, char *param2,
+             bool isjson) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   char buf2[TMPBUFSIZ];
@@ -865,64 +879,64 @@ void message(struct io_data *io_data, int messageid, int paramid, char *param2, 
   for (i = 0; codes[i].severity != SEVERITY_FAIL; i++) {
     if (codes[i].code == messageid) {
       switch (codes[i].severity) {
-        case SEVERITY_WARN:
-          severity[0] = 'W';
-          break;
-        case SEVERITY_INFO:
-          severity[0] = 'I';
-          break;
-        case SEVERITY_SUCC:
-          severity[0] = 'S';
-          break;
-        case SEVERITY_ERR:
-        default:
-          severity[0] = 'E';
-          break;
+      case SEVERITY_WARN:
+        severity[0] = 'W';
+        break;
+      case SEVERITY_INFO:
+        severity[0] = 'I';
+        break;
+      case SEVERITY_SUCC:
+        severity[0] = 'S';
+        break;
+      case SEVERITY_ERR:
+      default:
+        severity[0] = 'E';
+        break;
       }
       severity[1] = '\0';
 
-      switch(codes[i].params) {
-        case PARAM_GPU:
-        case PARAM_PID:
-        case PARAM_INT:
-          sprintf(buf, codes[i].description, paramid);
-          break;
-        case PARAM_POOL:
-          sprintf(buf, codes[i].description, paramid, pools[paramid]->rpc_url);
-          break;
-        case PARAM_GPUMAX:
-          sprintf(buf, codes[i].description, paramid, nDevs - 1);
-          break;
-        case PARAM_PMAX:
-          sprintf(buf, codes[i].description, total_pools);
-          break;
-        case PARAM_PRMAX:
-          sprintf(buf, codes[i].description, total_profiles);
-          break;
-        case PARAM_POOLMAX:
-          sprintf(buf, codes[i].description, paramid, total_pools - 1);
-          break;
-        case PARAM_DMAX:
-          sprintf(buf, codes[i].description, nDevs);
-          break;
-        case PARAM_CMD:
-          sprintf(buf, codes[i].description, JSON_COMMAND);
-          break;
-        case PARAM_STR:
-          sprintf(buf, codes[i].description, param2);
-          break;
-        case PARAM_BOTH:
-          sprintf(buf, codes[i].description, paramid, param2);
-          break;
-        case PARAM_BOOL:
-          sprintf(buf, codes[i].description, paramid ? TRUESTR : FALSESTR);
-          break;
-        case PARAM_SET:
-          sprintf(buf, codes[i].description, param2, paramid);
-          break;
-        case PARAM_NONE:
-        default:
-          strcpy(buf, codes[i].description);
+      switch (codes[i].params) {
+      case PARAM_GPU:
+      case PARAM_PID:
+      case PARAM_INT:
+        sprintf(buf, codes[i].description, paramid);
+        break;
+      case PARAM_POOL:
+        sprintf(buf, codes[i].description, paramid, pools[paramid]->rpc_url);
+        break;
+      case PARAM_GPUMAX:
+        sprintf(buf, codes[i].description, paramid, nDevs - 1);
+        break;
+      case PARAM_PMAX:
+        sprintf(buf, codes[i].description, total_pools);
+        break;
+      case PARAM_PRMAX:
+        sprintf(buf, codes[i].description, total_profiles);
+        break;
+      case PARAM_POOLMAX:
+        sprintf(buf, codes[i].description, paramid, total_pools - 1);
+        break;
+      case PARAM_DMAX:
+        sprintf(buf, codes[i].description, nDevs);
+        break;
+      case PARAM_CMD:
+        sprintf(buf, codes[i].description, JSON_COMMAND);
+        break;
+      case PARAM_STR:
+        sprintf(buf, codes[i].description, param2);
+        break;
+      case PARAM_BOTH:
+        sprintf(buf, codes[i].description, paramid, param2);
+        break;
+      case PARAM_BOOL:
+        sprintf(buf, codes[i].description, paramid ? TRUESTR : FALSESTR);
+        break;
+      case PARAM_SET:
+        sprintf(buf, codes[i].description, param2, paramid);
+        break;
+      case PARAM_NONE:
+      default:
+        strcpy(buf, codes[i].description);
       }
 
       root = api_add_string(root, _STATUS, severity, false);
@@ -959,8 +973,7 @@ static uint64_t lock_id = 1;
 
 static LOCKLIST *lockhead;
 
-static void lockmsgnow()
-{
+static void lockmsgnow() {
   struct timeval now;
   struct tm *tm;
   time_t dt;
@@ -970,17 +983,12 @@ static void lockmsgnow()
   dt = now.tv_sec;
   tm = localtime(&dt);
 
-  LOCKMSG("%d-%02d-%02d %02d:%02d:%02d",
-    tm->tm_year + 1900,
-    tm->tm_mon + 1,
-    tm->tm_mday,
-    tm->tm_hour,
-    tm->tm_min,
-    tm->tm_sec);
+  LOCKMSG("%d-%02d-%02d %02d:%02d:%02d", tm->tm_year + 1900, tm->tm_mon + 1,
+          tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
 
-static LOCKLIST *newlock(void *lock, enum cglock_typ typ, const char *file, const char *func, const int linenum)
-{
+static LOCKLIST *newlock(void *lock, enum cglock_typ typ, const char *file,
+                         const char *func, const int linenum) {
   LOCKLIST *list;
 
   list = (LOCKLIST *)calloc(1, sizeof(*list));
@@ -1001,8 +1009,8 @@ static LOCKLIST *newlock(void *lock, enum cglock_typ typ, const char *file, cons
   return list;
 }
 
-static LOCKINFO *findlock(void *lock, enum cglock_typ typ, const char *file, const char *func, const int linenum)
-{
+static LOCKINFO *findlock(void *lock, enum cglock_typ typ, const char *file,
+                          const char *func, const int linenum) {
   LOCKLIST *look;
 
   look = lockhead;
@@ -1018,8 +1026,8 @@ static LOCKINFO *findlock(void *lock, enum cglock_typ typ, const char *file, con
   return look->info;
 }
 
-static void addgettry(LOCKINFO *info, uint64_t id, const char *file, const char *func, const int linenum, bool get)
-{
+static void addgettry(LOCKINFO *info, uint64_t id, const char *file,
+                      const char *func, const int linenum, bool get) {
   LOCKSTAT *stat;
   LOCKLINE *line;
 
@@ -1056,8 +1064,8 @@ static void addgettry(LOCKINFO *info, uint64_t id, const char *file, const char 
   }
 }
 
-static void markgotdid(LOCKINFO *info, uint64_t id, const char *file, const char *func, const int linenum, bool got, int ret)
-{
+static void markgotdid(LOCKINFO *info, uint64_t id, const char *file,
+                       const char *func, const int linenum, bool got, int ret) {
   LOCKLINE *line;
 
   if (got)
@@ -1089,7 +1097,8 @@ static void markgotdid(LOCKINFO *info, uint64_t id, const char *file, const char
 
   if (!line) {
     lockmsgnow();
-    LOCKMSGFFL("ERROR attempt to mark a lock as '%s' that wasn't '%s' id=%"PRIu64,
+    LOCKMSGFFL(
+        "ERROR attempt to mark a lock as '%s' that wasn't '%s' id=%" PRIu64,
         got ? "got" : "did/didnt", got ? "get" : "try", id);
   }
 
@@ -1112,20 +1121,18 @@ static void markgotdid(LOCKINFO *info, uint64_t id, const char *file, const char
 }
 
 // Yes this uses locks also ... ;/
-static void locklock()
-{
+static void locklock() {
   if (unlikely(pthread_mutex_lock(&lockstat_lock)))
     quithere(1, "WTF MUTEX ERROR ON LOCK! errno=%d", errno);
 }
 
-static void lockunlock()
-{
+static void lockunlock() {
   if (unlikely(pthread_mutex_unlock(&lockstat_lock)))
     quithere(1, "WTF MUTEX ERROR ON UNLOCK! errno=%d", errno);
 }
 
-uint64_t api_getlock(void *lock, const char *file, const char *func, const int linenum)
-{
+uint64_t api_getlock(void *lock, const char *file, const char *func,
+                     const int linenum) {
   LOCKINFO *info;
   uint64_t id;
 
@@ -1140,8 +1147,8 @@ uint64_t api_getlock(void *lock, const char *file, const char *func, const int l
   return id;
 }
 
-void api_gotlock(uint64_t id, void *lock, const char *file, const char *func, const int linenum)
-{
+void api_gotlock(uint64_t id, void *lock, const char *file, const char *func,
+                 const int linenum) {
   LOCKINFO *info;
 
   locklock();
@@ -1152,8 +1159,8 @@ void api_gotlock(uint64_t id, void *lock, const char *file, const char *func, co
   lockunlock();
 }
 
-uint64_t api_trylock(void *lock, const char *file, const char *func, const int linenum)
-{
+uint64_t api_trylock(void *lock, const char *file, const char *func,
+                     const int linenum) {
   LOCKINFO *info;
   uint64_t id;
 
@@ -1168,8 +1175,8 @@ uint64_t api_trylock(void *lock, const char *file, const char *func, const int l
   return id;
 }
 
-void api_didlock(uint64_t id, int ret, void *lock, const char *file, const char *func, const int linenum)
-{
+void api_didlock(uint64_t id, int ret, void *lock, const char *file,
+                 const char *func, const int linenum) {
   LOCKINFO *info;
 
   locklock();
@@ -1180,8 +1187,8 @@ void api_didlock(uint64_t id, int ret, void *lock, const char *file, const char 
   lockunlock();
 }
 
-void api_gunlock(void *lock, const char *file, const char *func, const int linenum)
-{
+void api_gunlock(void *lock, const char *file, const char *func,
+                 const int linenum) {
   LOCKINFO *info;
 
   locklock();
@@ -1192,8 +1199,8 @@ void api_gunlock(void *lock, const char *file, const char *func, const int linen
   lockunlock();
 }
 
-void api_initlock(void *lock, enum cglock_typ typ, const char *file, const char *func, const int linenum)
-{
+void api_initlock(void *lock, enum cglock_typ typ, const char *file,
+                  const char *func, const int linenum) {
   locklock();
 
   findlock(lock, typ, file, func, linenum);
@@ -1201,46 +1208,29 @@ void api_initlock(void *lock, enum cglock_typ typ, const char *file, const char 
   lockunlock();
 }
 
-void dsp_det(char *msg, LOCKSTAT *stat)
-{
+void dsp_det(char *msg, LOCKSTAT *stat) {
   struct tm *tm;
   time_t dt;
 
   dt = stat->tv.tv_sec;
   tm = localtime(&dt);
 
-  LOCKMSGMORE("%s id=%"PRIu64" by %s %s():%d at %d-%02d-%02d %02d:%02d:%02d",
-      msg,
-      stat->lock_id,
-      stat->file,
-      stat->func,
-      stat->linenum,
-      tm->tm_year + 1900,
-      tm->tm_mon + 1,
-      tm->tm_mday,
-      tm->tm_hour,
-      tm->tm_min,
-      tm->tm_sec);
+  LOCKMSGMORE("%s id=%" PRIu64 " by %s %s():%d at %d-%02d-%02d %02d:%02d:%02d",
+              msg, stat->lock_id, stat->file, stat->func, stat->linenum,
+              tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour,
+              tm->tm_min, tm->tm_sec);
 }
 
-void dsp_lock(LOCKINFO *info)
-{
+void dsp_lock(LOCKINFO *info) {
   LOCKLINE *line;
   char *status;
 
-  LOCKMSG("Lock %p created by %s %s():%d",
-    info->lock,
-    info->file,
-    info->func,
-    info->linenum);
-  LOCKMSGMORE("gets:%"PRIu64" gots:%"PRIu64" tries:%"PRIu64
-        " dids:%"PRIu64" didnts:%"PRIu64" unlocks:%"PRIu64,
-      info->gets,
-      info->gots,
-      info->tries,
-      info->dids,
-      info->didnts,
-      info->unlocks);
+  LOCKMSG("Lock %p created by %s %s():%d", info->lock, info->file, info->func,
+          info->linenum);
+  LOCKMSGMORE("gets:%" PRIu64 " gots:%" PRIu64 " tries:%" PRIu64
+              " dids:%" PRIu64 " didnts:%" PRIu64 " unlocks:%" PRIu64,
+              info->gets, info->gots, info->tries, info->dids, info->didnts,
+              info->unlocks);
 
   if (info->gots > 0 || info->dids > 0) {
     if (info->unlocks < info->gots + info->dids)
@@ -1253,7 +1243,7 @@ void dsp_lock(LOCKINFO *info)
     LOCKMSGMORE("... unused ...");
 
   if (info->lockgets) {
-    LOCKMSGMORE("BLOCKED gets (%"PRIu64")", info->gets - info->gots);
+    LOCKMSGMORE("BLOCKED gets (%" PRIu64 ")", info->gets - info->gots);
     line = info->lockgets;
     while (line) {
       dsp_det("", line->stat);
@@ -1263,7 +1253,8 @@ void dsp_lock(LOCKINFO *info)
     LOCKMSGMORE("no blocked gets");
 
   if (info->locktries) {
-    LOCKMSGMORE("BLOCKED tries (%"PRIu64")", info->tries - info->dids - info->didnts);
+    LOCKMSGMORE("BLOCKED tries (%" PRIu64 ")",
+                info->tries - info->dids - info->didnts);
     line = info->lockgets;
     while (line) {
       dsp_det("", line->stat);
@@ -1273,8 +1264,7 @@ void dsp_lock(LOCKINFO *info)
     LOCKMSGMORE("no blocked tries");
 }
 
-void show_locks()
-{
+void show_locks() {
   LOCKLIST *list;
 
   locklock();
@@ -1297,13 +1287,12 @@ void show_locks()
 }
 #endif
 
-static void copyadvanceafter(char ch, char **param, char **buf)
-{
+static void copyadvanceafter(char ch, char **param, char **buf) {
 #define src_p (*param)
 #define dst_b (*buf)
 
   while (*src_p && *src_p != ch) {
-    if (*src_p == '\\' && *(src_p+1) != '\0')
+    if (*src_p == '\\' && *(src_p + 1) != '\0')
       src_p++;
 
     *(dst_b++) = *(src_p++);
@@ -1314,8 +1303,9 @@ static void copyadvanceafter(char ch, char **param, char **buf)
   *(dst_b++) = '\0';
 }
 
-static void lockstats(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void lockstats(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                      __maybe_unused char *param, bool isjson,
+                      __maybe_unused char group) {
 #if LOCK_TRACKING
   show_locks();
   message(io_data, MSG_LOCKOK, 0, NULL, isjson);
@@ -1324,8 +1314,9 @@ static void lockstats(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
 #endif
 }
 
-static void apiversion(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void apiversion(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       __maybe_unused char *param, bool isjson,
+                       __maybe_unused char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   bool io_open;
@@ -1343,8 +1334,9 @@ static void apiversion(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     io_close(io_data);
 }
 
-static void minerconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void minerconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                        __maybe_unused char *param, bool isjson,
+                        __maybe_unused char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   bool io_open;
@@ -1367,7 +1359,8 @@ static void minerconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __
   gpucount = nDevs;
 
   message(io_data, MSG_MINECONFIG, 0, NULL, isjson);
-  io_open = io_add(io_data, isjson ? COMSTR JSON_MINECONFIG : _MINECONFIG COMSTR);
+  io_open =
+      io_add(io_data, isjson ? COMSTR JSON_MINECONFIG : _MINECONFIG COMSTR);
 
   root = api_add_int(root, "GPU Count", &gpucount, false);
   root = api_add_int(root, "Pool Count", &total_pools, false);
@@ -1379,7 +1372,8 @@ static void minerconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __
   root = api_add_const(root, "Device Code", DEVICECODE, false);
   root = api_add_const(root, "OS", OSINFO, false);
   root = api_add_bool(root, "Failover-Only", &opt_fail_only, false);
-  root = api_add_int(root, "Failover Switch Delay", &opt_fail_switch_delay, false);
+  root =
+      api_add_int(root, "Failover Switch Delay", &opt_fail_switch_delay, false);
   root = api_add_int(root, "ScanTime", &opt_scantime, false);
   root = api_add_int(root, "Queue", &opt_queue, false);
   root = api_add_int(root, "Expiry", &opt_expiry, false);
@@ -1390,26 +1384,25 @@ static void minerconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __
     io_close(io_data);
 }
 
-static const char *status2str(enum alive status)
-{
+static const char *status2str(enum alive status) {
   switch (status) {
-    case LIFE_WELL:
-      return ALIVE;
-    case LIFE_SICK:
-      return SICK;
-    case LIFE_DEAD:
-      return DEAD;
-    case LIFE_NOSTART:
-      return NOSTART;
-    case LIFE_INIT:
-      return INIT;
-    default:
-      return UNKNOWN;
+  case LIFE_WELL:
+    return ALIVE;
+  case LIFE_SICK:
+    return SICK;
+  case LIFE_DEAD:
+    return DEAD;
+  case LIFE_NOSTART:
+    return NOSTART;
+  case LIFE_INIT:
+    return INIT;
+  default:
+    return UNKNOWN;
   }
 }
 
-static void gpustatus(struct io_data *io_data, int gpu, bool isjson, bool precom)
-{
+static void gpustatus(struct io_data *io_data, int gpu, bool isjson,
+                      bool precom) {
   struct api_data *root = NULL;
   char intensity[20];
   char buf[TMPBUFSIZ];
@@ -1472,31 +1465,40 @@ static void gpustatus(struct io_data *io_data, int gpu, bool isjson, bool precom
     root = api_add_string(root, "Intensity", intensity, false);
     root = api_add_int(root, "XIntensity", &(cgpu->xintensity), false);
     root = api_add_int(root, "RawIntensity", &(cgpu->rawintensity), false);
-    int last_share_pool = cgpu->last_share_pool_time > 0 ?
-          cgpu->last_share_pool : -1;
+    int last_share_pool =
+        cgpu->last_share_pool_time > 0 ? cgpu->last_share_pool : -1;
     root = api_add_int(root, "Last Share Pool", &last_share_pool, false);
-    root = api_add_time(root, "Last Share Time", &(cgpu->last_share_pool_time), false);
+    root = api_add_time(root, "Last Share Time", &(cgpu->last_share_pool_time),
+                        false);
     root = api_add_mhtotal(root, "Total MH", &(cgpu->total_mhashes), false);
     root = api_add_double(root, "Diff1 Work", &(cgpu->diff1), false);
-    root = api_add_diff(root, "Difficulty Accepted", &(cgpu->diff_accepted), false);
-    root = api_add_diff(root, "Difficulty Rejected", &(cgpu->diff_rejected), false);
-    root = api_add_diff(root, "Last Share Difficulty", &(cgpu->last_share_diff), false);
-    root = api_add_time(root, "Last Valid Work", &(cgpu->last_device_valid_work), false);
-    double hwp = (cgpu->hw_errors + cgpu->diff1) ?
-        (double)(cgpu->hw_errors) / (double)(cgpu->hw_errors + cgpu->diff1) : 0;
+    root = api_add_diff(root, "Difficulty Accepted", &(cgpu->diff_accepted),
+                        false);
+    root = api_add_diff(root, "Difficulty Rejected", &(cgpu->diff_rejected),
+                        false);
+    root = api_add_diff(root, "Last Share Difficulty", &(cgpu->last_share_diff),
+                        false);
+    root = api_add_time(root, "Last Valid Work",
+                        &(cgpu->last_device_valid_work), false);
+    double hwp = (cgpu->hw_errors + cgpu->diff1)
+                     ? (double)(cgpu->hw_errors) /
+                           (double)(cgpu->hw_errors + cgpu->diff1)
+                     : 0;
     root = api_add_percent(root, "Device Hardware%", &hwp, false);
-    double rejp = cgpu->diff1 ?
-        (double)(cgpu->diff_rejected) / (double)(cgpu->diff1) : 0;
+    double rejp =
+        cgpu->diff1 ? (double)(cgpu->diff_rejected) / (double)(cgpu->diff1) : 0;
     root = api_add_percent(root, "Device Rejected%", &rejp, false);
-    root = api_add_elapsed(root, "Device Elapsed", &(total_secs), true); // GPUs don't hotplug
+    root = api_add_elapsed(root, "Device Elapsed", &(total_secs),
+                           true); // GPUs don't hotplug
 
     root = print_data(root, buf, isjson, precom);
     io_add(io_data, buf);
   }
 }
 
-static void devstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void devstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                      __maybe_unused char *param, bool isjson,
+                      __maybe_unused char group) {
   bool io_open = false;
   int devcount = 0;
   int numgpu = 0;
@@ -1507,7 +1509,6 @@ static void devstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
     message(io_data, MSG_NODEVS, 0, NULL, isjson);
     return;
   }
-
 
   message(io_data, MSG_DEVS, 0, NULL, isjson);
   if (isjson)
@@ -1522,8 +1523,8 @@ static void devstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
     io_close(io_data);
 }
 
-static void gpudev(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void gpudev(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                   char *param, bool isjson, __maybe_unused char group) {
   bool io_open = false;
   int id;
 
@@ -1554,8 +1555,9 @@ static void gpudev(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *p
     io_close(io_data);
 }
 
-static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       __maybe_unused char *param, bool isjson,
+                       __maybe_unused char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   bool io_open = false;
@@ -1579,21 +1581,21 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
       continue;
 
     switch (pool->state) {
-      case POOL_DISABLED:
-        status = (char *)DISABLED;
-        break;
-      case POOL_REJECTING:
-        status = (char *)REJECTING;
-        break;
-      case POOL_ENABLED:
-        if (pool->idle)
-          status = (char *)DEAD;
-        else
-          status = (char *)ALIVE;
-        break;
-      default:
-        status = (char *)UNKNOWN;
-        break;
+    case POOL_DISABLED:
+      status = (char *)DISABLED;
+      break;
+    case POOL_REJECTING:
+      status = (char *)REJECTING;
+      break;
+    case POOL_ENABLED:
+      if (pool->idle)
+        status = (char *)DEAD;
+      else
+        status = (char *)ALIVE;
+      break;
+    default:
+      status = (char *)UNKNOWN;
+      break;
     }
 
     if (pool->hdr_path)
@@ -1608,11 +1610,14 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     root = api_add_escape(root, "URL", pool->rpc_url, false);
     root = api_add_escape(root, "Profile", pool->profile, false);
     root = api_add_escape(root, "Algorithm", pool->algorithm.name, false);
-    root = api_add_escape(root, "Algorithm Type", (char *)algorithm_type_str[pool->algorithm.type], false);
+    root =
+        api_add_escape(root, "Algorithm Type",
+                       (char *)algorithm_type_str[pool->algorithm.type], false);
 
-    //show nfactor for nscrypt
-    if(pool->algorithm.type == ALGO_NSCRYPT)
-      root = api_add_int(root, "Algorithm NFactor", (int *)&(pool->algorithm.nfactor), false);
+    // show nfactor for nscrypt
+    if (pool->algorithm.type == ALGO_NSCRYPT)
+      root = api_add_int(root, "Algorithm NFactor",
+                         (int *)&(pool->algorithm.nfactor), false);
 
     root = api_add_string(root, "Description", pool->description, false);
     root = api_add_string(root, "Status", status, false);
@@ -1625,23 +1630,30 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     root = api_add_int(root, "Works", &pool->works, false);
     root = api_add_uint(root, "Discarded", &(pool->discarded_work), false);
     root = api_add_uint(root, "Stale", &(pool->stale_shares), false);
-    root = api_add_uint(root, "Get Failures", &(pool->getfail_occasions), false);
-    root = api_add_uint(root, "Remote Failures", &(pool->remotefail_occasions), false);
+    root =
+        api_add_uint(root, "Get Failures", &(pool->getfail_occasions), false);
+    root = api_add_uint(root, "Remote Failures", &(pool->remotefail_occasions),
+                        false);
     root = api_add_escape(root, "User", pool->rpc_user, false);
-    root = api_add_time(root, "Last Share Time", &(pool->last_share_time), false);
+    root =
+        api_add_time(root, "Last Share Time", &(pool->last_share_time), false);
     root = api_add_double(root, "Diff1 Shares", &(pool->diff1), false);
 
     if (pool->rpc_proxy) {
-      root = api_add_const(root, "Proxy Type", proxytype(pool->rpc_proxytype), false);
+      root = api_add_const(root, "Proxy Type", proxytype(pool->rpc_proxytype),
+                           false);
       root = api_add_escape(root, "Proxy", pool->rpc_proxy, false);
     } else {
       root = api_add_const(root, "Proxy Type", BLANK, false);
       root = api_add_const(root, "Proxy", BLANK, false);
     }
-    root = api_add_diff(root, "Difficulty Accepted", &(pool->diff_accepted), false);
-    root = api_add_diff(root, "Difficulty Rejected", &(pool->diff_rejected), false);
+    root = api_add_diff(root, "Difficulty Accepted", &(pool->diff_accepted),
+                        false);
+    root = api_add_diff(root, "Difficulty Rejected", &(pool->diff_rejected),
+                        false);
     root = api_add_diff(root, "Difficulty Stale", &(pool->diff_stale), false);
-    root = api_add_diff(root, "Last Share Difficulty", &(pool->last_share_diff), false);
+    root = api_add_diff(root, "Last Share Difficulty", &(pool->last_share_diff),
+                        false);
     root = api_add_bool(root, "Has Stratum", &(pool->has_stratum), false);
     root = api_add_bool(root, "Stratum Active", &(pool->stratum_active), false);
     if (pool->stratum_active)
@@ -1650,11 +1662,18 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
       root = api_add_const(root, "Stratum URL", BLANK, false);
     root = api_add_bool(root, "Has GBT", &(pool->has_gbt), false);
     root = api_add_double(root, "Best Share", &(pool->best_diff), true);
-    double rejp = (pool->diff_accepted + pool->diff_rejected + pool->diff_stale) ?
-        (double)(pool->diff_rejected) / (double)(pool->diff_accepted + pool->diff_rejected + pool->diff_stale) : 0;
+    double rejp = (pool->diff_accepted + pool->diff_rejected + pool->diff_stale)
+                      ? (double)(pool->diff_rejected) /
+                            (double)(pool->diff_accepted + pool->diff_rejected +
+                                     pool->diff_stale)
+                      : 0;
     root = api_add_percent(root, "Pool Rejected%", &rejp, false);
-    double stalep = (pool->diff_accepted + pool->diff_rejected + pool->diff_stale) ?
-        (double)(pool->diff_stale) / (double)(pool->diff_accepted + pool->diff_rejected + pool->diff_stale) : 0;
+    double stalep =
+        (pool->diff_accepted + pool->diff_rejected + pool->diff_stale)
+            ? (double)(pool->diff_stale) /
+                  (double)(pool->diff_accepted + pool->diff_rejected +
+                           pool->diff_stale)
+            : 0;
     root = api_add_percent(root, "Pool Stale%", &stalep, false);
 
     root = print_data(root, buf, isjson, isjson && (i > 0));
@@ -1665,8 +1684,9 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     io_close(io_data);
 }
 
-static void summary(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void summary(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                    __maybe_unused char *param, bool isjson,
+                    __maybe_unused char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   bool io_open;
@@ -1678,9 +1698,9 @@ static void summary(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __mayb
   // stop hashmeter() changing some while copying
   mutex_lock(&hash_lock);
 
-  utility = total_accepted / ( total_secs ? total_secs : 1 ) * 60;
+  utility = total_accepted / (total_secs ? total_secs : 1) * 60;
   mhs = total_mhashes_done / total_secs;
-  work_utility = total_diff1 / ( total_secs ? total_secs : 1 ) * 60;
+  work_utility = total_diff1 / (total_secs ? total_secs : 1) * 60;
 
   root = api_add_elapsed(root, "Elapsed", &(total_secs), true);
   root = api_add_mhs(root, "MHS av", &(mhs), false);
@@ -1707,21 +1727,30 @@ static void summary(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __mayb
   root = api_add_uint(root, "Network Blocks", &(new_blocks), true);
   root = api_add_mhtotal(root, "Total MH", &(total_mhashes_done), true);
   root = api_add_utility(root, "Work Utility", &(work_utility), false);
-  root = api_add_diff(root, "Difficulty Accepted", &(total_diff_accepted), true);
-  root = api_add_diff(root, "Difficulty Rejected", &(total_diff_rejected), true);
+  root =
+      api_add_diff(root, "Difficulty Accepted", &(total_diff_accepted), true);
+  root =
+      api_add_diff(root, "Difficulty Rejected", &(total_diff_rejected), true);
   root = api_add_diff(root, "Difficulty Stale", &(total_diff_stale), true);
   root = api_add_double(root, "Best Share", &(best_diff), true);
-  double hwp = (hw_errors + total_diff1) ?
-      (double)(hw_errors) / (double)(hw_errors + total_diff1) : 0;
+  double hwp = (hw_errors + total_diff1)
+                   ? (double)(hw_errors) / (double)(hw_errors + total_diff1)
+                   : 0;
   root = api_add_percent(root, "Device Hardware%", &hwp, false);
-  double rejp = total_diff1 ?
-      (double)(total_diff_rejected) / (double)(total_diff1) : 0;
+  double rejp =
+      total_diff1 ? (double)(total_diff_rejected) / (double)(total_diff1) : 0;
   root = api_add_percent(root, "Device Rejected%", &rejp, false);
-  double prejp = (total_diff_accepted + total_diff_rejected + total_diff_stale) ?
-      (double)(total_diff_rejected) / (double)(total_diff_accepted + total_diff_rejected + total_diff_stale) : 0;
+  double prejp = (total_diff_accepted + total_diff_rejected + total_diff_stale)
+                     ? (double)(total_diff_rejected) /
+                           (double)(total_diff_accepted + total_diff_rejected +
+                                    total_diff_stale)
+                     : 0;
   root = api_add_percent(root, "Pool Rejected%", &prejp, false);
-  double stalep = (total_diff_accepted + total_diff_rejected + total_diff_stale) ?
-      (double)(total_diff_stale) / (double)(total_diff_accepted + total_diff_rejected + total_diff_stale) : 0;
+  double stalep = (total_diff_accepted + total_diff_rejected + total_diff_stale)
+                      ? (double)(total_diff_stale) /
+                            (double)(total_diff_accepted + total_diff_rejected +
+                                     total_diff_stale)
+                      : 0;
   root = api_add_percent(root, "Pool Stale%", &stalep, false);
   root = api_add_time(root, "Last getwork", &last_getwork, false);
 
@@ -1733,8 +1762,8 @@ static void summary(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __mayb
     io_close(io_data);
 }
 
-static void gpuenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void gpuenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                      char *param, bool isjson, __maybe_unused char group) {
   struct thr_info *thr;
   int gpu;
   int id;
@@ -1756,8 +1785,8 @@ static void gpuenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
     return;
   }
 
-  applog(LOG_DEBUG, "API: request to gpuenable gpuid %d %s%u",
-      id, gpus[id].drv->name, gpus[id].device_id);
+  applog(LOG_DEBUG, "API: request to gpuenable gpuid %d %s%u", id,
+         gpus[id].drv->name, gpus[id].device_id);
 
   if (gpus[id].deven != DEV_DISABLED) {
     message(io_data, MSG_ALRENA, id, NULL, isjson);
@@ -1783,8 +1812,8 @@ static void gpuenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
   message(io_data, MSG_GPUREN, id, NULL, isjson);
 }
 
-static void gpudisable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void gpudisable(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       char *param, bool isjson, __maybe_unused char group) {
   int id;
 
   if (nDevs == 0) {
@@ -1803,8 +1832,8 @@ static void gpudisable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
     return;
   }
 
-  applog(LOG_DEBUG, "API: request to gpudisable gpuid %d %s%u",
-      id, gpus[id].drv->name, gpus[id].device_id);
+  applog(LOG_DEBUG, "API: request to gpudisable gpuid %d %s%u", id,
+         gpus[id].drv->name, gpus[id].device_id);
 
   if (gpus[id].deven == DEV_DISABLED) {
     message(io_data, MSG_ALRDIS, id, NULL, isjson);
@@ -1816,8 +1845,8 @@ static void gpudisable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
   message(io_data, MSG_GPUDIS, id, NULL, isjson);
 }
 
-static void gpurestart(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void gpurestart(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       char *param, bool isjson, __maybe_unused char group) {
   int id;
 
   if (nDevs == 0) {
@@ -1841,8 +1870,9 @@ static void gpurestart(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
   message(io_data, MSG_GPUREI, id, NULL, isjson);
 }
 
-static void gpucount(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void gpucount(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                     __maybe_unused char *param, bool isjson,
+                     __maybe_unused char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   bool io_open;
@@ -1860,8 +1890,8 @@ static void gpucount(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __may
     io_close(io_data);
 }
 
-static void switchpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void switchpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       char *param, bool isjson, __maybe_unused char group) {
   struct pool *pool;
   int id;
 
@@ -1891,75 +1921,68 @@ static void switchpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
   message(io_data, MSG_SWITCHP, id, NULL, isjson);
 }
 
-static void api_pool_strategy(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void api_pool_strategy(struct io_data *io_data,
+                              __maybe_unused SOCKETTYPE c, char *param,
+                              bool isjson, __maybe_unused char group) {
   char *p;
   int strategy;
 
-  if (total_pools == 0)
-  {
+  if (total_pools == 0) {
     message(io_data, MSG_NOPOOL, 0, NULL, isjson);
     return;
   }
 
-  if (param == NULL || *param == '\0')
-  {
+  if (param == NULL || *param == '\0') {
     message(io_data, MSG_MISSTRAT, 0, NULL, isjson);
     return;
   }
 
-  //get strategy in parameter 1
-  if(!(p = strtok(param, ",")))
-  {
+  // get strategy in parameter 1
+  if (!(p = strtok(param, ","))) {
     message(io_data, MSG_MISSTRAT, 0, NULL, isjson);
     return;
   }
 
   strategy = atoi(p);
 
-  //invalid strategy
-  if(strategy < 0 || strategy > TOP_STRATEGY)
-  {
+  // invalid strategy
+  if (strategy < 0 || strategy > TOP_STRATEGY) {
     message(io_data, MSG_INVSTRAT, strategy, NULL, isjson);
     return;
   }
 
-  //if set to rotate, get second param
-  if(strategy == POOL_ROTATE)
-  {
-    //if second param is missing then invalid
-    if(!(p = strtok(NULL, ",")))
-    {
+  // if set to rotate, get second param
+  if (strategy == POOL_ROTATE) {
+    // if second param is missing then invalid
+    if (!(p = strtok(NULL, ","))) {
       message(io_data, MSG_MISSTRATINT, 0, NULL, isjson);
       return;
     }
 
-    //get interval in parameter 2
+    // get interval in parameter 2
     int interval;
     interval = atoi(p);
 
-    //interval can only be between 0 and 9999
-    if(interval < 0 || interval > 9999)
-    {
+    // interval can only be between 0 and 9999
+    if (interval < 0 || interval > 9999) {
       message(io_data, MSG_INVNUM, interval, "interval", isjson);
       return;
     }
 
-    //set interval
+    // set interval
     opt_rotate_period = interval;
   }
 
-  //set pool strategy
+  // set pool strategy
   pool_strategy = (enum pool_strategy)strategy;
-  //initiate new strategy
+  // initiate new strategy
   switch_pools(NULL);
 
   message(io_data, MSG_CHSTRAT, 0, (char *)strategies[strategy].s, isjson);
 }
 
 static bool pooldetails(char *param, char **url, char **user, char **pass,
-      char **name, char **desc, char **profile, char **algo)
-{
+                        char **name, char **desc, char **profile, char **algo) {
   char *ptr, *buf;
 
   ptr = buf = (char *)malloc(strlen(param) + 1);
@@ -2006,8 +2029,8 @@ exitsama:
   return false;
 }
 
-static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                    char *param, bool isjson, __maybe_unused char group) {
   char *url, *user, *pass;
   char *name = NULL, *desc = NULL, *algo = NULL, *profile = NULL;
   struct pool *pool;
@@ -2018,8 +2041,7 @@ static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *
     return;
   }
 
-  if (!pooldetails(param, &url, &user, &pass,
-       &name, &desc, &profile, &algo)) {
+  if (!pooldetails(param, &url, &user, &pass, &name, &desc, &profile, &algo)) {
     ptr = escape_string(param, isjson);
     message(io_data, MSG_INVPDP, 0, ptr, isjson);
     if (ptr != param)
@@ -2029,10 +2051,10 @@ static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *
   }
 
   /* If API client is old, it might not have provided all fields. */
-      name = ((name == NULL)?strdup(""):name);
-      desc = ((desc == NULL)?strdup(""):desc);
-      profile = ((profile == NULL)?strdup(""):profile);
-      algo = ((algo == NULL)?strdup(""):algo);
+  name = ((name == NULL) ? strdup("") : name);
+  desc = ((desc == NULL) ? strdup("") : desc);
+  profile = ((profile == NULL) ? strdup("") : profile);
+  algo = ((algo == NULL) ? strdup("") : algo);
 
   pool = add_pool();
   detect_stratum(pool, url);
@@ -2045,8 +2067,8 @@ static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *
   ptr = NULL;
 }
 
-static void enablepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void enablepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       char *param, bool isjson, __maybe_unused char group) {
   struct pool *pool;
   int id;
 
@@ -2079,8 +2101,8 @@ static void enablepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
   message(io_data, MSG_ENAPOOL, id, NULL, isjson);
 }
 
-static void poolpriority(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void poolpriority(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                         char *param, bool isjson, __maybe_unused char group) {
   char *ptr, *next;
   int i, pr, prio = 0;
 
@@ -2098,8 +2120,8 @@ static void poolpriority(struct io_data *io_data, __maybe_unused SOCKETTYPE c, c
     return;
   }
 
-  bool* pools_changed = (bool*)alloca(total_pools*sizeof(bool));
-  int* new_prio = (int*)alloca(total_pools*sizeof(int));
+  bool *pools_changed = (bool *)alloca(total_pools * sizeof(bool));
+  int *new_prio = (int *)alloca(total_pools * sizeof(int));
 
   for (i = 0; i < total_pools; ++i)
     pools_changed[i] = false;
@@ -2148,8 +2170,8 @@ static void poolpriority(struct io_data *io_data, __maybe_unused SOCKETTYPE c, c
   message(io_data, MSG_POOLPRIO, 0, NULL, isjson);
 }
 
-static void poolquota(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void poolquota(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                      char *param, bool isjson, __maybe_unused char group) {
   struct pool *pool;
   int quota, id;
   char *comma;
@@ -2190,8 +2212,8 @@ static void poolquota(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
   message(io_data, MSG_SETQUOTA, quota, pool->rpc_url, isjson);
 }
 
-static void disablepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void disablepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                        char *param, bool isjson, __maybe_unused char group) {
   struct pool *pool;
   int id;
 
@@ -2224,8 +2246,8 @@ static void disablepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, ch
   message(io_data, MSG_DISPOOL, id, NULL, isjson);
 }
 
-static void removepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void removepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       char *param, bool isjson, __maybe_unused char group) {
   struct pool *pool;
   char *rpc_url;
   bool dofree = false;
@@ -2275,8 +2297,8 @@ static void removepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
   rpc_url = NULL;
 }
 
-static bool splitgpuvalue(struct io_data *io_data, char *param, int *gpu, char **value, bool isjson)
-{
+static bool splitgpuvalue(struct io_data *io_data, char *param, int *gpu,
+                          char **value, bool isjson) {
   int id;
   char *gpusep;
 
@@ -2310,8 +2332,8 @@ static bool splitgpuvalue(struct io_data *io_data, char *param, int *gpu, char *
   return true;
 }
 
-static void gpuintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void gpuintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                         char *param, bool isjson, __maybe_unused char group) {
   int id;
   char *value;
   int intensity;
@@ -2323,8 +2345,7 @@ static void gpuintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c, c
   if (!strncasecmp(value, DYNAMIC, 1)) {
     gpus[id].dynamic = true;
     strcpy(intensitystr, DYNAMIC);
-  }
-  else {
+  } else {
     intensity = atoi(value);
     if (intensity < MIN_INTENSITY || intensity > MAX_INTENSITY) {
       message(io_data, MSG_INVINT, 0, value, isjson);
@@ -2344,8 +2365,8 @@ static void gpuintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c, c
   message(io_data, MSG_GPUINT, id, intensitystr, isjson);
 }
 
-static void gpuxintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void gpuxintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                          char *param, bool isjson, __maybe_unused char group) {
   int id;
   char *value;
   int intensity;
@@ -2372,8 +2393,9 @@ static void gpuxintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c, 
   message(io_data, MSG_GPUXINT, id, intensitystr, isjson);
 }
 
-static void gpurawintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void gpurawintensity(struct io_data *io_data,
+                            __maybe_unused SOCKETTYPE c, char *param,
+                            bool isjson, __maybe_unused char group) {
   int id;
   char *value;
   int intensity;
@@ -2400,8 +2422,9 @@ static void gpurawintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c
   message(io_data, MSG_GPURAWINT, id, intensitystr, isjson);
 }
 
-static void gpumem(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void gpumem(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                   __maybe_unused char *param, bool isjson,
+                   __maybe_unused char group) {
 #ifdef HAVE_ADL
   int id;
   char *value;
@@ -2421,8 +2444,9 @@ static void gpumem(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
 #endif
 }
 
-static void gpuengine(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void gpuengine(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                      __maybe_unused char *param, bool isjson,
+                      __maybe_unused char group) {
 #ifdef HAVE_ADL
   int id;
   char *value;
@@ -2442,8 +2466,9 @@ static void gpuengine(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
 #endif
 }
 
-static void gpufan(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void gpufan(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                   __maybe_unused char *param, bool isjson,
+                   __maybe_unused char group) {
 #ifdef HAVE_ADL
   int id;
   char *value;
@@ -2463,8 +2488,9 @@ static void gpufan(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
 #endif
 }
 
-static void gpuvddc(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void gpuvddc(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                    __maybe_unused char *param, bool isjson,
+                    __maybe_unused char group) {
 #ifdef HAVE_ADL
   int id;
   char *value;
@@ -2484,29 +2510,32 @@ static void gpuvddc(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __mayb
 #endif
 }
 
-void doquit(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+void doquit(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+            __maybe_unused char *param, bool isjson,
+            __maybe_unused char group) {
   message(io_data, MSG_BYE, 0, _BYE, isjson);
 
   bye = true;
   do_a_quit = true;
 }
 
-void dorestart(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+void dorestart(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+               __maybe_unused char *param, bool isjson,
+               __maybe_unused char group) {
   message(io_data, MSG_BYE, 0, _RESTART, isjson);
 
   bye = true;
   do_a_restart = true;
 }
 
-void privileged(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+void privileged(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                __maybe_unused char *param, bool isjson,
+                __maybe_unused char group) {
   message(io_data, MSG_ACCOK, 0, NULL, isjson);
 }
 
-void notifystatus(struct io_data *io_data, int device, struct cgpu_info *cgpu, bool isjson, __maybe_unused char group)
-{
+void notifystatus(struct io_data *io_data, int device, struct cgpu_info *cgpu,
+                  bool isjson, __maybe_unused char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   char *reason;
@@ -2514,37 +2543,37 @@ void notifystatus(struct io_data *io_data, int device, struct cgpu_info *cgpu, b
   if (cgpu->device_last_not_well == 0)
     reason = REASON_NONE;
   else
-    switch(cgpu->device_not_well_reason) {
-      case REASON_THREAD_FAIL_INIT:
-        reason = REASON_THREAD_FAIL_INIT_STR;
-        break;
-      case REASON_THREAD_ZERO_HASH:
-        reason = REASON_THREAD_ZERO_HASH_STR;
-        break;
-      case REASON_THREAD_FAIL_QUEUE:
-        reason = REASON_THREAD_FAIL_QUEUE_STR;
-        break;
-      case REASON_DEV_SICK_IDLE_60:
-        reason = REASON_DEV_SICK_IDLE_60_STR;
-        break;
-      case REASON_DEV_DEAD_IDLE_600:
-        reason = REASON_DEV_DEAD_IDLE_600_STR;
-        break;
-      case REASON_DEV_NOSTART:
-        reason = REASON_DEV_NOSTART_STR;
-        break;
-      case REASON_DEV_OVER_HEAT:
-        reason = REASON_DEV_OVER_HEAT_STR;
-        break;
-      case REASON_DEV_THERMAL_CUTOFF:
-        reason = REASON_DEV_THERMAL_CUTOFF_STR;
-        break;
-      case REASON_DEV_COMMS_ERROR:
-        reason = REASON_DEV_COMMS_ERROR_STR;
-        break;
-      default:
-        reason = REASON_UNKNOWN_STR;
-        break;
+    switch (cgpu->device_not_well_reason) {
+    case REASON_THREAD_FAIL_INIT:
+      reason = REASON_THREAD_FAIL_INIT_STR;
+      break;
+    case REASON_THREAD_ZERO_HASH:
+      reason = REASON_THREAD_ZERO_HASH_STR;
+      break;
+    case REASON_THREAD_FAIL_QUEUE:
+      reason = REASON_THREAD_FAIL_QUEUE_STR;
+      break;
+    case REASON_DEV_SICK_IDLE_60:
+      reason = REASON_DEV_SICK_IDLE_60_STR;
+      break;
+    case REASON_DEV_DEAD_IDLE_600:
+      reason = REASON_DEV_DEAD_IDLE_600_STR;
+      break;
+    case REASON_DEV_NOSTART:
+      reason = REASON_DEV_NOSTART_STR;
+      break;
+    case REASON_DEV_OVER_HEAT:
+      reason = REASON_DEV_OVER_HEAT_STR;
+      break;
+    case REASON_DEV_THERMAL_CUTOFF:
+      reason = REASON_DEV_THERMAL_CUTOFF_STR;
+      break;
+    case REASON_DEV_COMMS_ERROR:
+      reason = REASON_DEV_COMMS_ERROR_STR;
+      break;
+    default:
+      reason = REASON_UNKNOWN_STR;
+      break;
     }
 
   // ALL counters (and only counters) must start the name with a '*'
@@ -2553,25 +2582,34 @@ void notifystatus(struct io_data *io_data, int device, struct cgpu_info *cgpu, b
   root = api_add_string(root, "Name", cgpu->drv->name, false);
   root = api_add_int(root, "ID", &(cgpu->device_id), false);
   root = api_add_time(root, "Last Well", &(cgpu->device_last_well), false);
-  root = api_add_time(root, "Last Not Well", &(cgpu->device_last_not_well), false);
+  root =
+      api_add_time(root, "Last Not Well", &(cgpu->device_last_not_well), false);
   root = api_add_string(root, "Reason Not Well", reason, false);
-  root = api_add_int(root, "*Thread Fail Init", &(cgpu->thread_fail_init_count), false);
-  root = api_add_int(root, "*Thread Zero Hash", &(cgpu->thread_zero_hash_count), false);
-  root = api_add_int(root, "*Thread Fail Queue", &(cgpu->thread_fail_queue_count), false);
-  root = api_add_int(root, "*Dev Sick Idle 60s", &(cgpu->dev_sick_idle_60_count), false);
-  root = api_add_int(root, "*Dev Dead Idle 600s", &(cgpu->dev_dead_idle_600_count), false);
+  root = api_add_int(root, "*Thread Fail Init", &(cgpu->thread_fail_init_count),
+                     false);
+  root = api_add_int(root, "*Thread Zero Hash", &(cgpu->thread_zero_hash_count),
+                     false);
+  root = api_add_int(root, "*Thread Fail Queue",
+                     &(cgpu->thread_fail_queue_count), false);
+  root = api_add_int(root, "*Dev Sick Idle 60s",
+                     &(cgpu->dev_sick_idle_60_count), false);
+  root = api_add_int(root, "*Dev Dead Idle 600s",
+                     &(cgpu->dev_dead_idle_600_count), false);
   root = api_add_int(root, "*Dev Nostart", &(cgpu->dev_nostart_count), false);
-  root = api_add_int(root, "*Dev Over Heat", &(cgpu->dev_over_heat_count), false);
-  root = api_add_int(root, "*Dev Thermal Cutoff", &(cgpu->dev_thermal_cutoff_count), false);
-  root = api_add_int(root, "*Dev Comms Error", &(cgpu->dev_comms_error_count), false);
+  root =
+      api_add_int(root, "*Dev Over Heat", &(cgpu->dev_over_heat_count), false);
+  root = api_add_int(root, "*Dev Thermal Cutoff",
+                     &(cgpu->dev_thermal_cutoff_count), false);
+  root = api_add_int(root, "*Dev Comms Error", &(cgpu->dev_comms_error_count),
+                     false);
   root = api_add_int(root, "*Dev Throttle", &(cgpu->dev_throttle_count), false);
 
   root = print_data(root, buf, isjson, isjson && (device > 0));
   io_add(io_data, buf);
 }
 
-static void notify(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, char group)
-{
+static void notify(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                   __maybe_unused char *param, bool isjson, char group) {
   struct cgpu_info *cgpu;
   bool io_open = false;
   int i, j;
@@ -2596,8 +2634,9 @@ static void notify(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
     io_close(io_data);
 }
 
-static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       __maybe_unused char *param, bool isjson,
+                       __maybe_unused char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   bool io_open = false;
@@ -2617,7 +2656,8 @@ static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
   for (i = 0, j = 0; i < total_devices; i++) {
     cgpu = get_devices(i);
 
-    if (opt_removedisabled && cgpu->deven == DEV_DISABLED) continue;
+    if (opt_removedisabled && cgpu->deven == DEV_DISABLED)
+      continue;
 
     root = api_add_int(root, "DEVDETAILS", &j, false);
     root = api_add_string(root, "Name", cgpu->drv->name, false);
@@ -2625,7 +2665,8 @@ static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     root = api_add_string(root, "Driver", cgpu->drv->dname, false);
     root = api_add_const(root, "Kernel", cgpu->algorithm.name, false);
     root = api_add_const(root, "Model", cgpu->name ? cgpu->name : BLANK, false);
-    root = api_add_const(root, "Device Path", cgpu->device_path ? cgpu->device_path : BLANK, false);
+    root = api_add_const(root, "Device Path",
+                         cgpu->device_path ? cgpu->device_path : BLANK, false);
 
     root = print_data(root, buf, isjson, isjson && (j > 0));
     io_add(io_data, buf);
@@ -2636,10 +2677,10 @@ static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     io_close(io_data);
 }
 
-void dosave(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+void dosave(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param,
+            bool isjson, __maybe_unused char group) {
   char filename[PATH_MAX];
-//  FILE *fcfg;
+  //  FILE *fcfg;
   char *ptr;
 
   if (param == NULL || *param == '\0') {
@@ -2658,7 +2699,7 @@ void dosave(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, b
   }*/
 
   write_config(param);
-  //fclose(fcfg);
+  // fclose(fcfg);
 
   ptr = escape_string(param, isjson);
   message(io_data, MSG_SAVED, 0, ptr, isjson);
@@ -2667,8 +2708,11 @@ void dosave(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, b
   ptr = NULL;
 }
 
-static int itemstats(struct io_data *io_data, int i, char *id, struct sgminer_stats *stats, struct sgminer_pool_stats *pool_stats, struct api_data *extra, struct cgpu_info *cgpu, bool isjson)
-{
+static int itemstats(struct io_data *io_data, int i, char *id,
+                     struct sgminer_stats *stats,
+                     struct sgminer_pool_stats *pool_stats,
+                     struct api_data *extra, struct cgpu_info *cgpu,
+                     bool isjson) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
 
@@ -2681,27 +2725,42 @@ static int itemstats(struct io_data *io_data, int i, char *id, struct sgminer_st
   root = api_add_timeval(root, "Min", &(stats->getwork_wait_min), false);
 
   if (pool_stats) {
-    root = api_add_uint32(root, "Pool Calls", &(pool_stats->getwork_calls), false);
-    root = api_add_uint32(root, "Pool Attempts", &(pool_stats->getwork_attempts), false);
-    root = api_add_timeval(root, "Pool Wait", &(pool_stats->getwork_wait), false);
-    root = api_add_timeval(root, "Pool Max", &(pool_stats->getwork_wait_max), false);
-    root = api_add_timeval(root, "Pool Min", &(pool_stats->getwork_wait_min), false);
-    root = api_add_double(root, "Pool Av", &(pool_stats->getwork_wait_rolling), false);
-    root = api_add_bool(root, "Work Had Roll Time", &(pool_stats->hadrolltime), false);
+    root =
+        api_add_uint32(root, "Pool Calls", &(pool_stats->getwork_calls), false);
+    root = api_add_uint32(root, "Pool Attempts",
+                          &(pool_stats->getwork_attempts), false);
+    root =
+        api_add_timeval(root, "Pool Wait", &(pool_stats->getwork_wait), false);
+    root = api_add_timeval(root, "Pool Max", &(pool_stats->getwork_wait_max),
+                           false);
+    root = api_add_timeval(root, "Pool Min", &(pool_stats->getwork_wait_min),
+                           false);
+    root = api_add_double(root, "Pool Av", &(pool_stats->getwork_wait_rolling),
+                          false);
+    root = api_add_bool(root, "Work Had Roll Time", &(pool_stats->hadrolltime),
+                        false);
     root = api_add_bool(root, "Work Can Roll", &(pool_stats->canroll), false);
-    root = api_add_bool(root, "Work Had Expire", &(pool_stats->hadexpire), false);
-    root = api_add_uint32(root, "Work Roll Time", &(pool_stats->rolltime), false);
+    root =
+        api_add_bool(root, "Work Had Expire", &(pool_stats->hadexpire), false);
+    root =
+        api_add_uint32(root, "Work Roll Time", &(pool_stats->rolltime), false);
     root = api_add_diff(root, "Work Diff", &(pool_stats->last_diff), false);
     root = api_add_diff(root, "Min Diff", &(pool_stats->min_diff), false);
     root = api_add_diff(root, "Max Diff", &(pool_stats->max_diff), false);
-    root = api_add_uint32(root, "Min Diff Count", &(pool_stats->min_diff_count), false);
-    root = api_add_uint32(root, "Max Diff Count", &(pool_stats->max_diff_count), false);
+    root = api_add_uint32(root, "Min Diff Count", &(pool_stats->min_diff_count),
+                          false);
+    root = api_add_uint32(root, "Max Diff Count", &(pool_stats->max_diff_count),
+                          false);
     root = api_add_uint64(root, "Times Sent", &(pool_stats->times_sent), false);
     root = api_add_uint64(root, "Bytes Sent", &(pool_stats->bytes_sent), false);
-    root = api_add_uint64(root, "Times Recv", &(pool_stats->times_received), false);
-    root = api_add_uint64(root, "Bytes Recv", &(pool_stats->bytes_received), false);
-    root = api_add_uint64(root, "Net Bytes Sent", &(pool_stats->net_bytes_sent), false);
-    root = api_add_uint64(root, "Net Bytes Recv", &(pool_stats->net_bytes_received), false);
+    root = api_add_uint64(root, "Times Recv", &(pool_stats->times_received),
+                          false);
+    root = api_add_uint64(root, "Bytes Recv", &(pool_stats->bytes_received),
+                          false);
+    root = api_add_uint64(root, "Net Bytes Sent", &(pool_stats->net_bytes_sent),
+                          false);
+    root = api_add_uint64(root, "Net Bytes Recv",
+                          &(pool_stats->net_bytes_received), false);
   }
 
   if (extra)
@@ -2713,8 +2772,9 @@ static int itemstats(struct io_data *io_data, int i, char *id, struct sgminer_st
   return ++i;
 }
 
-static void minerstats(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void minerstats(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       __maybe_unused char *param, bool isjson,
+                       __maybe_unused char group) {
   struct cgpu_info *cgpu;
   bool io_open = false;
   struct api_data *extra;
@@ -2730,14 +2790,16 @@ static void minerstats(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
   for (j = 0; j < total_devices; j++) {
     cgpu = get_devices(j);
 
-    if (cgpu && cgpu->drv && (!opt_removedisabled || cgpu->deven != DEV_DISABLED)) {
+    if (cgpu && cgpu->drv &&
+        (!opt_removedisabled || cgpu->deven != DEV_DISABLED)) {
       if (cgpu->drv->get_api_stats)
         extra = cgpu->drv->get_api_stats(cgpu);
       else
         extra = NULL;
 
       sprintf(id, "%s%d", cgpu->drv->name, cgpu->device_id);
-      i = itemstats(io_data, i, id, &(cgpu->sgminer_stats), NULL, extra, cgpu, isjson);
+      i = itemstats(io_data, i, id, &(cgpu->sgminer_stats), NULL, extra, cgpu,
+                    isjson);
     }
   }
 
@@ -2745,15 +2807,16 @@ static void minerstats(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     struct pool *pool = pools[j];
 
     sprintf(id, "POOL%d", j);
-    i = itemstats(io_data, i, id, &(pool->sgminer_stats), &(pool->sgminer_pool_stats), NULL, NULL, isjson);
+    i = itemstats(io_data, i, id, &(pool->sgminer_stats),
+                  &(pool->sgminer_pool_stats), NULL, NULL, isjson);
   }
 
   if (isjson && io_open)
     io_close(io_data);
 }
 
-static void failoveronly(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void failoveronly(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                         char *param, bool isjson, __maybe_unused char group) {
   if (param == NULL || *param == '\0') {
     message(io_data, MSG_MISBOOL, 0, NULL, isjson);
     return;
@@ -2773,8 +2836,9 @@ static void failoveronly(struct io_data *io_data, __maybe_unused SOCKETTYPE c, c
   message(io_data, MSG_FOO, tf, NULL, isjson);
 }
 
-static void minecoin(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
-{
+static void minecoin(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                     __maybe_unused char *param, bool isjson,
+                     __maybe_unused char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   bool io_open;
@@ -2782,7 +2846,8 @@ static void minecoin(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __may
   message(io_data, MSG_MINECOIN, 0, NULL, isjson);
   io_open = io_add(io_data, isjson ? COMSTR JSON_MINECOIN : _MINECOIN COMSTR);
 
-  root = api_add_string(root, "Hash Method", get_devices(0)->algorithm.name, false);
+  root = api_add_string(root, "Hash Method", get_devices(0)->algorithm.name,
+                        false);
 
   cg_rlock(&ch_lock);
   root = api_add_timeval(root, "Current Block Time", &block_timeval, true);
@@ -2798,8 +2863,8 @@ static void minecoin(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __may
     io_close(io_data);
 }
 
-static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                       char *param, bool isjson, __maybe_unused char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   bool io_open;
@@ -2809,7 +2874,7 @@ static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
   else
     *param = tolower(*param);
 
-  switch(*param) {
+  switch (*param) {
   case 's':
     opt_realquiet = true;
     break;
@@ -2878,8 +2943,8 @@ static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
     io_close(io_data);
 }
 
-static void setconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void setconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                      char *param, bool isjson, __maybe_unused char group) {
   char *comma;
   int value;
 
@@ -2915,8 +2980,8 @@ static void setconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
   message(io_data, MSG_SETCONFIG, value, param, isjson);
 }
 
-static void dozero(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
-{
+static void dozero(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                   char *param, bool isjson, __maybe_unused char group) {
   if (param == NULL || *param == '\0') {
     message(io_data, MSG_ZERMIS, 0, NULL, isjson);
     return;
@@ -2963,62 +3028,61 @@ static void dozero(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *p
     message(io_data, MSG_ZERNOSUM, 0, all ? "All" : "BestShare", isjson);
 }
 
-static void checkcommand(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, char group);
+static void checkcommand(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                         char *param, bool isjson, char group);
 
 struct CMDS {
   char *name;
   void (*func)(struct io_data *, SOCKETTYPE, char *, bool, char);
   bool iswritemode;
   bool joinable;
-} cmds[] = {
-  { "version",    apiversion, false,  true },
-  { "config",   minerconfig,  false,  true },
-  { "devs",   devstatus,  false,  true },
-  { "pools",    poolstatus, false,  true },
-  { "profiles",    api_profile_list, false,  true },
-  { "summary",    summary,  false,  true },
-  { "gpuenable",          gpuenable,      true, false },
-  { "gpudisable",         gpudisable,     true, false },
-  { "gpurestart",         gpurestart,     true, false },
-  { "gpu",                gpudev,         false,  false },
-  { "gpucount",           gpucount,       false,  true },
-  { "switchpool",   switchpool, true, false },
-  { "changestrategy",   api_pool_strategy, true, false },
-  { "addpool",    addpool,  true, false },
-  { "poolpriority", poolpriority, true, false },
-  { "poolquota",    poolquota,  true, false },
-  { "enablepool",   enablepool, true, false },
-  { "disablepool",  disablepool,  true, false },
-  { "removepool",   removepool, true, false },
-  { "changepoolprofile",   api_pool_profile, true, false },
-  { "addprofile",    api_profile_add,  true, false },
-  { "removeprofile",    api_profile_remove,  true, false },
-  { "gpuintensity",       gpuintensity,   true, false },
-  { "gpuxintensity",       gpuxintensity,   true, false },
-  { "gpurawintensity",       gpurawintensity,   true, false },
-  { "gpumem",             gpumem,         true, false },
-  { "gpuengine",          gpuengine,      true, false },
-  { "gpufan",             gpufan,         true, false },
-  { "gpuvddc",            gpuvddc,        true, false },
-  { "save",   dosave,   true, false },
-  { "quit",   doquit,   true, false },
-  { "privileged",   privileged, true, false },
-  { "notify",   notify,   false,  true },
-  { "devdetails",   devdetails, false,  true },
-  { "restart",    dorestart,  true, false },
-  { "stats",    minerstats, false,  true },
-  { "check",    checkcommand, false,  false },
-  { "failover-only",  failoveronly, true, false },
-  { "coin",   minecoin, false,  true },
-  { "debug",    debugstate, true, false },
-  { "setconfig",    setconfig,  true, false },
-  { "zero",   dozero,   true, false },
-  { "lockstats",    lockstats,  true, true },
-  { NULL,     NULL,   false,  false }
-};
+} cmds[] = {{"version", apiversion, false, true},
+            {"config", minerconfig, false, true},
+            {"devs", devstatus, false, true},
+            {"pools", poolstatus, false, true},
+            {"profiles", api_profile_list, false, true},
+            {"summary", summary, false, true},
+            {"gpuenable", gpuenable, true, false},
+            {"gpudisable", gpudisable, true, false},
+            {"gpurestart", gpurestart, true, false},
+            {"gpu", gpudev, false, false},
+            {"gpucount", gpucount, false, true},
+            {"switchpool", switchpool, true, false},
+            {"changestrategy", api_pool_strategy, true, false},
+            {"addpool", addpool, true, false},
+            {"poolpriority", poolpriority, true, false},
+            {"poolquota", poolquota, true, false},
+            {"enablepool", enablepool, true, false},
+            {"disablepool", disablepool, true, false},
+            {"removepool", removepool, true, false},
+            {"changepoolprofile", api_pool_profile, true, false},
+            {"addprofile", api_profile_add, true, false},
+            {"removeprofile", api_profile_remove, true, false},
+            {"gpuintensity", gpuintensity, true, false},
+            {"gpuxintensity", gpuxintensity, true, false},
+            {"gpurawintensity", gpurawintensity, true, false},
+            {"gpumem", gpumem, true, false},
+            {"gpuengine", gpuengine, true, false},
+            {"gpufan", gpufan, true, false},
+            {"gpuvddc", gpuvddc, true, false},
+            {"save", dosave, true, false},
+            {"quit", doquit, true, false},
+            {"privileged", privileged, true, false},
+            {"notify", notify, false, true},
+            {"devdetails", devdetails, false, true},
+            {"restart", dorestart, true, false},
+            {"stats", minerstats, false, true},
+            {"check", checkcommand, false, false},
+            {"failover-only", failoveronly, true, false},
+            {"coin", minecoin, false, true},
+            {"debug", debugstate, true, false},
+            {"setconfig", setconfig, true, false},
+            {"zero", dozero, true, false},
+            {"lockstats", lockstats, true, true},
+            {NULL, NULL, false, false}};
 
-static void checkcommand(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, char group)
-{
+static void checkcommand(struct io_data *io_data, __maybe_unused SOCKETTYPE c,
+                         char *param, bool isjson, char group) {
   struct api_data *root = NULL;
   char buf[TMPBUFSIZ];
   bool io_open;
@@ -3057,8 +3121,8 @@ static void checkcommand(struct io_data *io_data, __maybe_unused SOCKETTYPE c, c
     io_close(io_data);
 }
 
-static void head_join(struct io_data *io_data, char *cmdptr, bool isjson, bool *firstjoin)
-{
+static void head_join(struct io_data *io_data, char *cmdptr, bool isjson,
+                      bool *firstjoin) {
   char *ptr;
 
   if (*firstjoin) {
@@ -3087,8 +3151,7 @@ static void head_join(struct io_data *io_data, char *cmdptr, bool isjson, bool *
     free(ptr);
 }
 
-static void tail_join(struct io_data *io_data, bool isjson)
-{
+static void tail_join(struct io_data *io_data, bool isjson) {
   if (io_data->close) {
     io_add(io_data, JSON_CLOSE);
     io_data->close = false;
@@ -3100,8 +3163,7 @@ static void tail_join(struct io_data *io_data, bool isjson)
   }
 }
 
-static void send_result(struct io_data *io_data, SOCKETTYPE c, bool isjson)
-{
+static void send_result(struct io_data *io_data, SOCKETTYPE c, bool isjson) {
   int count, sendc, res, tosend, len, n;
   char *buf = io_data->ptr;
 
@@ -3114,9 +3176,10 @@ static void send_result(struct io_data *io_data, SOCKETTYPE c, bool isjson)
     strcat(buf, JSON_END);
 
   len = strlen(buf);
-  tosend = len+1;
+  tosend = len + 1;
 
-  applog(LOG_DEBUG, "API: send reply: (%d) '%.10s%s'", tosend, buf, len > 10 ? "..." : BLANK);
+  applog(LOG_DEBUG, "API: send reply: (%d) '%.10s%s'", tosend, buf,
+         len > 10 ? "..." : BLANK);
 
   count = sendc = 0;
   while (count < 5 && tosend > 0) {
@@ -3139,7 +3202,8 @@ static void send_result(struct io_data *io_data, SOCKETTYPE c, bool isjson)
       if (sock_blocks())
         continue;
 
-      applog(LOG_WARNING, "API: send (%d:%d) failed: %s", len+1, (len+1 - tosend), SOCKERRMSG);
+      applog(LOG_WARNING, "API: send (%d:%d) failed: %s", len + 1,
+             (len + 1 - tosend), SOCKERRMSG);
 
       return;
     } else {
@@ -3150,9 +3214,11 @@ static void send_result(struct io_data *io_data, SOCKETTYPE c, bool isjson)
           applog(LOG_DEBUG, "API: sent %d of %d first go", n, tosend);
       } else {
         if (n == tosend)
-          applog(LOG_DEBUG, "API: sent all of remaining %d (sendc=%d)", tosend, sendc);
+          applog(LOG_DEBUG, "API: sent all of remaining %d (sendc=%d)", tosend,
+                 sendc);
         else
-          applog(LOG_DEBUG, "API: sent %d of remaining %d (sendc=%d)", n, tosend, sendc);
+          applog(LOG_DEBUG, "API: sent %d of remaining %d (sendc=%d)", n,
+                 tosend, sendc);
       }
 
       tosend -= n;
@@ -3164,8 +3230,7 @@ static void send_result(struct io_data *io_data, SOCKETTYPE c, bool isjson)
   }
 }
 
-static void tidyup(__maybe_unused void *arg)
-{
+static void tidyup(__maybe_unused void *arg) {
   mutex_lock(&quit_restart_lock);
 
   SOCKETTYPE *apisock = (SOCKETTYPE *)arg;
@@ -3191,8 +3256,7 @@ static void tidyup(__maybe_unused void *arg)
 /*
  * Interpret --api-groups G:cmd1:cmd2:cmd3,P:cmd4,*,...
  */
-static void setup_groups()
-{
+static void setup_groups() {
   char *api_groups = opt_api_groups ? opt_api_groups : (char *)BLANK;
   char *buf, *ptr, *next, *colon;
   char group;
@@ -3217,7 +3281,7 @@ static void setup_groups()
       *(next++) = '\0';
 
     // Validate the group
-    if (*(ptr+1) != ':') {
+    if (*(ptr + 1) != ':') {
       colon = strchr(ptr, ':');
       if (colon)
         *colon = '\0';
@@ -3292,7 +3356,8 @@ static void setup_groups()
       }
     }
 
-    ptr = apigroups[GROUPOFFSET(group)].commands = (char *)malloc(strlen(commands) + 1);
+    ptr = apigroups[GROUPOFFSET(group)].commands =
+        (char *)malloc(strlen(commands) + 1);
     if (unlikely(!ptr))
       quit(1, "Failed to malloc group commands buf");
 
@@ -3312,13 +3377,15 @@ static void setup_groups()
     }
   }
 
-  ptr = apigroups[GROUPOFFSET(NOPRIVGROUP)].commands = (char *)malloc(strlen(commands) + 1);
+  ptr = apigroups[GROUPOFFSET(NOPRIVGROUP)].commands =
+      (char *)malloc(strlen(commands) + 1);
   if (unlikely(!ptr))
     quit(1, "Failed to malloc noprivgroup commands buf");
 
   strcpy(ptr, commands);
 
-  // W (PRIVGROUP) is handled as a special case since it simply means all commands
+  // W (PRIVGROUP) is handled as a special case since it simply means all
+  // commands
 
   free(buf);
   return;
@@ -3332,8 +3399,7 @@ static void setup_groups()
 /*
  * N.B. IP4 addresses are by Definition 32bit big endian on all platforms
  */
-static void setup_ipaccess()
-{
+static void setup_ipaccess() {
   char *buf, *ptr, *comma, *slash, *dot;
   int ipcount, mask, octet, i;
   char group;
@@ -3372,7 +3438,7 @@ static void setup_ipaccess()
 
     group = NOPRIVGROUP;
 
-    if (isalpha(*ptr) && *(ptr+1) == ':') {
+    if (isalpha(*ptr) && *(ptr + 1) == ':') {
       if (DEFINEDGROUP(*ptr))
         group = GROUP(*ptr);
 
@@ -3419,15 +3485,14 @@ static void setup_ipaccess()
     }
 
     ips++;
-popipo:
+  popipo:
     ptr = comma;
   }
 
   free(buf);
 }
 
-static void *quit_thread(__maybe_unused void *userdata)
-{
+static void *quit_thread(__maybe_unused void *userdata) {
   // allow thread creator to finish whatever it's doing
   mutex_lock(&quit_restart_lock);
   mutex_unlock(&quit_restart_lock);
@@ -3439,8 +3504,7 @@ static void *quit_thread(__maybe_unused void *userdata)
   return NULL;
 }
 
-static void *restart_thread(__maybe_unused void *userdata)
-{
+static void *restart_thread(__maybe_unused void *userdata) {
   // allow thread creator to finish whatever it's doing
   mutex_lock(&quit_restart_lock);
   mutex_unlock(&quit_restart_lock);
@@ -3452,8 +3516,8 @@ static void *restart_thread(__maybe_unused void *userdata)
   return NULL;
 }
 
-static bool check_connect(struct sockaddr_in *cli, char **connectaddr, char *group)
-{
+static bool check_connect(struct sockaddr_in *cli, char **connectaddr,
+                          char *group) {
   bool addrok = false;
   int i;
 
@@ -3479,8 +3543,7 @@ static bool check_connect(struct sockaddr_in *cli, char **connectaddr, char *gro
   return addrok;
 }
 
-static void mcast()
-{
+static void mcast() {
   struct sockaddr_in listen;
   struct ip_mreq grp;
   struct sockaddr_in came_from;
@@ -3512,8 +3575,10 @@ static void mcast()
   mcast_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
   int optval = 1;
-  if (SOCKETFAIL(setsockopt(mcast_sock, SOL_SOCKET, SO_REUSEADDR, (const char *)(&optval), sizeof(optval)))) {
-    applog(LOG_ERR, "API mcast setsockopt SO_REUSEADDR failed (%s)%s", SOCKERRMSG, MUNAVAILABLE);
+  if (SOCKETFAIL(setsockopt(mcast_sock, SOL_SOCKET, SO_REUSEADDR,
+                            (const char *)(&optval), sizeof(optval)))) {
+    applog(LOG_ERR, "API mcast setsockopt SO_REUSEADDR failed (%s)%s",
+           SOCKERRMSG, MUNAVAILABLE);
     goto die;
   }
 
@@ -3522,11 +3587,13 @@ static void mcast()
   listen.sin_addr.s_addr = INADDR_ANY;
   listen.sin_port = htons(opt_api_mcast_port);
 
-  // try for more than 1 minute ... in case the old one hasn't completely gone yet
+  // try for more than 1 minute ... in case the old one hasn't completely gone
+  // yet
   bound = 0;
   bindstart = time(NULL);
   while (bound == 0) {
-    if (SOCKETFAIL(bind(mcast_sock, (struct sockaddr *)(&listen), sizeof(listen)))) {
+    if (SOCKETFAIL(
+            bind(mcast_sock, (struct sockaddr *)(&listen), sizeof(listen)))) {
       binderror = SOCKERRMSG;
       if ((time(NULL) - bindstart) > 61)
         break;
@@ -3537,11 +3604,13 @@ static void mcast()
   }
 
   if (bound == 0) {
-    applog(LOG_ERR, "API mcast bind to port %d failed (%s)%s", opt_api_port, binderror, MUNAVAILABLE);
+    applog(LOG_ERR, "API mcast bind to port %d failed (%s)%s", opt_api_port,
+           binderror, MUNAVAILABLE);
     goto die;
   }
 
-  if (SOCKETFAIL(setsockopt(mcast_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)(&grp), sizeof(grp)))) {
+  if (SOCKETFAIL(setsockopt(mcast_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                            (const char *)(&grp), sizeof(grp)))) {
     applog(LOG_ERR, "API mcast join failed (%s)%s", SOCKERRMSG, MUNAVAILABLE);
     goto die;
   }
@@ -3550,7 +3619,8 @@ static void mcast()
   expect_code = (char *)malloc(expect_code_len + 1);
   if (!expect_code)
     quit(1, "Failed to malloc mcast expect_code");
-  snprintf(expect_code, expect_code_len+1, "%s%s-", expect, opt_api_mcast_code);
+  snprintf(expect_code, expect_code_len + 1, "%s%s-", expect,
+           opt_api_mcast_code);
 
   count = 0;
   while (80085) {
@@ -3558,53 +3628,51 @@ static void mcast()
 
     count++;
     came_from_siz = sizeof(came_from);
-    if (SOCKETFAIL(rep = recvfrom(mcast_sock, buf, sizeof(buf) - 1,
-            0, (struct sockaddr *)(&came_from), &came_from_siz))) {
-      applog(LOG_DEBUG, "API mcast failed count=%d (%s) (%d)",
-          count, SOCKERRMSG, (int)mcast_sock);
+    if (SOCKETFAIL(rep = recvfrom(mcast_sock, buf, sizeof(buf) - 1, 0,
+                                  (struct sockaddr *)(&came_from),
+                                  &came_from_siz))) {
+      applog(LOG_DEBUG, "API mcast failed count=%d (%s) (%d)", count,
+             SOCKERRMSG, (int)mcast_sock);
       continue;
     }
 
     addrok = check_connect(&came_from, &connectaddr, &group);
-    applog(LOG_DEBUG, "API mcast from %s - %s",
-          connectaddr, addrok ? "Accepted" : "Ignored");
+    applog(LOG_DEBUG, "API mcast from %s - %s", connectaddr,
+           addrok ? "Accepted" : "Ignored");
     if (!addrok)
       continue;
 
     buf[rep] = '\0';
-    if (rep > 0 && buf[rep-1] == '\n')
+    if (rep > 0 && buf[rep - 1] == '\n')
       buf[--rep] = '\0';
 
-    applog(LOG_DEBUG, "API mcast request rep=%d (%s) from %s:%d",
-          (int)rep, buf,
-          inet_ntoa(came_from.sin_addr),
-          ntohs(came_from.sin_port));
+    applog(LOG_DEBUG, "API mcast request rep=%d (%s) from %s:%d", (int)rep, buf,
+           inet_ntoa(came_from.sin_addr), ntohs(came_from.sin_port));
 
-    if ((size_t)rep > expect_code_len && memcmp(buf, expect_code, expect_code_len) == 0) {
+    if ((size_t)rep > expect_code_len &&
+        memcmp(buf, expect_code, expect_code_len) == 0) {
       reply_port = atoi(&buf[expect_code_len]);
       if (reply_port < 1 || reply_port > 65535) {
         applog(LOG_DEBUG, "API mcast request ignored - invalid port (%s)",
-              &buf[expect_code_len]);
+               &buf[expect_code_len]);
       } else {
         applog(LOG_DEBUG, "API mcast request OK port %s=%d",
-              &buf[expect_code_len], reply_port);
+               &buf[expect_code_len], reply_port);
 
         came_from.sin_port = htons(reply_port);
         reply_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
-        snprintf(replybuf, sizeof(replybuf),
-              "cgm-" API_MCAST_CODE "-%d-%s",
-              opt_api_port, opt_api_mcast_des);
+        snprintf(replybuf, sizeof(replybuf), "cgm-" API_MCAST_CODE "-%d-%s",
+                 opt_api_port, opt_api_mcast_des);
 
-        rep = sendto(reply_sock, replybuf, strlen(replybuf)+1,
-            0, (struct sockaddr *)(&came_from),
-            sizeof(came_from));
+        rep = sendto(reply_sock, replybuf, strlen(replybuf) + 1, 0,
+                     (struct sockaddr *)(&came_from), sizeof(came_from));
         if (SOCKETFAIL(rep)) {
-          applog(LOG_DEBUG, "API mcast send reply failed (%s) (%d)",
-                SOCKERRMSG, (int)reply_sock);
+          applog(LOG_DEBUG, "API mcast send reply failed (%s) (%d)", SOCKERRMSG,
+                 (int)reply_sock);
         } else {
           applog(LOG_DEBUG, "API mcast send reply (%s) succeeded (%d) (%d)",
-                replybuf, (int)rep, (int)reply_sock);
+                 replybuf, (int)rep, (int)reply_sock);
         }
 
         CLOSESOCKET(reply_sock);
@@ -3618,8 +3686,7 @@ die:
   CLOSESOCKET(mcast_sock);
 }
 
-static void *mcast_thread(void *userdata)
-{
+static void *mcast_thread(void *userdata) {
   struct thr_info *mythr = (struct thr_info *)userdata;
 
   pthread_detach(pthread_self());
@@ -3634,8 +3701,7 @@ static void *mcast_thread(void *userdata)
   return NULL;
 }
 
-void mcast_init()
-{
+void mcast_init() {
   struct thr_info *thr;
 
   thr = (struct thr_info *)calloc(1, sizeof(*thr));
@@ -3646,8 +3712,7 @@ void mcast_init()
     quit(1, "API mcast thread create failed");
 }
 
-void api(int api_thr_id)
-{
+void api(int api_thr_id) {
   struct io_data *io_data;
   struct thr_info bye_thr;
   char buf[TMPBUFSIZ];
@@ -3697,7 +3762,8 @@ void api(int api_thr_id)
     setup_ipaccess();
 
     if (ips == 0) {
-      applog(LOG_WARNING, "API not running (no valid IPs specified)%s", UNAVAILABLE);
+      applog(LOG_WARNING, "API not running (no valid IPs specified)%s",
+             UNAVAILABLE);
       free(apisock);
       return;
     }
@@ -3705,11 +3771,12 @@ void api(int api_thr_id)
 
   /* This should be done before curl in needed
    * to ensure curl has already called WSAStartup() in windows */
-  cgsleep_ms(opt_log_interval*1000);
+  cgsleep_ms(opt_log_interval * 1000);
 
   *apisock = socket(AF_INET, SOCK_STREAM, 0);
   if (*apisock == INVSOCK) {
-    applog(LOG_ERR, "API1 initialisation failed (%s)%s", SOCKERRMSG, UNAVAILABLE);
+    applog(LOG_ERR, "API1 initialisation failed (%s)%s", SOCKERRMSG,
+           UNAVAILABLE);
     free(apisock);
     return;
   }
@@ -3721,7 +3788,8 @@ void api(int api_thr_id)
   if (!opt_api_allow && !opt_api_network) {
     serv.sin_addr.s_addr = inet_addr(localaddr);
     if (serv.sin_addr.s_addr == (in_addr_t)INVINETADDR) {
-      applog(LOG_ERR, "API2 initialisation failed (%s)%s", SOCKERRMSG, UNAVAILABLE);
+      applog(LOG_ERR, "API2 initialisation failed (%s)%s", SOCKERRMSG,
+             UNAVAILABLE);
       free(apisock);
       return;
     }
@@ -3735,15 +3803,18 @@ void api(int api_thr_id)
   // another program has it open - which is what we want
   int optval = 1;
   // If it doesn't work, we don't really care - just show a debug message
-  if (SOCKETFAIL(setsockopt(*apisock, SOL_SOCKET, SO_REUSEADDR, (void *)(&optval), sizeof(optval))))
-    applog(LOG_DEBUG, "API setsockopt SO_REUSEADDR failed (ignored): %s", SOCKERRMSG);
+  if (SOCKETFAIL(setsockopt(*apisock, SOL_SOCKET, SO_REUSEADDR,
+                            (void *)(&optval), sizeof(optval))))
+    applog(LOG_DEBUG, "API setsockopt SO_REUSEADDR failed (ignored): %s",
+           SOCKERRMSG);
 #else
-  // On windows a 2nd program can bind to a port>1024 already in use unless
-  // SO_EXCLUSIVEADDRUSE is used - however then the bind to a closed port
-  // in TIME_WAIT will fail until the timeout - so we leave the options alone
+// On windows a 2nd program can bind to a port>1024 already in use unless
+// SO_EXCLUSIVEADDRUSE is used - however then the bind to a closed port
+// in TIME_WAIT will fail until the timeout - so we leave the options alone
 #endif
 
-  // try for more than 1 minute ... in case the old one hasn't completely gone yet
+  // try for more than 1 minute ... in case the old one hasn't completely gone
+  // yet
   bound = 0;
   bindstart = time(NULL);
   while (bound == 0) {
@@ -3752,7 +3823,8 @@ void api(int api_thr_id)
       if ((time(NULL) - bindstart) > 61)
         break;
       else {
-        applog(LOG_WARNING, "API bind to port %d failed - trying again in 30sec", port);
+        applog(LOG_WARNING,
+               "API bind to port %d failed - trying again in 30sec", port);
         cgsleep_ms(30000);
       }
     } else
@@ -3760,25 +3832,32 @@ void api(int api_thr_id)
   }
 
   if (bound == 0) {
-    applog(LOG_ERR, "API bind to port %d failed (%s)%s", port, binderror, UNAVAILABLE);
+    applog(LOG_ERR, "API bind to port %d failed (%s)%s", port, binderror,
+           UNAVAILABLE);
     free(apisock);
     return;
   }
 
   if (SOCKETFAIL(listen(*apisock, QUEUE))) {
-    applog(LOG_ERR, "API3 initialisation failed (%s)%s", SOCKERRMSG, UNAVAILABLE);
+    applog(LOG_ERR, "API3 initialisation failed (%s)%s", SOCKERRMSG,
+           UNAVAILABLE);
     CLOSESOCKET(*apisock);
     free(apisock);
     return;
   }
 
   if (opt_api_allow)
-    applog(LOG_WARNING, "API running in IP access mode on port %d (%d)", port, (int)*apisock);
+    applog(LOG_WARNING, "API running in IP access mode on port %d (%d)", port,
+           (int)*apisock);
   else {
     if (opt_api_network)
-      applog(LOG_WARNING, "API running in UNRESTRICTED read access mode on port %d (%d)", port, (int)*apisock);
+      applog(LOG_WARNING,
+             "API running in UNRESTRICTED read access mode on port %d (%d)",
+             port, (int)*apisock);
     else
-      applog(LOG_WARNING, "API running in local read access mode on port %d (%d)", port, (int)*apisock);
+      applog(LOG_WARNING,
+             "API running in local read access mode on port %d (%d)", port,
+             (int)*apisock);
   }
 
   if (opt_api_mcast)
@@ -3787,16 +3866,17 @@ void api(int api_thr_id)
   while (!bye) {
     clisiz = sizeof(cli);
     if (SOCKETFAIL(c = accept(*apisock, (struct sockaddr *)(&cli), &clisiz))) {
-      applog(LOG_ERR, "API failed (%s)%s (%d)", SOCKERRMSG, UNAVAILABLE, (int)*apisock);
+      applog(LOG_ERR, "API failed (%s)%s (%d)", SOCKERRMSG, UNAVAILABLE,
+             (int)*apisock);
       goto die;
     }
 
     addrok = check_connect(&cli, &connectaddr, &group);
-    applog(LOG_DEBUG, "API: connection from %s - %s",
-          connectaddr, addrok ? "Accepted" : "Ignored");
+    applog(LOG_DEBUG, "API: connection from %s - %s", connectaddr,
+           addrok ? "Accepted" : "Ignored");
 
     if (addrok) {
-      n = recv(c, &buf[0], TMPBUFSIZ-1, 0);
+      n = recv(c, &buf[0], TMPBUFSIZ - 1, 0);
       if (SOCKETFAIL(n))
         buf[0] = '\0';
       else
@@ -3822,13 +3902,13 @@ void api(int api_thr_id)
             *(param++) = '\0';
 
           cmd = buf;
-        }
-        else {
+        } else {
           isjson = true;
 
           param = NULL;
 
-#if JANSSON_MAJOR_VERSION > 2 || (JANSSON_MAJOR_VERSION == 2 && JANSSON_MINOR_VERSION > 0)
+#if JANSSON_MAJOR_VERSION > 2 ||                                               \
+    (JANSSON_MAJOR_VERSION == 2 && JANSSON_MINOR_VERSION > 0)
           json_config = json_loadb(buf, n, 0, &json_err);
 #elif JANSSON_MAJOR_VERSION > 1
           json_config = json_loads(buf, 0, &json_err);
@@ -3913,7 +3993,9 @@ void api(int api_thr_id)
                   (cmds[i].func)(io_data, c, param, isjson, group);
                 else {
                   message(io_data, MSG_ACCDENY, 0, cmds[i].name, isjson);
-                  applog(LOG_DEBUG, "API: access denied to '%s' for '%s' command", connectaddr, cmds[i].name);
+                  applog(LOG_DEBUG,
+                         "API: access denied to '%s' for '%s' command",
+                         connectaddr, cmds[i].name);
                 }
 
                 did = true;
@@ -3934,7 +4016,7 @@ void api(int api_thr_id)
               else
                 send_result(io_data, c, isjson);
             }
-inochi:
+          inochi:
             if (isjoin)
               cmdptr = cmd;
           } while (isjoin && cmdptr);
@@ -3950,16 +4032,17 @@ inochi:
     CLOSESOCKET(c);
   }
 die:
-  /* Blank line fix for older compilers since pthread_cleanup_pop is a
-   * macro that gets confused by a label existing immediately before it
-   */
-  ;
+    /* Blank line fix for older compilers since pthread_cleanup_pop is a
+     * macro that gets confused by a label existing immediately before it
+     */
+    ;
   pthread_cleanup_pop(true);
 
   free(apisock);
 
   applog(LOG_DEBUG, "API: terminating due to: %s",
-      do_a_quit ? "QUIT" : (do_a_restart ? "RESTART" : (bye ? "BYE" : "UNKNOWN!")));
+         do_a_quit ? "QUIT"
+                   : (do_a_restart ? "RESTART" : (bye ? "BYE" : "UNKNOWN!")));
 
   mutex_lock(&quit_restart_lock);
 

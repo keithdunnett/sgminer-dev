@@ -27,150 +27,143 @@
 #include "config.h"
 #include "miner.h"
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "sph/sph_blake.h"
 #include "sph/sph_bmw.h"
+#include "sph/sph_cubehash.h"
+#include "sph/sph_echo.h"
 #include "sph/sph_groestl.h"
 #include "sph/sph_jh.h"
 #include "sph/sph_keccak.h"
-#include "sph/sph_skein.h"
 #include "sph/sph_luffa.h"
-#include "sph/sph_cubehash.h"
 #include "sph/sph_shavite.h"
 #include "sph/sph_simd.h"
-#include "sph/sph_echo.h"
-#include "sph/sph_shavite.h"
+#include "sph/sph_skein.h"
 
-/* Move init out of loop, so init once externally, and then use one single memcpy with that bigger memory block */
+/* Move init out of loop, so init once externally, and then use one single
+ * memcpy with that bigger memory block */
 typedef struct {
-    sph_blake512_context    blake1;
-    sph_bmw512_context      bmw1;
-    sph_groestl512_context  groestl1;
-    sph_skein512_context    skein1;
-    sph_jh512_context       jh1;
-    sph_keccak512_context   keccak1;
-    sph_luffa512_context    luffa1;
-    sph_cubehash512_context cubehash1;
-    sph_shavite512_context  shavite1;
-    sph_simd512_context     simd1;
-    sph_echo512_context     echo1;
+  sph_blake512_context blake1;
+  sph_bmw512_context bmw1;
+  sph_groestl512_context groestl1;
+  sph_skein512_context skein1;
+  sph_jh512_context jh1;
+  sph_keccak512_context keccak1;
+  sph_luffa512_context luffa1;
+  sph_cubehash512_context cubehash1;
+  sph_shavite512_context shavite1;
+  sph_simd512_context simd1;
+  sph_echo512_context echo1;
 } Xhash_context_holder;
 
 static Xhash_context_holder base_contexts;
 
-
-static inline void init_Xhash_contexts()
-{
-    sph_blake512_init(&base_contexts.blake1);
-    sph_bmw512_init(&base_contexts.bmw1);
-    sph_groestl512_init(&base_contexts.groestl1);
-    sph_skein512_init(&base_contexts.skein1);
-    sph_jh512_init(&base_contexts.jh1);
-    sph_keccak512_init(&base_contexts.keccak1);
-    sph_luffa512_init(&base_contexts.luffa1);
-    sph_cubehash512_init(&base_contexts.cubehash1);
-    sph_shavite512_init(&base_contexts.shavite1);
-    sph_simd512_init(&base_contexts.simd1);
-    sph_echo512_init(&base_contexts.echo1);
+static inline void init_Xhash_contexts() {
+  sph_blake512_init(&base_contexts.blake1);
+  sph_bmw512_init(&base_contexts.bmw1);
+  sph_groestl512_init(&base_contexts.groestl1);
+  sph_skein512_init(&base_contexts.skein1);
+  sph_jh512_init(&base_contexts.jh1);
+  sph_keccak512_init(&base_contexts.keccak1);
+  sph_luffa512_init(&base_contexts.luffa1);
+  sph_cubehash512_init(&base_contexts.cubehash1);
+  sph_shavite512_init(&base_contexts.shavite1);
+  sph_simd512_init(&base_contexts.simd1);
+  sph_echo512_init(&base_contexts.echo1);
 }
 
 #ifdef __APPLE_CC__
 static
 #endif
-void inkhash(void *state, const void *input)
-{
-    uint32_t hash[16];
-    sph_shavite512_context ctx_shavite;
+    void
+    inkhash(void *state, const void *input) {
+  uint32_t hash[16];
+  sph_shavite512_context ctx_shavite;
 
-    sph_shavite512_init(&ctx_shavite);
-    sph_shavite512 (&ctx_shavite, input, 80);
-    sph_shavite512_close(&ctx_shavite, hash);
+  sph_shavite512_init(&ctx_shavite);
+  sph_shavite512(&ctx_shavite, input, 80);
+  sph_shavite512_close(&ctx_shavite, hash);
 
-    sph_shavite512_init(&ctx_shavite);
-    sph_shavite512(&ctx_shavite, hash, 64);
-    sph_shavite512_close(&ctx_shavite, hash);
+  sph_shavite512_init(&ctx_shavite);
+  sph_shavite512(&ctx_shavite, hash, 64);
+  sph_shavite512_close(&ctx_shavite, hash);
 
-    memcpy(state, hash, 32);
+  memcpy(state, hash, 32);
 }
 
 static const uint32_t diff1targ = 0x0000ffff;
 
-
 /* Used externally as confirmation of correct OCL code */
-int inkcoin_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
-{
-	uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	uint32_t data[20], ohash[8];
+int inkcoin_test(unsigned char *pdata, const unsigned char *ptarget,
+                 uint32_t nonce) {
+  uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
+  uint32_t data[20], ohash[8];
 
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
-	data[19] = htobe32(nonce);
-	inkhash(ohash, data);
-	tmp_hash7 = be32toh(ohash[7]);
+  be32enc_vect(data, (const uint32_t *)pdata, 19);
+  data[19] = htobe32(nonce);
+  inkhash(ohash, data);
+  tmp_hash7 = be32toh(ohash[7]);
 
-	applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
-				(long unsigned int)Htarg,
-				(long unsigned int)diff1targ,
-				(long unsigned int)tmp_hash7);
-	if (tmp_hash7 > diff1targ)
-		return -1;
-	if (tmp_hash7 > Htarg)
-		return 0;
-	return 1;
+  applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
+         (long unsigned int)Htarg, (long unsigned int)diff1targ,
+         (long unsigned int)tmp_hash7);
+  if (tmp_hash7 > diff1targ)
+    return -1;
+  if (tmp_hash7 > Htarg)
+    return 0;
+  return 1;
 }
 
-void inkcoin_regenhash(struct work *work)
-{
-        uint32_t data[20];
-        uint32_t *nonce = (uint32_t *)(work->data + 76);
-        uint32_t *ohash = (uint32_t *)(work->hash);
+void inkcoin_regenhash(struct work *work) {
+  uint32_t data[20];
+  uint32_t *nonce = (uint32_t *)(work->data + 76);
+  uint32_t *ohash = (uint32_t *)(work->hash);
 
-        be32enc_vect(data, (const uint32_t *)work->data, 19);
-        data[19] = htobe32(*nonce);
-        inkhash(ohash, data);
+  be32enc_vect(data, (const uint32_t *)work->data, 19);
+  data[19] = htobe32(*nonce);
+  inkhash(ohash, data);
 }
 
-bool scanhash_inkcoin(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
-		     unsigned char *pdata, unsigned char __maybe_unused *phash1,
-		     unsigned char __maybe_unused *phash, const unsigned char *ptarget,
-		     uint32_t max_nonce, uint32_t *last_nonce, uint32_t n)
-{
-	uint32_t *nonce = (uint32_t *)(pdata + 76);
-	uint32_t data[20];
-	uint32_t tmp_hash7;
-	uint32_t Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	bool ret = false;
+bool scanhash_inkcoin(struct thr_info *thr,
+                      const unsigned char __maybe_unused *pmidstate,
+                      unsigned char *pdata,
+                      unsigned char __maybe_unused *phash1,
+                      unsigned char __maybe_unused *phash,
+                      const unsigned char *ptarget, uint32_t max_nonce,
+                      uint32_t *last_nonce, uint32_t n) {
+  uint32_t *nonce = (uint32_t *)(pdata + 76);
+  uint32_t data[20];
+  uint32_t tmp_hash7;
+  uint32_t Htarg = le32toh(((const uint32_t *)ptarget)[7]);
+  bool ret = false;
 
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
+  be32enc_vect(data, (const uint32_t *)pdata, 19);
 
-	while(1) {
-		uint32_t ostate[8];
+  while (1) {
+    uint32_t ostate[8];
 
-		*nonce = ++n;
-		data[19] = (n);
-		inkhash(ostate, data);
-		tmp_hash7 = (ostate[7]);
+    *nonce = ++n;
+    data[19] = (n);
+    inkhash(ostate, data);
+    tmp_hash7 = (ostate[7]);
 
-		applog(LOG_INFO, "data7 %08lx",
-					(long unsigned int)data[7]);
+    applog(LOG_INFO, "data7 %08lx", (long unsigned int)data[7]);
 
-		if (unlikely(tmp_hash7 <= Htarg)) {
-			((uint32_t *)pdata)[19] = htobe32(n);
-			*last_nonce = n;
-			ret = true;
-			break;
-		}
+    if (unlikely(tmp_hash7 <= Htarg)) {
+      ((uint32_t *)pdata)[19] = htobe32(n);
+      *last_nonce = n;
+      ret = true;
+      break;
+    }
 
-		if (unlikely((n >= max_nonce) || thr->work_restart)) {
-			*last_nonce = n;
-			break;
-		}
-	}
+    if (unlikely((n >= max_nonce) || thr->work_restart)) {
+      *last_nonce = n;
+      break;
+    }
+  }
 
-	return ret;
+  return ret;
 }
-
-
-

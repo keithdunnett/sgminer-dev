@@ -17,7 +17,7 @@ typedef struct _build_kernel_data {
   cl_context context;
   cl_device_id *device;
 
-// for compiler options
+  // for compiler options
   char platform[64];
   char sgminer_path[255];
   const char *kernel_path;

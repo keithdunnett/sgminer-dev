@@ -17,57 +17,57 @@
 #define BETWEEN_JOIN SEPSTR
 #define _DYNAMIC "D"
 
-#define _DEVS   "DEVS"
-#define _POOLS    "POOLS"
-#define _PROFILES    "PROFILES"
-#define _SUMMARY  "SUMMARY"
-#define _STATUS   "STATUS"
-#define _VERSION  "VERSION"
+#define _DEVS "DEVS"
+#define _POOLS "POOLS"
+#define _PROFILES "PROFILES"
+#define _SUMMARY "SUMMARY"
+#define _STATUS "STATUS"
+#define _VERSION "VERSION"
 #define _MINECONFIG "CONFIG"
-#define _GPU    "GPU"
+#define _GPU "GPU"
 
-#define _GPUS   "GPUS"
-#define _NOTIFY   "NOTIFY"
+#define _GPUS "GPUS"
+#define _NOTIFY "NOTIFY"
 #define _DEVDETAILS "DEVDETAILS"
-#define _BYE    "BYE"
-#define _RESTART  "RESTART"
-#define _MINESTATS  "STATS"
-#define _CHECK    "CHECK"
+#define _BYE "BYE"
+#define _RESTART "RESTART"
+#define _MINESTATS "STATS"
+#define _CHECK "CHECK"
 #define _MINECOIN "COIN"
 #define _DEBUGSET "DEBUG"
-#define _SETCONFIG  "SETCONFIG"
+#define _SETCONFIG "SETCONFIG"
 
-#define JSON0   "{"
-#define JSON1   "\""
-#define JSON2   "\":["
-#define JSON3   "]"
-#define JSON4   ",\"id\":1"
+#define JSON0 "{"
+#define JSON1 "\""
+#define JSON2 "\":["
+#define JSON3 "]"
+#define JSON4 ",\"id\":1"
 // If anyone cares, id=0 for truncated output
 #define JSON4_TRUNCATED ",\"id\":0"
-#define JSON5   "}"
+#define JSON5 "}"
 
-#define JSON_START  JSON0
+#define JSON_START JSON0
 #define JSON_DEVS JSON1 _DEVS JSON2
-#define JSON_POOLS  JSON1 _POOLS JSON2
-#define JSON_PROFILES  JSON1 _POOLS JSON2
-#define JSON_SUMMARY  JSON1 _SUMMARY JSON2
+#define JSON_POOLS JSON1 _POOLS JSON2
+#define JSON_PROFILES JSON1 _POOLS JSON2
+#define JSON_SUMMARY JSON1 _SUMMARY JSON2
 #define JSON_STATUS JSON1 _STATUS JSON2
-#define JSON_VERSION  JSON1 _VERSION JSON2
+#define JSON_VERSION JSON1 _VERSION JSON2
 #define JSON_MINECONFIG JSON1 _MINECONFIG JSON2
-#define JSON_GPU  JSON1 _GPU JSON2
+#define JSON_GPU JSON1 _GPU JSON2
 
 #define JSON_GPUS JSON1 _GPUS JSON2
 #define JSON_NOTIFY JSON1 _NOTIFY JSON2
 #define JSON_DEVDETAILS JSON1 _DEVDETAILS JSON2
-#define JSON_CLOSE  JSON3
-#define JSON_MINESTATS  JSON1 _MINESTATS JSON2
-#define JSON_CHECK  JSON1 _CHECK JSON2
+#define JSON_CLOSE JSON3
+#define JSON_MINESTATS JSON1 _MINESTATS JSON2
+#define JSON_CHECK JSON1 _CHECK JSON2
 #define JSON_MINECOIN JSON1 _MINECOIN JSON2
 #define JSON_DEBUGSET JSON1 _DEBUGSET JSON2
-#define JSON_SETCONFIG  JSON1 _SETCONFIG JSON2
+#define JSON_SETCONFIG JSON1 _SETCONFIG JSON2
 
-#define JSON_END  JSON4 JSON5
-#define JSON_END_TRUNCATED  JSON4_TRUNCATED JSON5
+#define JSON_END JSON4 JSON5
+#define JSON_END_TRUNCATED JSON4_TRUNCATED JSON5
 #define JSON_BETWEEN_JOIN ","
 
 #define MSG_INVGPU 1
@@ -200,7 +200,7 @@ enum code_parameters {
   PARAM_PRMAX,
   PARAM_POOLMAX,
 
-// Single generic case: have the code resolve it - see below
+  // Single generic case: have the code resolve it - see below
   PARAM_DMAX,
 
   PARAM_CMD,
@@ -251,38 +251,66 @@ struct io_list {
   struct io_list *next;
 };
 
-extern void message(struct io_data *io_data, int messageid, int paramid, char *param2, bool isjson);
+extern void message(struct io_data *io_data, int messageid, int paramid,
+                    char *param2, bool isjson);
 extern bool io_add(struct io_data *io_data, char *buf);
 extern void io_close(struct io_data *io_data);
 extern void io_free();
 
-extern struct api_data *api_add_escape(struct api_data *root, char *name, char *data, bool copy_data);
-extern struct api_data *api_add_string(struct api_data *root, char *name, char *data, bool copy_data);
-extern struct api_data *api_add_const(struct api_data *root, char *name, const char *data, bool copy_data);
-extern struct api_data *api_add_uint8(struct api_data *root, char *name, uint8_t *data, bool copy_data);
-extern struct api_data *api_add_uint16(struct api_data *root, char *name, uint16_t *data, bool copy_data);
-extern struct api_data *api_add_int(struct api_data *root, char *name, int *data, bool copy_data);
-extern struct api_data *api_add_uint(struct api_data *root, char *name, unsigned int *data, bool copy_data);
-extern struct api_data *api_add_uint32(struct api_data *root, char *name, uint32_t *data, bool copy_data);
-extern struct api_data *api_add_hex32(struct api_data *root, char *name, uint32_t *data, bool copy_data);
-extern struct api_data *api_add_uint64(struct api_data *root, char *name, uint64_t *data, bool copy_data);
-extern struct api_data *api_add_double(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_elapsed(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_bool(struct api_data *root, char *name, bool *data, bool copy_data);
-extern struct api_data *api_add_timeval(struct api_data *root, char *name, struct timeval *data, bool copy_data);
-extern struct api_data *api_add_time(struct api_data *root, char *name, time_t *data, bool copy_data);
-extern struct api_data *api_add_mhs(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_khs(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_mhtotal(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_temp(struct api_data *root, char *name, float *data, bool copy_data);
-extern struct api_data *api_add_utility(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_freq(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_volts(struct api_data *root, char *name, float *data, bool copy_data);
-extern struct api_data *api_add_hs(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_diff(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_percent(struct api_data *root, char *name, double *data, bool copy_data);
-extern struct api_data *api_add_avg(struct api_data *root, char *name, float *data, bool copy_data);
-extern struct api_data *print_data(struct api_data *root, char *buf, bool isjson, bool precom);
+extern struct api_data *api_add_escape(struct api_data *root, char *name,
+                                       char *data, bool copy_data);
+extern struct api_data *api_add_string(struct api_data *root, char *name,
+                                       char *data, bool copy_data);
+extern struct api_data *api_add_const(struct api_data *root, char *name,
+                                      const char *data, bool copy_data);
+extern struct api_data *api_add_uint8(struct api_data *root, char *name,
+                                      uint8_t *data, bool copy_data);
+extern struct api_data *api_add_uint16(struct api_data *root, char *name,
+                                       uint16_t *data, bool copy_data);
+extern struct api_data *api_add_int(struct api_data *root, char *name,
+                                    int *data, bool copy_data);
+extern struct api_data *api_add_uint(struct api_data *root, char *name,
+                                     unsigned int *data, bool copy_data);
+extern struct api_data *api_add_uint32(struct api_data *root, char *name,
+                                       uint32_t *data, bool copy_data);
+extern struct api_data *api_add_hex32(struct api_data *root, char *name,
+                                      uint32_t *data, bool copy_data);
+extern struct api_data *api_add_uint64(struct api_data *root, char *name,
+                                       uint64_t *data, bool copy_data);
+extern struct api_data *api_add_double(struct api_data *root, char *name,
+                                       double *data, bool copy_data);
+extern struct api_data *api_add_elapsed(struct api_data *root, char *name,
+                                        double *data, bool copy_data);
+extern struct api_data *api_add_bool(struct api_data *root, char *name,
+                                     bool *data, bool copy_data);
+extern struct api_data *api_add_timeval(struct api_data *root, char *name,
+                                        struct timeval *data, bool copy_data);
+extern struct api_data *api_add_time(struct api_data *root, char *name,
+                                     time_t *data, bool copy_data);
+extern struct api_data *api_add_mhs(struct api_data *root, char *name,
+                                    double *data, bool copy_data);
+extern struct api_data *api_add_khs(struct api_data *root, char *name,
+                                    double *data, bool copy_data);
+extern struct api_data *api_add_mhtotal(struct api_data *root, char *name,
+                                        double *data, bool copy_data);
+extern struct api_data *api_add_temp(struct api_data *root, char *name,
+                                     float *data, bool copy_data);
+extern struct api_data *api_add_utility(struct api_data *root, char *name,
+                                        double *data, bool copy_data);
+extern struct api_data *api_add_freq(struct api_data *root, char *name,
+                                     double *data, bool copy_data);
+extern struct api_data *api_add_volts(struct api_data *root, char *name,
+                                      float *data, bool copy_data);
+extern struct api_data *api_add_hs(struct api_data *root, char *name,
+                                   double *data, bool copy_data);
+extern struct api_data *api_add_diff(struct api_data *root, char *name,
+                                     double *data, bool copy_data);
+extern struct api_data *api_add_percent(struct api_data *root, char *name,
+                                        double *data, bool copy_data);
+extern struct api_data *api_add_avg(struct api_data *root, char *name,
+                                    float *data, bool copy_data);
+extern struct api_data *print_data(struct api_data *root, char *buf,
+                                   bool isjson, bool precom);
 
 #define SOCKBUFALLOCSIZ 65536
 
@@ -291,47 +319,50 @@ extern struct api_data *print_data(struct api_data *root, char *buf, bool isjson
 
 #if LOCK_TRACKING
 
-  #define LOCK_FMT_FFL " - called from %s %s():%d"
-  #define LOCKMSG(fmt, ...) fprintf(stderr, "APILOCK: " fmt "\n", ##__VA_ARGS__)
-  #define LOCKMSGMORE(fmt, ...) fprintf(stderr, "          " fmt "\n", ##__VA_ARGS__)
-  #define LOCKMSGFFL(fmt, ...) fprintf(stderr, "APILOCK: " fmt LOCK_FMT_FFL "\n", ##__VA_ARGS__, file, func, linenum)
-  #define LOCKMSGFLUSH() fflush(stderr)
+#define LOCK_FMT_FFL " - called from %s %s():%d"
+#define LOCKMSG(fmt, ...) fprintf(stderr, "APILOCK: " fmt "\n", ##__VA_ARGS__)
+#define LOCKMSGMORE(fmt, ...)                                                  \
+  fprintf(stderr, "          " fmt "\n", ##__VA_ARGS__)
+#define LOCKMSGFFL(fmt, ...)                                                   \
+  fprintf(stderr, "APILOCK: " fmt LOCK_FMT_FFL "\n", ##__VA_ARGS__, file,      \
+          func, linenum)
+#define LOCKMSGFLUSH() fflush(stderr)
 
-  typedef struct lockstat {
-    uint64_t lock_id;
-    const char *file;
-    const char *func;
-    int linenum;
-    struct timeval tv;
-  } LOCKSTAT;
+typedef struct lockstat {
+  uint64_t lock_id;
+  const char *file;
+  const char *func;
+  int linenum;
+  struct timeval tv;
+} LOCKSTAT;
 
-  typedef struct lockline {
-    struct lockline *prev;
-    struct lockstat *stat;
-    struct lockline *next;
-  } LOCKLINE;
+typedef struct lockline {
+  struct lockline *prev;
+  struct lockstat *stat;
+  struct lockline *next;
+} LOCKLINE;
 
-  typedef struct lockinfo {
-    void *lock;
-    enum cglock_typ typ;
-    const char *file;
-    const char *func;
-    int linenum;
-    uint64_t gets;
-    uint64_t gots;
-    uint64_t tries;
-    uint64_t dids;
-    uint64_t didnts; // should be tries - dids
-    uint64_t unlocks;
-    LOCKSTAT lastgot;
-    LOCKLINE *lockgets;
-    LOCKLINE *locktries;
-  } LOCKINFO;
+typedef struct lockinfo {
+  void *lock;
+  enum cglock_typ typ;
+  const char *file;
+  const char *func;
+  int linenum;
+  uint64_t gets;
+  uint64_t gots;
+  uint64_t tries;
+  uint64_t dids;
+  uint64_t didnts; // should be tries - dids
+  uint64_t unlocks;
+  LOCKSTAT lastgot;
+  LOCKLINE *lockgets;
+  LOCKLINE *locktries;
+} LOCKINFO;
 
-  typedef struct locklist {
-    LOCKINFO *info;
-    struct locklist *next;
-  } LOCKLIST;
+typedef struct locklist {
+  LOCKINFO *info;
+  struct locklist *next;
+} LOCKLIST;
 #endif
 
 #endif /* API_H */

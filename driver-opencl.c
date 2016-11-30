@@ -15,10 +15,10 @@
 #include <curses.h>
 #endif
 
-#include <string.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <signal.h>
+#include <string.h>
 #include <sys/types.h>
 
 #ifndef WIN32
@@ -26,11 +26,11 @@
 #endif
 #include <ccan/opt/opt.h>
 
-#include "include/compat.h"
-#include "miner.h"
 #include "config_parser.h"
 #include "driver-opencl.h"
 #include "findnonce.h"
+#include "include/compat.h"
+#include "miner.h"
 #include "ocl.h"
 //#include "adl.h"
 #include "util.h"
@@ -62,8 +62,7 @@ extern int gpu_fanspeed(int gpu);
 extern int gpu_fanpercent(int gpu);
 #endif
 
-char *set_vector(char *arg)
-{
+char *set_vector(char *arg) {
   int i, val = 0, device = 0;
   char *nextptr;
 
@@ -91,8 +90,7 @@ char *set_vector(char *arg)
   return NULL;
 }
 
-char *set_worksize(const char *arg)
-{
+char *set_worksize(const char *arg) {
   int i, val = 0, device = 0;
   char *tmpstr = strdup(arg);
   char *nextptr;
@@ -114,7 +112,8 @@ char *set_worksize(const char *arg)
     gpus[device++].work_size = val;
   } while ((nextptr = strtok(NULL, ",")) != NULL);
 
-  // if only 1 worksize was passed, assign the same worksize for all remaining GPUs
+  // if only 1 worksize was passed, assign the same worksize for all remaining
+  // GPUs
   if (device == 1) {
     for (i = device; i < total_devices; ++i) {
       gpus[i].work_size = gpus[0].work_size;
@@ -126,8 +125,7 @@ char *set_worksize(const char *arg)
   return NULL;
 }
 
-char *set_shaders(char *arg)
-{
+char *set_shaders(char *arg) {
   int i, val = 0, device = 0;
   char *nextptr;
 
@@ -151,8 +149,7 @@ char *set_shaders(char *arg)
   return NULL;
 }
 
-char *set_lookup_gap(char *arg)
-{
+char *set_lookup_gap(char *arg) {
   int i, val = 0, device = 0;
   char *nextptr;
 
@@ -176,8 +173,7 @@ char *set_lookup_gap(char *arg)
   return NULL;
 }
 
-char *set_thread_concurrency(const char *arg)
-{
+char *set_thread_concurrency(const char *arg) {
   int i, device = 0;
   size_t val = 0;
   char *tmpstr = strdup(arg);
@@ -207,7 +203,8 @@ char *set_thread_concurrency(const char *arg)
   if (device == 1) {
     for (i = device; i < total_devices; ++i) {
       gpus[i].opt_tc = gpus[0].opt_tc;
-      applog(LOG_DEBUG, "GPU %d Thread Concurrency set to %lu.", i, gpus[i].opt_tc);
+      applog(LOG_DEBUG, "GPU %d Thread Concurrency set to %lu.", i,
+             gpus[i].opt_tc);
     }
   }
 
@@ -218,8 +215,7 @@ char *set_thread_concurrency(const char *arg)
 #ifdef HAVE_ADL
 /* This function allows us to map an adl device to an opencl device for when
  * simple enumeration has failed to match them. */
-char *set_gpu_map(char *arg)
-{
+char *set_gpu_map(char *arg) {
   int val1 = 0, val2 = 0;
   char *nextptr;
 
@@ -246,8 +242,7 @@ char *set_gpu_map(char *arg)
   return NULL;
 }
 
-char *set_gpu_threads(const char *_arg)
-{
+char *set_gpu_threads(const char *_arg) {
   int i, val = 1, device = 0;
   char *nextptr;
   char *arg = (char *)alloca(strlen(_arg) + 1);
@@ -277,8 +272,7 @@ char *set_gpu_threads(const char *_arg)
   return NULL;
 }
 
-char *set_gpu_engine(const char *_arg)
-{
+char *set_gpu_engine(const char *_arg) {
   int i, val1 = 0, val2 = 0, device = 0;
   char *nextptr;
   char *arg = (char *)alloca(strlen(_arg) + 1);
@@ -295,21 +289,21 @@ char *set_gpu_engine(const char *_arg)
     gpus[device].min_engine = val1;
     gpus[device].gpu_engine = val2;
 
-    //also set adl settings otherwise range will never properly be applied
-    //since min_engine/gpu_engine are only called during init_adl() at startup
+    // also set adl settings otherwise range will never properly be applied
+    // since min_engine/gpu_engine are only called during init_adl() at startup
     gpus[device].adl.minspeed = val1 * 100;
     gpus[device].adl.maxspeed = val2 * 100;
 
     device++;
   } while ((nextptr = strtok(NULL, ",")) != NULL);
 
-  //if only 1 range passed, apply to all gpus
+  // if only 1 range passed, apply to all gpus
   if (device == 1) {
     for (i = 1; i < MAX_GPUDEVICES; i++) {
       gpus[i].min_engine = gpus[0].min_engine;
       gpus[i].gpu_engine = gpus[0].gpu_engine;
 
-      //set adl values
+      // set adl values
       gpus[i].adl.minspeed = val1 * 100;
       gpus[i].adl.maxspeed = val2 * 100;
     }
@@ -318,8 +312,7 @@ char *set_gpu_engine(const char *_arg)
   return NULL;
 }
 
-char *set_gpu_fan(const char *_arg)
-{
+char *set_gpu_fan(const char *_arg) {
   int i, val1 = 0, val2 = 0, device = 0;
   char *nextptr;
   char *arg = (char *)alloca(strlen(_arg) + 1);
@@ -356,8 +349,7 @@ char *set_gpu_fan(const char *_arg)
   return NULL;
 }
 
-char *set_gpu_memclock(const char *_arg)
-{
+char *set_gpu_memclock(const char *_arg) {
   int i, val = 0, device = 0;
   char *nextptr;
   char *arg = (char *)alloca(strlen(_arg) + 1);
@@ -387,8 +379,7 @@ char *set_gpu_memclock(const char *_arg)
   return NULL;
 }
 
-char *set_gpu_memdiff(char *arg)
-{
+char *set_gpu_memdiff(char *arg) {
   int i, val = 0, device = 0;
   char *nextptr;
 
@@ -416,8 +407,7 @@ char *set_gpu_memdiff(char *arg)
   return NULL;
 }
 
-char *set_gpu_powertune(char *arg)
-{
+char *set_gpu_powertune(char *arg) {
   int i, val = 0, device = 0;
   char *nextptr;
 
@@ -445,8 +435,7 @@ char *set_gpu_powertune(char *arg)
   return NULL;
 }
 
-char *set_gpu_vddc(char *arg)
-{
+char *set_gpu_vddc(char *arg) {
   int i, device = 0;
   float val = 0;
   char *nextptr;
@@ -475,8 +464,7 @@ char *set_gpu_vddc(char *arg)
   return NULL;
 }
 
-char *set_temp_overheat(char *arg)
-{
+char *set_temp_overheat(char *arg) {
   int i, val = 0, device = 0, *to;
   char *nextptr;
 
@@ -508,8 +496,7 @@ char *set_temp_overheat(char *arg)
   return NULL;
 }
 
-char *set_temp_target(char *arg)
-{
+char *set_temp_target(char *arg) {
   int i, val = 0, device = 0, *tt;
   char *nextptr;
 
@@ -542,8 +529,7 @@ char *set_temp_target(char *arg)
 }
 #endif
 
-char *set_intensity(const char *_arg)
-{
+char *set_intensity(const char *_arg) {
   int i, device = 0, *tt;
   char *nextptr, val = 0;
   char *arg = (char *)alloca(strlen(_arg) + 1);
@@ -557,12 +543,13 @@ char *set_intensity(const char *_arg)
   else {
     gpus[device].dynamic = false;
     val = atoi(nextptr);
-    if (val == 0) return "disabled";
+    if (val == 0)
+      return "disabled";
     if (val < MIN_INTENSITY || val > MAX_INTENSITY)
       return "Invalid value passed to set intensity";
     tt = &gpus[device].intensity;
     *tt = val;
-    gpus[device].xintensity = 0; // Disable shader based intensity
+    gpus[device].xintensity = 0;   // Disable shader based intensity
     gpus[device].rawintensity = 0; // Disable raw intensity
   }
 
@@ -574,13 +561,14 @@ char *set_intensity(const char *_arg)
     else {
       gpus[device].dynamic = false;
       val = atoi(nextptr);
-      if (val == 0) return "disabled";
+      if (val == 0)
+        return "disabled";
       if (val < MIN_INTENSITY || val > MAX_INTENSITY)
         return "Invalid value passed to set intensity";
 
       tt = &gpus[device].intensity;
       *tt = val;
-      gpus[device].xintensity = 0; // Disable shader based intensity
+      gpus[device].xintensity = 0;   // Disable shader based intensity
       gpus[device].rawintensity = 0; // Disable raw intensity
     }
     device++;
@@ -589,7 +577,7 @@ char *set_intensity(const char *_arg)
     for (i = device; i < MAX_GPUDEVICES; i++) {
       gpus[i].dynamic = gpus[0].dynamic;
       gpus[i].intensity = gpus[0].intensity;
-      gpus[i].xintensity = 0; // Disable shader based intensity
+      gpus[i].xintensity = 0;   // Disable shader based intensity
       gpus[i].rawintensity = 0; // Disable raw intensity
     }
   }
@@ -597,8 +585,7 @@ char *set_intensity(const char *_arg)
   return NULL;
 }
 
-char *set_xintensity(const char *_arg)
-{
+char *set_xintensity(const char *_arg) {
   int i, device = 0, val = 0;
   char *nextptr;
   char *arg = (char *)alloca(strlen(_arg) + 1);
@@ -608,40 +595,41 @@ char *set_xintensity(const char *_arg)
   if (nextptr == NULL)
     return "Invalid parameters for shader based intensity";
   val = atoi(nextptr);
-  if (val == 0) return "disabled";
+  if (val == 0)
+    return "disabled";
   if (val < MIN_XINTENSITY || val > MAX_XINTENSITY)
     return "Invalid value passed to set shader-based intensity";
 
-  gpus[device].dynamic = false; // Disable dynamic intensity
-  gpus[device].intensity = 0; // Disable regular intensity
+  gpus[device].dynamic = false;  // Disable dynamic intensity
+  gpus[device].intensity = 0;    // Disable regular intensity
   gpus[device].rawintensity = 0; // Disable raw intensity
   gpus[device].xintensity = val;
   device++;
 
   while ((nextptr = strtok(NULL, ",")) != NULL) {
     val = atoi(nextptr);
-    if (val == 0) return "disabled";
+    if (val == 0)
+      return "disabled";
     if (val < MIN_XINTENSITY || val > MAX_XINTENSITY)
       return "Invalid value passed to set shader based intensity";
-    gpus[device].dynamic = false; // Disable dynamic intensity
-    gpus[device].intensity = 0; // Disable regular intensity
+    gpus[device].dynamic = false;  // Disable dynamic intensity
+    gpus[device].intensity = 0;    // Disable regular intensity
     gpus[device].rawintensity = 0; // Disable raw intensity
     gpus[device].xintensity = val;
     device++;
   }
   if (device == 1)
-  for (i = device; i < MAX_GPUDEVICES; i++) {
-    gpus[i].dynamic = gpus[0].dynamic;
-    gpus[i].intensity = gpus[0].intensity;
-    gpus[i].rawintensity = gpus[0].rawintensity;
-    gpus[i].xintensity = gpus[0].xintensity;
-  }
+    for (i = device; i < MAX_GPUDEVICES; i++) {
+      gpus[i].dynamic = gpus[0].dynamic;
+      gpus[i].intensity = gpus[0].intensity;
+      gpus[i].rawintensity = gpus[0].rawintensity;
+      gpus[i].xintensity = gpus[0].xintensity;
+    }
 
   return NULL;
 }
 
-char *set_rawintensity(const char *_arg)
-{
+char *set_rawintensity(const char *_arg) {
   int i, device = 0, val = 0;
   char *nextptr;
   char *arg = (char *)alloca(strlen(_arg) + 1);
@@ -651,43 +639,44 @@ char *set_rawintensity(const char *_arg)
   if (nextptr == NULL)
     return "Invalid parameters for raw intensity";
   val = atoi(nextptr);
-  if (val == 0) return "disabled";
+  if (val == 0)
+    return "disabled";
   if (val < MIN_RAWINTENSITY || val > MAX_RAWINTENSITY)
     return "Invalid value passed to set raw intensity";
 
   gpus[device].dynamic = false; // Disable dynamic intensity
-  gpus[device].intensity = 0; // Disable regular intensity
-  gpus[device].xintensity = 0; // Disable xintensity
+  gpus[device].intensity = 0;   // Disable regular intensity
+  gpus[device].xintensity = 0;  // Disable xintensity
   gpus[device].rawintensity = val;
   device++;
 
   while ((nextptr = strtok(NULL, ",")) != NULL) {
     val = atoi(nextptr);
-    if (val == 0) return "disabled";
+    if (val == 0)
+      return "disabled";
     if (val < MIN_RAWINTENSITY || val > MAX_RAWINTENSITY)
       return "Invalid value passed to set raw intensity";
     gpus[device].dynamic = false; // Disable dynamic intensity
-    gpus[device].intensity = 0; // Disable regular intensity
-    gpus[device].xintensity = 0; // Disable xintensity
+    gpus[device].intensity = 0;   // Disable regular intensity
+    gpus[device].xintensity = 0;  // Disable xintensity
     gpus[device].rawintensity = val;
     device++;
   }
   if (device == 1)
-  for (i = device; i < MAX_GPUDEVICES; i++) {
-    gpus[i].dynamic = gpus[0].dynamic;
-    gpus[i].intensity = gpus[0].intensity;
-    gpus[i].rawintensity = gpus[0].rawintensity;
-    gpus[i].xintensity = gpus[0].xintensity;
-  }
+    for (i = device; i < MAX_GPUDEVICES; i++) {
+      gpus[i].dynamic = gpus[0].dynamic;
+      gpus[i].intensity = gpus[0].intensity;
+      gpus[i].rawintensity = gpus[0].rawintensity;
+      gpus[i].xintensity = gpus[0].xintensity;
+    }
 
   return NULL;
 }
 
-void print_ndevs(int *ndevs)
-{
+void print_ndevs(int *ndevs) {
   opt_verbose = true;
   opencl_drv.drv_detect();
-//  clear_adl(*ndevs);
+  //  clear_adl(*ndevs);
   applog(LOG_INFO, "%i GPU devices max detected", *ndevs);
 }
 
@@ -697,8 +686,7 @@ struct cgpu_info *cpus;
 /* In dynamic mode, only the first thread of each device will be in use.
  * This potentially could start a thread that was stopped with the start-stop
  * options if one were to disable dynamic from the menu on a paused GPU */
-void pause_dynamic_threads(int gpu)
-{
+void pause_dynamic_threads(int gpu) {
   struct cgpu_info *cgpu = &gpus[gpu];
   int i;
 
@@ -720,8 +708,7 @@ void pause_dynamic_threads(int gpu)
 }
 
 #if defined(HAVE_CURSES)
-void manage_gpu(void)
-{
+void manage_gpu(void) {
   struct thr_info *thr;
   int selected, gpu, i;
   char checkin[40];
@@ -750,16 +737,19 @@ retry: // TODO: refactor
       mhash_base = false;
     }
 
-    wlog("GPU %d: %.1f / %.1f %sh/s | A:%d  R:%d  HW:%d  U:%.2f/m  I:%d  xI:%d  rI:%d\n",
-      gpu, displayed_rolling, displayed_total, mhash_base ? "M" : "K",
-      cgpu->accepted, cgpu->rejected, cgpu->hw_errors,
-      cgpu->utility, cgpu->intensity, cgpu->xintensity, cgpu->rawintensity);
+    wlog("GPU %d: %.1f / %.1f %sh/s | A:%d  R:%d  HW:%d  U:%.2f/m  I:%d  xI:%d "
+         " rI:%d\n",
+         gpu, displayed_rolling, displayed_total, mhash_base ? "M" : "K",
+         cgpu->accepted, cgpu->rejected, cgpu->hw_errors, cgpu->utility,
+         cgpu->intensity, cgpu->xintensity, cgpu->rawintensity);
 #ifdef HAVE_ADL
     if (gpus[gpu].has_adl) {
-      int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
+      int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0,
+          fanpercent = 0, powertune = 0;
       float temp = 0, vddc = 0;
 
-      if (gpu_stats(gpu, &temp, &engineclock, &memclock, &vddc, &activity, &fanspeed, &fanpercent, &powertune)) {
+      if (gpu_stats(gpu, &temp, &engineclock, &memclock, &vddc, &activity,
+                    &fanspeed, &fanpercent, &powertune)) {
         char logline[255];
 
         strcpy(logline, ""); // In case it has no data
@@ -799,7 +789,9 @@ retry: // TODO: refactor
       displayed_rolling = thr->rolling;
       if (!mhash_base)
         displayed_rolling *= 1000;
-      wlog("Thread %d: %.1f %sh/s %s ", i, displayed_rolling, mhash_base ? "M" : "K", cgpu->deven != DEV_DISABLED ? "Enabled" : "Disabled");
+      wlog("Thread %d: %.1f %sh/s %s ", i, displayed_rolling,
+           mhash_base ? "M" : "K",
+           cgpu->deven != DEV_DISABLED ? "Enabled" : "Disabled");
       switch (cgpu->status) {
       default:
       case LIFE_WELL:
@@ -825,7 +817,8 @@ retry: // TODO: refactor
     wlog("\n");
   }
 
-//  wlogprint("[E]nable  [D]isable  [R]estart GPU  %s\n", adl_active ? "[C]hange settings" : "");
+  //  wlogprint("[E]nable  [D]isable  [R]estart GPU  %s\n", adl_active ?
+  //  "[C]hange settings" : "");
   wlogprint("[E]nable  [D]isable  [R]estart GPU");
   wlogprint("[I]ntensity  E[x]perimental intensity  R[a]w Intensity\n");
 
@@ -869,8 +862,7 @@ retry: // TODO: refactor
     }
     rd_unlock(&mining_thr_lock);
     goto retry;
-  }
-  else if (!strncasecmp(&input, "d", 1)) {
+  } else if (!strncasecmp(&input, "d", 1)) {
     if (selected)
       selected = curses_int("Select GPU to disable");
     if (selected < 0 || selected >= nDevs) {
@@ -883,8 +875,7 @@ retry: // TODO: refactor
     }
     gpus[selected].deven = DEV_DISABLED;
     goto retry;
-  }
-  else if (!strncasecmp(&input, "i", 1)) {
+  } else if (!strncasecmp(&input, "i", 1)) {
     int intensity;
     char *intvar;
 
@@ -895,9 +886,8 @@ retry: // TODO: refactor
       goto retry;
     }
 
-    intvar = curses_input("Set GPU scan intensity (d or "
-      MIN_INTENSITY_STR " -> "
-      MAX_INTENSITY_STR ")");
+    intvar = curses_input("Set GPU scan intensity (d or " MIN_INTENSITY_STR
+                          " -> " MAX_INTENSITY_STR ")");
     if (!intvar) {
       wlogprint("Invalid input\n");
       goto retry;
@@ -922,7 +912,8 @@ retry: // TODO: refactor
     gpus[selected].dynamic = false;
     gpus[selected].intensity = intensity;
     gpus[selected].xintensity = 0; // Disable xintensity when enabling intensity
-    gpus[selected].rawintensity = 0; // Disable raw intensity when enabling intensity
+    gpus[selected].rawintensity =
+        0; // Disable raw intensity when enabling intensity
     wlogprint("Intensity on gpu %d set to %d\n", selected, intensity);
 
     // fix config with new settings so that we can save them
@@ -930,8 +921,7 @@ retry: // TODO: refactor
 
     pause_dynamic_threads(selected);
     goto retry;
-  }
-  else if (!strncasecmp(&input, "x", 1)) {
+  } else if (!strncasecmp(&input, "x", 1)) {
     int xintensity;
     char *intvar;
 
@@ -942,7 +932,9 @@ retry: // TODO: refactor
       goto retry;
     }
 
-    intvar = curses_input("Set experimental GPU scan intensity (" MIN_XINTENSITY_STR " -> " MAX_XINTENSITY_STR ")");
+    intvar =
+        curses_input("Set experimental GPU scan intensity (" MIN_XINTENSITY_STR
+                     " -> " MAX_XINTENSITY_STR ")");
     if (!intvar) {
       wlogprint("Invalid input\n");
       goto retry;
@@ -955,17 +947,18 @@ retry: // TODO: refactor
     }
     gpus[selected].dynamic = false;
     gpus[selected].intensity = 0; // Disable intensity when enabling xintensity
-    gpus[selected].rawintensity = 0; // Disable raw intensity when enabling xintensity
+    gpus[selected].rawintensity =
+        0; // Disable raw intensity when enabling xintensity
     gpus[selected].xintensity = xintensity;
-    wlogprint("Experimental intensity on gpu %d set to %d\n", selected, xintensity);
+    wlogprint("Experimental intensity on gpu %d set to %d\n", selected,
+              xintensity);
 
     // fix config with new settings so that we can save them
     update_config_xintensity(get_gpu_profile(selected));
 
     pause_dynamic_threads(selected);
     goto retry;
-  }
-  else if (!strncasecmp(&input, "a", 1)) {
+  } else if (!strncasecmp(&input, "a", 1)) {
     int rawintensity;
     char *intvar;
 
@@ -976,7 +969,8 @@ retry: // TODO: refactor
       goto retry;
     }
 
-    intvar = curses_input("Set raw GPU scan intensity (" MIN_RAWINTENSITY_STR " -> " MAX_RAWINTENSITY_STR ")");
+    intvar = curses_input("Set raw GPU scan intensity (" MIN_RAWINTENSITY_STR
+                          " -> " MAX_RAWINTENSITY_STR ")");
     if (!intvar) {
       wlogprint("Invalid input\n");
       goto retry;
@@ -988,8 +982,10 @@ retry: // TODO: refactor
       goto retry;
     }
     gpus[selected].dynamic = false;
-    gpus[selected].intensity = 0; // Disable intensity when enabling raw intensity
-    gpus[selected].xintensity = 0; // Disable xintensity when enabling raw intensity
+    gpus[selected].intensity =
+        0; // Disable intensity when enabling raw intensity
+    gpus[selected].xintensity =
+        0; // Disable xintensity when enabling raw intensity
     gpus[selected].rawintensity = rawintensity;
     wlogprint("Raw intensity on gpu %d set to %d\n", selected, rawintensity);
 
@@ -998,8 +994,7 @@ retry: // TODO: refactor
 
     pause_dynamic_threads(selected);
     goto retry;
-  }
-  else if (!strncasecmp(&input, "r", 1)) {
+  } else if (!strncasecmp(&input, "r", 1)) {
     if (selected)
       selected = curses_int("Select GPU to attempt to restart");
     if (selected < 0 || selected >= nDevs) {
@@ -1009,53 +1004,53 @@ retry: // TODO: refactor
     wlogprint("Attempting to restart threads of GPU %d\n", selected);
     reinit_device(&gpus[selected]);
     goto retry;
-//  }
-//  else if (adl_active && (!strncasecmp(&input, "c", 1))) {
-//    if (selected)
-//      selected = curses_int("Select GPU to change settings on");
-//    if (selected < 0 || selected >= nDevs) {
-//      wlogprint("Invalid selection\n");
-//      goto retry;
-//    }
-//    change_gpusettings(selected);
-//    goto retry;
-  }
-  else
+    //  }
+    //  else if (adl_active && (!strncasecmp(&input, "c", 1))) {
+    //    if (selected)
+    //      selected = curses_int("Select GPU to change settings on");
+    //    if (selected < 0 || selected >= nDevs) {
+    //      wlogprint("Invalid selection\n");
+    //      goto retry;
+    //    }
+    //    change_gpusettings(selected);
+    //    goto retry;
+  } else
     clear_logwin();
 
   immedok(logwin, false);
   opt_loginput = false;
 }
 #else
-void manage_gpu(void)
-{
-}
+void manage_gpu(void) {}
 #endif
 
 static _clState *clStates[MAX_GPUDEVICES];
 
-static void set_threads_hashes(unsigned int vectors, unsigned int compute_shaders, int64_t *hashes, size_t *globalThreads,
-  unsigned int minthreads, __maybe_unused int *intensity, __maybe_unused int *xintensity,
-  __maybe_unused int *rawintensity, algorithm_t *algorithm)
-{
+static void set_threads_hashes(unsigned int vectors,
+                               unsigned int compute_shaders, int64_t *hashes,
+                               size_t *globalThreads, unsigned int minthreads,
+                               __maybe_unused int *intensity,
+                               __maybe_unused int *xintensity,
+                               __maybe_unused int *rawintensity,
+                               algorithm_t *algorithm) {
   unsigned int threads = 0;
   while (threads < minthreads) {
 
     if (*rawintensity > 0) {
       threads = *rawintensity;
-    }
-    else if (*xintensity > 0) {
-      threads = compute_shaders * ((algorithm->xintensity_shift) ? (1 << (algorithm->xintensity_shift + *xintensity)) : *xintensity);
-    }
-    else {
+    } else if (*xintensity > 0) {
+      threads = compute_shaders *
+                ((algorithm->xintensity_shift)
+                     ? (1 << (algorithm->xintensity_shift + *xintensity))
+                     : *xintensity);
+    } else {
       threads = 1 << (algorithm->intensity_shift + *intensity);
     }
 
     if (threads < minthreads) {
       if (likely(*intensity < MAX_INTENSITY)) {
         (*intensity)++;
-      }
-      else {
+      } else {
         threads = minthreads;
       }
     }
@@ -1070,8 +1065,7 @@ static void set_threads_hashes(unsigned int vectors, unsigned int compute_shader
  * return, unable to harm other GPUs. If it does return, it means we only had
  * a soft failure and then the reinit_gpu thread is ready to tackle another
  * GPU */
-void *reinit_gpu(void *userdata)
-{
+void *reinit_gpu(void *userdata) {
   struct thr_info *mythr = (struct thr_info *)userdata;
   struct cgpu_info *cgpu;
   struct thr_info *thr;
@@ -1088,7 +1082,8 @@ select_cgpu:
     goto out;
 
   if (clDevicesNum() != nDevs) {
-    applog(LOG_WARNING, "Hardware not reporting same number of active devices, will not attempt to restart GPU");
+    applog(LOG_WARNING, "Hardware not reporting same number of active devices, "
+                        "will not attempt to restart GPU");
     goto out;
   }
 
@@ -1110,8 +1105,7 @@ select_cgpu:
       applog(LOG_WARNING, "Thread %d still exists, killing it off", thr_id);
       cg_completion_timeout(&thr_info_cancel_join, thr, 5000);
       thr->cgpu->drv->thread_shutdown(thr);
-    }
-    else
+    } else
       applog(LOG_WARNING, "Thread %d no longer exists", thr_id);
   }
   rd_unlock(&mining_thr_lock);
@@ -1129,17 +1123,18 @@ select_cgpu:
 
     virtual_gpu = cgpu->virtual_gpu;
     /* Lose this ram cause we may get stuck here! */
-    //tq_freeze(thr->q);
+    // tq_freeze(thr->q);
 
     thr->q = tq_new();
     if (!thr->q)
       quit(1, "Failed to tq_new in reinit_gpu");
 
     /* Lose this ram cause we may dereference in the dying thread! */
-    //free(clState);
+    // free(clState);
 
     applog(LOG_INFO, "Reinit GPU thread %d", thr_id);
-    clStates[thr_id] = initCl(virtual_gpu, name, sizeof(name), &cgpu->algorithm);
+    clStates[thr_id] =
+        initCl(virtual_gpu, name, sizeof(name), &cgpu->algorithm);
     if (!clStates[thr_id]) {
       applog(LOG_ERR, "Failed to reinit GPU thread %d", thr_id);
       goto select_cgpu;
@@ -1175,8 +1170,7 @@ out:
   return NULL;
 }
 
-static void opencl_detect(void)
-{
+static void opencl_detect(void) {
   int i;
 
   nDevs = clDevicesNum();
@@ -1213,18 +1207,17 @@ static void opencl_detect(void)
     add_cgpu(cgpu);
   }
 
-//  if (!opt_noadl)
-//    init_adl(nDevs);
+  //  if (!opt_noadl)
+  //    init_adl(nDevs);
 }
 
-static void reinit_opencl_device(struct cgpu_info *gpu)
-{
+static void reinit_opencl_device(struct cgpu_info *gpu) {
   tq_push(control_thr[gpur_thr_id].q, gpu);
 }
 
 #ifdef HAVE_ADL
-static void get_opencl_statline_before(char *buf, size_t bufsiz, struct cgpu_info *gpu)
-{
+static void get_opencl_statline_before(char *buf, size_t bufsiz,
+                                       struct cgpu_info *gpu) {
   if (gpu->has_adl) {
     int gpuid = gpu->device_id;
     float gt = gpu_temp(gpuid);
@@ -1243,14 +1236,13 @@ static void get_opencl_statline_before(char *buf, size_t bufsiz, struct cgpu_inf
     else
       tailsprintf(buf, bufsiz, "        ");
     tailsprintf(buf, bufsiz, "| ");
-  }
-  else
+  } else
     gpu->drv->get_statline_before = &blank_get_statline_before;
 }
 #endif
 
-static void get_opencl_statline(char *buf, size_t bufsiz, struct cgpu_info *gpu)
-{
+static void get_opencl_statline(char *buf, size_t bufsiz,
+                                struct cgpu_info *gpu) {
   if (gpu->rawintensity > 0)
     tailsprintf(buf, bufsiz, " rI:%3d", gpu->rawintensity);
   else if (gpu->xintensity > 0)
@@ -1260,14 +1252,13 @@ static void get_opencl_statline(char *buf, size_t bufsiz, struct cgpu_info *gpu)
 }
 
 struct opencl_thread_data {
-  cl_int(*queue_kernel_parameters)(_clState *, dev_blk_ctx *, cl_uint);
+  cl_int (*queue_kernel_parameters)(_clState *, dev_blk_ctx *, cl_uint);
   uint32_t *res;
 };
 
 static uint32_t *blank_res;
 
-static bool opencl_thread_prepare(struct thr_info *thr)
-{
+static bool opencl_thread_prepare(struct thr_info *thr) {
   char name[256];
   struct timeval now;
   struct cgpu_info *cgpu = thr->cgpu;
@@ -1285,7 +1276,8 @@ static bool opencl_thread_prepare(struct thr_info *thr)
   }
 
   strcpy(name, "");
-  applog(LOG_INFO, "Init GPU thread %i GPU %i virtual GPU %i", i, gpu, virtual_gpu);
+  applog(LOG_INFO, "Init GPU thread %i GPU %i virtual GPU %i", i, gpu,
+         virtual_gpu);
 
   clStates[i] = initCl(virtual_gpu, name, sizeof(name), &cgpu->algorithm);
   if (!clStates[i]) {
@@ -1293,7 +1285,8 @@ static bool opencl_thread_prepare(struct thr_info *thr)
     if (use_curses)
       enable_curses();
 #endif
-    applog(LOG_ERR, "Failed to init GPU thread %d, disabling device %d", i, gpu);
+    applog(LOG_ERR, "Failed to init GPU thread %d, disabling device %d", i,
+           gpu);
     if (!failmessage) {
       applog(LOG_ERR, "Restarting the GPU from the menu will not fix this.");
       applog(LOG_ERR, "Re-check your configuration and try restarting.");
@@ -1324,8 +1317,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
   return true;
 }
 
-static bool opencl_thread_init(struct thr_info *thr)
-{
+static bool opencl_thread_init(struct thr_info *thr) {
   const int thr_id = thr->id;
   struct cgpu_info *gpu = thr->cgpu;
   struct opencl_thread_data *thrdata;
@@ -1336,7 +1328,9 @@ static bool opencl_thread_init(struct thr_info *thr)
   int buffersize = BUFFERSIZE;
 
   if (!thrdata) {
-    applog(LOG_ERR, "Failed to calloc before algorithm.queue_kernel in opencl_thread_init");
+    applog(
+        LOG_ERR,
+        "Failed to calloc before algorithm.queue_kernel in opencl_thread_init");
     return false;
   }
 
@@ -1345,11 +1339,14 @@ static bool opencl_thread_init(struct thr_info *thr)
 
   if (!thrdata->res) {
     free(thrdata);
-    applog(LOG_ERR, "Failed to calloc during algorithm.queue_kernel in opencl_thread_init");
+    applog(
+        LOG_ERR,
+        "Failed to calloc during algorithm.queue_kernel in opencl_thread_init");
     return false;
   }
-  status |= clEnqueueWriteBuffer(clState->commandQueue, clState->outputBuffer, CL_TRUE, 0,
-    buffersize, blank_res, 0, NULL, NULL);
+  status |=
+      clEnqueueWriteBuffer(clState->commandQueue, clState->outputBuffer,
+                           CL_TRUE, 0, buffersize, blank_res, 0, NULL, NULL);
   if (unlikely(status != CL_SUCCESS)) {
     free(thrdata->res);
     free(thrdata);
@@ -1364,29 +1361,31 @@ static bool opencl_thread_init(struct thr_info *thr)
   return true;
 }
 
-static bool opencl_prepare_work(struct thr_info __maybe_unused *thr, struct work *work)
-{
+static bool opencl_prepare_work(struct thr_info __maybe_unused *thr,
+                                struct work *work) {
   work->blk.work = work;
-  if (work->pool->algorithm.prepare_work) work->pool->algorithm.prepare_work(&work->blk, (uint32_t *)(work->midstate), (uint32_t *)(work->data));
+  if (work->pool->algorithm.prepare_work)
+    work->pool->algorithm.prepare_work(&work->blk, (uint32_t *)(work->midstate),
+                                       (uint32_t *)(work->data));
   thr->pool_no = work->pool->pool_no;
-  
+
   return true;
 }
 
 extern int opt_dynamic_interval;
 
 static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
-  int64_t __maybe_unused max_nonce)
-{
+                               int64_t __maybe_unused max_nonce) {
   const int thr_id = thr->id;
-  struct opencl_thread_data *thrdata = (struct opencl_thread_data *)thr->cgpu_data;
+  struct opencl_thread_data *thrdata =
+      (struct opencl_thread_data *)thr->cgpu_data;
   struct cgpu_info *gpu = thr->cgpu;
   _clState *clState = clStates[thr_id];
   const int dynamic_us = opt_dynamic_interval * 1000;
 
   cl_int status;
   size_t globalThreads[1];
-  size_t localThreads[1] = { clState->wsize };
+  size_t localThreads[1] = {clState->wsize};
   size_t *p_global_work_offset = NULL;
   int64_t hashes;
   int found = gpu->algorithm.found_idx;
@@ -1403,150 +1402,170 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
     if (gpu_us > dynamic_us) {
       if (gpu->intensity > MIN_INTENSITY)
         --gpu->intensity;
-    }
-    else if (gpu_us < dynamic_us / 2) {
+    } else if (gpu_us < dynamic_us / 2) {
       if (gpu->intensity < MAX_INTENSITY)
         ++gpu->intensity;
     }
     memcpy(&(gpu->tv_gpustart), &tv_gpuend, sizeof(struct timeval));
     gpu->intervals = 0;
   }
-  
-  set_threads_hashes(clState->vwidth, clState->compute_shaders, &hashes, globalThreads, localThreads[0],
-    &gpu->intensity, &gpu->xintensity, &gpu->rawintensity, &gpu->algorithm);
+
+  set_threads_hashes(clState->vwidth, clState->compute_shaders, &hashes,
+                     globalThreads, localThreads[0], &gpu->intensity,
+                     &gpu->xintensity, &gpu->rawintensity, &gpu->algorithm);
   if (hashes > gpu->max_hashes)
     gpu->max_hashes = hashes;
 
-  status = thrdata->queue_kernel_parameters(clState, &work->blk, globalThreads[0]);
+  status =
+      thrdata->queue_kernel_parameters(clState, &work->blk, globalThreads[0]);
   if (unlikely(status != CL_SUCCESS)) {
     applog(LOG_ERR, "Error: clSetKernelArg of all params failed.");
     return -1;
   }
-  
-  if(gpu->algorithm.type == ALGO_CRYPTONIGHT)
-  {
-	mutex_lock(&work->pool->XMRGlobalNonceLock);
-	work->blk.nonce = work->pool->XMRGlobalNonce;
-	work->pool->XMRGlobalNonce += gpu->max_hashes;
-	mutex_unlock(&work->pool->XMRGlobalNonceLock);
+
+  if (gpu->algorithm.type == ALGO_CRYPTONIGHT) {
+    mutex_lock(&work->pool->XMRGlobalNonceLock);
+    work->blk.nonce = work->pool->XMRGlobalNonce;
+    work->pool->XMRGlobalNonce += gpu->max_hashes;
+    mutex_unlock(&work->pool->XMRGlobalNonceLock);
   }
-  
+
   if (clState->goffset)
     p_global_work_offset = (size_t *)&work->blk.nonce;
-  
-	if(gpu->algorithm.type == ALGO_CRYPTONIGHT)
-	{
-		size_t GlobalThreads = *globalThreads, Nonce[2] = { (size_t)work->blk.nonce, 1}, gthreads[2] = { *globalThreads, 8 }, lthreads[2] = { *localThreads, 8 };
-		size_t BranchBufCount[4] = { 0, 0, 0, 0 };
-		
-		for(int i = 0; i < 4; ++i)
-		{
-			cl_uint zero = 0;
 
-			status = clEnqueueWriteBuffer(clState->commandQueue, clState->BranchBuffer[i], CL_FALSE, sizeof(cl_uint) * GlobalThreads, sizeof(cl_uint), &zero, 0, NULL, NULL);
+  if (gpu->algorithm.type == ALGO_CRYPTONIGHT) {
+    size_t GlobalThreads = *globalThreads,
+           Nonce[2] = {(size_t)work->blk.nonce, 1},
+           gthreads[2] = {*globalThreads, 8}, lthreads[2] = {*localThreads, 8};
+    size_t BranchBufCount[4] = {0, 0, 0, 0};
 
-			if(status != CL_SUCCESS)
-			{
-				applog(LOG_ERR, "Error %d while resetting branch buffer counter %d.\n", status, i);
-				return(-1);
-			}
-		}
-		
-		clFinish(clState->commandQueue);
-		
-		// Main CN P0
-		status = clEnqueueNDRangeKernel(clState->commandQueue, clState->kernel, 2, Nonce, gthreads, lthreads, 0, NULL, NULL);
-		
-		if(status != CL_SUCCESS)
-		{
-			applog(LOG_ERR, "Error %d while attempting to enqueue kernel 0.", status);
-			return(-1);
-		}
-		
-		// Main CN P1
-		status = clEnqueueNDRangeKernel(clState->commandQueue, clState->extra_kernels[0], 1, p_global_work_offset, globalThreads, localThreads, 0, NULL, NULL);
-		
-		if(status != CL_SUCCESS)
-		{
-			applog(LOG_ERR, "Error %d while attempting to enqueue kernel 1.", status);
-			return(-1);
-		}
-		
-		// Main CN P2
-		status = clEnqueueNDRangeKernel(clState->commandQueue, clState->extra_kernels[1], 2, Nonce, gthreads, lthreads, 0, NULL, NULL);
-		
-		if(status != CL_SUCCESS)
-		{
-			applog(LOG_ERR, "Error %d while attempting to enqueue kernel 2.", status);
-			return(-1);
-		}
-		
-		// Read BranchBuf counters
-		
-		for(int i = 0; i < 4; ++i)
-		{
-			status = clEnqueueReadBuffer(clState->commandQueue, clState->BranchBuffer[i], CL_FALSE, sizeof(cl_uint) * GlobalThreads, sizeof(cl_uint), BranchBufCount + i, 0, NULL, NULL);
-			
-			if(status != CL_SUCCESS)
-			{
-				applog(LOG_ERR, "Error %d while attempting to read branch buffer counter %d.", status, i);
-				return(-1);
-			}
-		}
-		
-		clFinish(clState->commandQueue);
-		
-		for(int i = 0; i < 4; ++i)
-		{
-			if(BranchBufCount[i])
-			{
-				cl_ulong tmp = BranchBufCount[i];
-				
-				// Threads
-				status = clSetKernelArg(clState->extra_kernels[i + 2], 4, sizeof(cl_ulong), &tmp);
-				
-				if(status != CL_SUCCESS)
-				{
-					applog(LOG_ERR, "Error %d while attempting to set argument 4 for kernel %d.", status, i + 2);
-					return(-1);
-				}
-				
-				// Make it a multiple of the local worksize (some drivers will otherwise shit a brick)
-				BranchBufCount[i] += (clState->wsize - (BranchBufCount[i] & (clState->wsize - 1)));
-				
-				status = clEnqueueNDRangeKernel(clState->commandQueue, clState->extra_kernels[i + 2], 1, p_global_work_offset, BranchBufCount + i, localThreads, 0, NULL, NULL);
-				
-				if(status != CL_SUCCESS)
-				{
-					applog(LOG_ERR, "Error %d while attempting to enqueue kernel %d.", status, i + 2);
-					return(-1);
-				}
-			}
-		}
-	}
-  else
-  {
-	  status = clEnqueueNDRangeKernel(clState->commandQueue, clState->kernel, 1, p_global_work_offset,
-		globalThreads, localThreads, 0, NULL, NULL);
-	  if (unlikely(status != CL_SUCCESS)) {
-		applog(LOG_ERR, "Error %d: Enqueueing kernel onto command queue. (clEnqueueNDRangeKernel)", status);
-		return -1;
-	  }
+    for (int i = 0; i < 4; ++i) {
+      cl_uint zero = 0;
 
-	  for (i = 0; i < clState->n_extra_kernels; i++) {
-		status = clEnqueueNDRangeKernel(clState->commandQueue, clState->extra_kernels[i], 1, p_global_work_offset,
-		  globalThreads, localThreads, 0, NULL, NULL);
-		if (unlikely(status != CL_SUCCESS)) {
-		  applog(LOG_ERR, "Error %d: Enqueueing kernel onto command queue. (clEnqueueNDRangeKernel)", status);
-		  return -1;
-		}
-	  }
+      status =
+          clEnqueueWriteBuffer(clState->commandQueue, clState->BranchBuffer[i],
+                               CL_FALSE, sizeof(cl_uint) * GlobalThreads,
+                               sizeof(cl_uint), &zero, 0, NULL, NULL);
+
+      if (status != CL_SUCCESS) {
+        applog(LOG_ERR, "Error %d while resetting branch buffer counter %d.\n",
+               status, i);
+        return (-1);
+      }
+    }
+
+    clFinish(clState->commandQueue);
+
+    // Main CN P0
+    status = clEnqueueNDRangeKernel(clState->commandQueue, clState->kernel, 2,
+                                    Nonce, gthreads, lthreads, 0, NULL, NULL);
+
+    if (status != CL_SUCCESS) {
+      applog(LOG_ERR, "Error %d while attempting to enqueue kernel 0.", status);
+      return (-1);
+    }
+
+    // Main CN P1
+    status = clEnqueueNDRangeKernel(
+        clState->commandQueue, clState->extra_kernels[0], 1,
+        p_global_work_offset, globalThreads, localThreads, 0, NULL, NULL);
+
+    if (status != CL_SUCCESS) {
+      applog(LOG_ERR, "Error %d while attempting to enqueue kernel 1.", status);
+      return (-1);
+    }
+
+    // Main CN P2
+    status =
+        clEnqueueNDRangeKernel(clState->commandQueue, clState->extra_kernels[1],
+                               2, Nonce, gthreads, lthreads, 0, NULL, NULL);
+
+    if (status != CL_SUCCESS) {
+      applog(LOG_ERR, "Error %d while attempting to enqueue kernel 2.", status);
+      return (-1);
+    }
+
+    // Read BranchBuf counters
+
+    for (int i = 0; i < 4; ++i) {
+      status = clEnqueueReadBuffer(
+          clState->commandQueue, clState->BranchBuffer[i], CL_FALSE,
+          sizeof(cl_uint) * GlobalThreads, sizeof(cl_uint), BranchBufCount + i,
+          0, NULL, NULL);
+
+      if (status != CL_SUCCESS) {
+        applog(LOG_ERR,
+               "Error %d while attempting to read branch buffer counter %d.",
+               status, i);
+        return (-1);
+      }
+    }
+
+    clFinish(clState->commandQueue);
+
+    for (int i = 0; i < 4; ++i) {
+      if (BranchBufCount[i]) {
+        cl_ulong tmp = BranchBufCount[i];
+
+        // Threads
+        status = clSetKernelArg(clState->extra_kernels[i + 2], 4,
+                                sizeof(cl_ulong), &tmp);
+
+        if (status != CL_SUCCESS) {
+          applog(LOG_ERR,
+                 "Error %d while attempting to set argument 4 for kernel %d.",
+                 status, i + 2);
+          return (-1);
+        }
+
+        // Make it a multiple of the local worksize (some drivers will otherwise
+        // shit a brick)
+        BranchBufCount[i] +=
+            (clState->wsize - (BranchBufCount[i] & (clState->wsize - 1)));
+
+        status = clEnqueueNDRangeKernel(
+            clState->commandQueue, clState->extra_kernels[i + 2], 1,
+            p_global_work_offset, BranchBufCount + i, localThreads, 0, NULL,
+            NULL);
+
+        if (status != CL_SUCCESS) {
+          applog(LOG_ERR, "Error %d while attempting to enqueue kernel %d.",
+                 status, i + 2);
+          return (-1);
+        }
+      }
+    }
+  } else {
+    status = clEnqueueNDRangeKernel(clState->commandQueue, clState->kernel, 1,
+                                    p_global_work_offset, globalThreads,
+                                    localThreads, 0, NULL, NULL);
+    if (unlikely(status != CL_SUCCESS)) {
+      applog(LOG_ERR, "Error %d: Enqueueing kernel onto command queue. "
+                      "(clEnqueueNDRangeKernel)",
+             status);
+      return -1;
+    }
+
+    for (i = 0; i < clState->n_extra_kernels; i++) {
+      status = clEnqueueNDRangeKernel(
+          clState->commandQueue, clState->extra_kernels[i], 1,
+          p_global_work_offset, globalThreads, localThreads, 0, NULL, NULL);
+      if (unlikely(status != CL_SUCCESS)) {
+        applog(LOG_ERR, "Error %d: Enqueueing kernel onto command queue. "
+                        "(clEnqueueNDRangeKernel)",
+               status);
+        return -1;
+      }
+    }
   }
 
-  status = clEnqueueReadBuffer(clState->commandQueue, clState->outputBuffer, CL_FALSE, 0,
-    buffersize, thrdata->res, 0, NULL, NULL);
+  status =
+      clEnqueueReadBuffer(clState->commandQueue, clState->outputBuffer,
+                          CL_FALSE, 0, buffersize, thrdata->res, 0, NULL, NULL);
   if (unlikely(status != CL_SUCCESS)) {
-    applog(LOG_ERR, "Error: clEnqueueReadBuffer failed error %d. (clEnqueueReadBuffer)", status);
+    applog(LOG_ERR,
+           "Error: clEnqueueReadBuffer failed error %d. (clEnqueueReadBuffer)",
+           status);
     return -1;
   }
 
@@ -1555,25 +1574,28 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
    * than enough to prevent repeating work */
   work->blk.nonce += gpu->max_hashes;
 
-  /* This finish flushes the readbuffer set with CL_FALSE in clEnqueueReadBuffer */
+  /* This finish flushes the readbuffer set with CL_FALSE in clEnqueueReadBuffer
+   */
   clFinish(clState->commandQueue);
 
   /* found entry is used as a counter to say how many nonces exist */
   if (thrdata->res[found]) {
     /* Clear the buffer again */
-    status = clEnqueueWriteBuffer(clState->commandQueue, clState->outputBuffer, CL_FALSE, 0,
-      buffersize, blank_res, 0, NULL, NULL);
+    status =
+        clEnqueueWriteBuffer(clState->commandQueue, clState->outputBuffer,
+                             CL_FALSE, 0, buffersize, blank_res, 0, NULL, NULL);
     if (unlikely(status != CL_SUCCESS)) {
       applog(LOG_ERR, "Error: clEnqueueWriteBuffer failed.");
       return -1;
     }
     applog(LOG_DEBUG, "GPU %d found something?", gpu->device_id);
     postcalc_hash_async(thr, work, thrdata->res);
-//	postcalc_hash(thr);
-//	submit_tested_work(thr, work);
-//	submit_work_async(work);
+    //	postcalc_hash(thr);
+    //	submit_tested_work(thr, work);
+    //	submit_work_async(work);
     memset(thrdata->res, 0, buffersize);
-    /* This finish flushes the writebuffer set with CL_FALSE in clEnqueueWriteBuffer */
+    /* This finish flushes the writebuffer set with CL_FALSE in
+     * clEnqueueWriteBuffer */
     clFinish(clState->commandQueue);
   }
 
@@ -1582,8 +1604,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 
 // Cleanup OpenCL memory on the GPU
 // Note: This function is not thread-safe (clStates modification not atomic)
-static void opencl_thread_shutdown(struct thr_info *thr)
-{
+static void opencl_thread_shutdown(struct thr_info *thr) {
   const int thr_id = thr->id;
   _clState *clState = clStates[thr_id];
   clStates[thr_id] = NULL;
@@ -1593,16 +1614,18 @@ static void opencl_thread_shutdown(struct thr_info *thr)
     clFinish(clState->commandQueue);
     clReleaseMemObject(clState->outputBuffer);
     clReleaseMemObject(clState->CLbuffer0);
-	if (clState->buffer1)
-	clReleaseMemObject(clState->buffer1);
-	if (clState->buffer2)
-	clReleaseMemObject(clState->buffer2);
-	if (clState->buffer3)
-	clReleaseMemObject(clState->buffer3);
+    if (clState->buffer1)
+      clReleaseMemObject(clState->buffer1);
+    if (clState->buffer2)
+      clReleaseMemObject(clState->buffer2);
+    if (clState->buffer3)
+      clReleaseMemObject(clState->buffer3);
     if (clState->padbuffer8)
       clReleaseMemObject(clState->padbuffer8);
-    if(clState->States) clReleaseMemObject(clState->States);
-    if(clState->Scratchpads) clReleaseMemObject(clState->Scratchpads);
+    if (clState->States)
+      clReleaseMemObject(clState->States);
+    if (clState->Scratchpads)
+      clReleaseMemObject(clState->Scratchpads);
     clReleaseKernel(clState->kernel);
     for (i = 0; i < clState->n_extra_kernels; i++)
       clReleaseKernel(clState->extra_kernels[i]);
@@ -1619,36 +1642,35 @@ static void opencl_thread_shutdown(struct thr_info *thr)
 }
 
 struct device_drv opencl_drv = {
-  /*.drv_id = */      DRIVER_opencl,
-  /*.dname = */     "opencl",
-  /*.name = */      "GPU",
-  /*.drv_detect = */    opencl_detect,
-  /*.reinit_device = */   reinit_opencl_device,
+    /*.drv_id = */ DRIVER_opencl,
+    /*.dname = */ "opencl",
+    /*.name = */ "GPU",
+    /*.drv_detect = */ opencl_detect,
+    /*.reinit_device = */ reinit_opencl_device,
 #ifdef HAVE_ADL
-  /*.get_statline_before = */ get_opencl_statline_before,
+    /*.get_statline_before = */ get_opencl_statline_before,
 #else
-  NULL,
+    NULL,
 #endif
-  /*.get_statline = */    get_opencl_statline,
-  /*.api_data = */    NULL,
-  /*.get_stats = */   NULL,
-  /*.identify_device = */   NULL,
-  /*.set_device = */    NULL,
+    /*.get_statline = */ get_opencl_statline,
+    /*.api_data = */ NULL,
+    /*.get_stats = */ NULL,
+    /*.identify_device = */ NULL,
+    /*.set_device = */ NULL,
 
-  /*.thread_prepare = */    opencl_thread_prepare,
-  /*.can_limit_work = */    NULL,
-  /*.thread_init = */   opencl_thread_init,
-  /*.prepare_work = */    opencl_prepare_work,
-  /*.hash_work = */   NULL,
-  /*.scanhash = */    opencl_scanhash,
-  /*.scanwork = */    NULL,
-  /*.queue_full = */    NULL,
-  /*.flush_work = */    NULL,
-  /*.update_work = */   NULL,
-  /*.hw_error = */    NULL,
-  /*.thread_shutdown = */   opencl_thread_shutdown,
-  /*.thread_enable =*/    NULL,
-  false,
-  0,
-  0
-};
+    /*.thread_prepare = */ opencl_thread_prepare,
+    /*.can_limit_work = */ NULL,
+    /*.thread_init = */ opencl_thread_init,
+    /*.prepare_work = */ opencl_prepare_work,
+    /*.hash_work = */ NULL,
+    /*.scanhash = */ opencl_scanhash,
+    /*.scanwork = */ NULL,
+    /*.queue_full = */ NULL,
+    /*.flush_work = */ NULL,
+    /*.update_work = */ NULL,
+    /*.hw_error = */ NULL,
+    /*.thread_shutdown = */ opencl_thread_shutdown,
+    /*.thread_enable =*/NULL,
+    false,
+    0,
+    0};
