@@ -111,13 +111,12 @@ project (${My_Project_Title})
 # Build Submodules (if any)
 # =========================
 
-# add_subdirectory(submodules/jansson)
 
 add_subdirectory(ccan)
 add_subdirectory(sph)
+add_subdirectory(include)
 #add_subdirectory(lib)
 #add_subdirectory(submodules)
-#add_subdirectory(include/libuthash/libut)
 
 
 # =================
