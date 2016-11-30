@@ -1405,8 +1405,8 @@ struct opt_table opt_config_table[] = {
     OPT_WITH_ARG("--intensity|-I", set_default_intensity, NULL, NULL,
                  "Intensity of GPU scanning (d or " MIN_INTENSITY_STR
                  " -> " MAX_INTENSITY_STR ",default: d to maintain desktop "
-                                          "interactivity), overridden by "
-                                          "--xintensity or --rawintensity."),
+                 "interactivity), overridden by "
+                 "--xintensity or --rawintensity."),
     OPT_WITH_ARG("--xintensity|-X", set_default_xintensity, NULL, NULL,
                  "Shader based intensity of GPU scanning (" MIN_XINTENSITY_STR
                  " to " MAX_XINTENSITY_STR
@@ -7236,9 +7236,7 @@ bool test_nonce(struct work *work, uint32_t nonce) {
   rebuild_nonce(work, nonce);
   // for Neoscrypt, the diff1targ value is in work->target
   if (work->pool->algorithm.type == ALGO_NEOSCRYPT ||
-      work->pool->algorithm.type == ALGO_PLUCK ||
-      work->pool->algorithm.type == ALGO_YESCRYPT ||
-      work->pool->algorithm.type == ALGO_YESCRYPT_MULTI) {
+      work->pool->algorithm.type == ALGO_PLUCK) {
     diff1targ = ((uint32_t *)work->target)[7];
   } else if (work->pool->algorithm.type == ALGO_ETHASH) {
     uint64_t target = *(uint64_t *)(work->device_target + 24);

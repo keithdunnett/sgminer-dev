@@ -19,8 +19,8 @@
 #include "algorithm/fuguecoin.h"
 #include "algorithm/groestlcoin.h"
 #include "algorithm/inkcoin.h"
-#include "algorithm/lyra2re.h"
-#include "algorithm/lyra2rev2.h"
+//#include "algorithm/lyra2re.h"
+//#include "algorithm/lyra2rev2.h"
 #include "algorithm/marucoin.h"
 #include "algorithm/maxcoin.h"
 #include "algorithm/myriadcoin-groestl.h"
@@ -52,11 +52,12 @@
 #include <string.h>
 
 const char *algorithm_type_str[] = {
-    "Unknown",   "Credits", "Scrypt",    "NScrypt",    "X11",        "X13",
-    "X14",       "X15",     "Keccak",    "Quarkcoin",  "Twecoin",    "Fugue256",
-    "NIST",      "Fresh",   "Whirlcoin", "Neoscrypt",  "WhirlpoolX", "Lyra2RE",
-    "Lyra2REV2", "Pluck",   "Blakecoin", "Blake",      "Sia",        "Decred",
-    "Vanilla",   "Lbry",    "Ethash",    "Cryptonight"};
+    "Unknown",    "Credits",    "Scrypt",  "NScrypt",   "X11",
+    "X13",        "X14",        "X15",     "Keccak",    "Quarkcoin",
+    "Twecoin",    "Fugue256",   "NIST",    "Fresh",     "Whirlcoin",
+    "Neoscrypt",  "WhirlpoolX", "Pluck",   "Blakecoin", "Blake",
+    "Sia",        "Decred",     "Vanilla", "Lbry",      "Ethash",
+    "Cryptonight"};
 //	Yescrypt",
 //	"Yescrypt-multi",
 
@@ -918,107 +919,109 @@ static cl_int queue_whirlpoolx_kernel(struct __clState *clState,
   return status;
 }
 
-static cl_int queue_lyra2re_kernel(struct __clState *clState,
-                                   struct _dev_blk_ctx *blk,
-                                   __maybe_unused cl_uint threads) {
-  cl_kernel *kernel;
-  unsigned int num;
-  cl_int status = 0;
-  cl_ulong le_target;
+// static cl_int queue_lyra2re_kernel(struct __clState *clState,
+//                                   struct _dev_blk_ctx *blk,
+//                                   __maybe_unused cl_uint threads) {
+//  cl_kernel *kernel;
+//  unsigned int num;
+//  cl_int status = 0;
+//  cl_ulong le_target;
+//
+//  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+//  flip80(clState->cldata, blk->work->data);
+//  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0,
+//  true,
+//                                0, 80, clState->cldata, 0, NULL, NULL);
+//
+//  // blake - search
+//  kernel = &clState->kernel;
+//  num = 0;
+//
+//  CL_SET_ARG(clState->padbuffer8);
+//  CL_SET_ARG(blk->work->blk.ctx_a);
+//  CL_SET_ARG(blk->work->blk.ctx_b);
+//  CL_SET_ARG(blk->work->blk.ctx_c);
+//  CL_SET_ARG(blk->work->blk.ctx_d);
+//  CL_SET_ARG(blk->work->blk.ctx_e);
+//  CL_SET_ARG(blk->work->blk.ctx_f);
+//  CL_SET_ARG(blk->work->blk.ctx_g);
+//  CL_SET_ARG(blk->work->blk.ctx_h);
+//  CL_SET_ARG(blk->work->blk.cty_a);
+//  CL_SET_ARG(blk->work->blk.cty_b);
+//  CL_SET_ARG(blk->work->blk.cty_c);
+//
+//  // bmw - search1
+//  kernel = clState->extra_kernels;
+//  CL_SET_ARG_0(clState->padbuffer8);
+//  // groestl - search2
+//  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+//  // skein - search3
+//  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+//  // jh - search4
+//  num = 0;
+//  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
+//  CL_SET_ARG(clState->outputBuffer);
+//  CL_SET_ARG(le_target);
+//
+//  return status;
+//}
 
-  le_target = *(cl_ulong *)(blk->work->device_target + 24);
-  flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true,
-                                0, 80, clState->cldata, 0, NULL, NULL);
-
-  // blake - search
-  kernel = &clState->kernel;
-  num = 0;
-
-  CL_SET_ARG(clState->padbuffer8);
-  CL_SET_ARG(blk->work->blk.ctx_a);
-  CL_SET_ARG(blk->work->blk.ctx_b);
-  CL_SET_ARG(blk->work->blk.ctx_c);
-  CL_SET_ARG(blk->work->blk.ctx_d);
-  CL_SET_ARG(blk->work->blk.ctx_e);
-  CL_SET_ARG(blk->work->blk.ctx_f);
-  CL_SET_ARG(blk->work->blk.ctx_g);
-  CL_SET_ARG(blk->work->blk.ctx_h);
-  CL_SET_ARG(blk->work->blk.cty_a);
-  CL_SET_ARG(blk->work->blk.cty_b);
-  CL_SET_ARG(blk->work->blk.cty_c);
-
-  // bmw - search1
-  kernel = clState->extra_kernels;
-  CL_SET_ARG_0(clState->padbuffer8);
-  // groestl - search2
-  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
-  // skein - search3
-  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
-  // jh - search4
-  num = 0;
-  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
-  CL_SET_ARG(clState->outputBuffer);
-  CL_SET_ARG(le_target);
-
-  return status;
-}
-
-static cl_int queue_lyra2rev2_kernel(struct __clState *clState,
-                                     struct _dev_blk_ctx *blk,
-                                     __maybe_unused cl_uint threads) {
-  cl_kernel *kernel;
-  unsigned int num;
-  cl_int status = 0;
-  cl_ulong le_target;
-
-  //  le_target = *(cl_uint *)(blk->work->device_target + 28);
-  le_target = *(cl_ulong *)(blk->work->device_target + 24);
-  flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true,
-                                0, 80, clState->cldata, 0, NULL, NULL);
-
-  // blake - search
-  kernel = &clState->kernel;
-  num = 0;
-  //  CL_SET_ARG(clState->CLbuffer0);
-  CL_SET_ARG(clState->buffer1);
-  CL_SET_ARG(blk->work->blk.ctx_a);
-  CL_SET_ARG(blk->work->blk.ctx_b);
-  CL_SET_ARG(blk->work->blk.ctx_c);
-  CL_SET_ARG(blk->work->blk.ctx_d);
-  CL_SET_ARG(blk->work->blk.ctx_e);
-  CL_SET_ARG(blk->work->blk.ctx_f);
-  CL_SET_ARG(blk->work->blk.ctx_g);
-  CL_SET_ARG(blk->work->blk.ctx_h);
-  CL_SET_ARG(blk->work->blk.cty_a);
-  CL_SET_ARG(blk->work->blk.cty_b);
-  CL_SET_ARG(blk->work->blk.cty_c);
-
-  // keccak - search1
-  kernel = clState->extra_kernels;
-  CL_SET_ARG_0(clState->buffer1);
-  // cubehash - search2
-  num = 0;
-  CL_NEXTKERNEL_SET_ARG_0(clState->buffer1);
-  // lyra - search3
-  num = 0;
-  CL_NEXTKERNEL_SET_ARG_N(0, clState->buffer1);
-  CL_SET_ARG_N(1, clState->padbuffer8);
-  // skein -search4
-  num = 0;
-  CL_NEXTKERNEL_SET_ARG_0(clState->buffer1);
-  // cubehash - search5
-  num = 0;
-  CL_NEXTKERNEL_SET_ARG_0(clState->buffer1);
-  // bmw - search6
-  num = 0;
-  CL_NEXTKERNEL_SET_ARG(clState->buffer1);
-  CL_SET_ARG(clState->outputBuffer);
-  CL_SET_ARG(le_target);
-
-  return status;
-}
+// static cl_int queue_lyra2rev2_kernel(struct __clState *clState,
+//                                     struct _dev_blk_ctx *blk,
+//                                     __maybe_unused cl_uint threads) {
+//  cl_kernel *kernel;
+//  unsigned int num;
+//  cl_int status = 0;
+//  cl_ulong le_target;
+//
+//  //  le_target = *(cl_uint *)(blk->work->device_target + 28);
+//  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+//  flip80(clState->cldata, blk->work->data);
+//  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0,
+//  true,
+//                                0, 80, clState->cldata, 0, NULL, NULL);
+//
+//  // blake - search
+//  kernel = &clState->kernel;
+//  num = 0;
+//  //  CL_SET_ARG(clState->CLbuffer0);
+//  CL_SET_ARG(clState->buffer1);
+//  CL_SET_ARG(blk->work->blk.ctx_a);
+//  CL_SET_ARG(blk->work->blk.ctx_b);
+//  CL_SET_ARG(blk->work->blk.ctx_c);
+//  CL_SET_ARG(blk->work->blk.ctx_d);
+//  CL_SET_ARG(blk->work->blk.ctx_e);
+//  CL_SET_ARG(blk->work->blk.ctx_f);
+//  CL_SET_ARG(blk->work->blk.ctx_g);
+//  CL_SET_ARG(blk->work->blk.ctx_h);
+//  CL_SET_ARG(blk->work->blk.cty_a);
+//  CL_SET_ARG(blk->work->blk.cty_b);
+//  CL_SET_ARG(blk->work->blk.cty_c);
+//
+//  // keccak - search1
+//  kernel = clState->extra_kernels;
+//  CL_SET_ARG_0(clState->buffer1);
+//  // cubehash - search2
+//  num = 0;
+//  CL_NEXTKERNEL_SET_ARG_0(clState->buffer1);
+//  // lyra - search3
+//  num = 0;
+// CL_NEXTKERNEL_SET_ARG_N(0, clState->buffer1);
+//  CL_SET_ARG_N(1, clState->padbuffer8);
+//  // skein -search4
+// num = 0;
+//  CL_NEXTKERNEL_SET_ARG_0(clState->buffer1);
+//  // cubehash - search5
+//  num = 0;
+//  CL_NEXTKERNEL_SET_ARG_0(clState->buffer1);
+//  // bmw - search6
+//  num = 0;
+//  CL_NEXTKERNEL_SET_ARG(clState->buffer1);
+//  CL_SET_ARG(clState->outputBuffer);
+//  CL_SET_ARG(le_target);
+//
+//  return status;
+//}
 
 static cl_int queue_pluck_kernel(_clState *clState, dev_blk_ctx *blk,
                                  __maybe_unused cl_uint threads) {
@@ -1687,47 +1690,6 @@ static algorithm_settings_t algos[] = {
      gen_hash,
      NULL},
 
-    {"lyra2re",
-     ALGO_LYRA2RE,
-     "",
-     1,
-     128,
-     128,
-     0,
-     0,
-     0xFF,
-     0xFFFFULL,
-     0x0000ffffUL,
-     4,
-     2 * 8 * 4194304,
-     0,
-     lyra2re_regenhash,
-     blake256_midstate,
-     blake256_prepare_work,
-     queue_lyra2re_kernel,
-     gen_hash,
-     NULL},
-    {"lyra2rev2",
-     ALGO_LYRA2REV2,
-     "",
-     1,
-     256,
-     256,
-     0,
-     0,
-     0xFF,
-     0xFFFFULL,
-     0x0000ffffUL,
-     6,
-     -1,
-     CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
-     lyra2rev2_regenhash,
-     blake256_midstate,
-     blake256_prepare_work,
-     queue_lyra2rev2_kernel,
-     gen_hash,
-     append_neoscrypt_compiler_options},
-
 // kernels starting from this will have difficulty calculated by using fuguecoin
 // algorithm
 #define A_FUGUE(a, b, c)                                                       \
@@ -2017,8 +1979,6 @@ static const char *lookup_algorithm_alias(const char *lookup_alias,
   ALGO_ALIAS("nist5", "talkcoin-mod");
   ALGO_ALIAS("keccak", "maxcoin");
   ALGO_ALIAS("whirlpool", "whirlcoin");
-  ALGO_ALIAS("lyra2", "lyra2re");
-  ALGO_ALIAS("lyra2v2", "lyra2rev2");
   ALGO_ALIAS("blakecoin", "blake256r8");
   ALGO_ALIAS("blake", "blake256r14");
 
