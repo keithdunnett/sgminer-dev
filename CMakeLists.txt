@@ -26,90 +26,36 @@ string(REGEX REPLACE " " "_" My_Project_Title_Caps ${My_Project_Title_Caps} )
 project (${My_Project_Title})
 
 #
-# Variables imported from previous Makefile.am - not all will be used
+# Fetch and make use of external project sources
 #
 
-#ACLOCAL_AMFLAGS = -I m4
-#JANSSON_CPPFLAGS= -I$(top_builddir)/submodules/jansson/src -I$(top_srcdir)/submodules/jansson/src
-#EXTRA_DIST	= example.conf m4/gnulib-cache.m4 \
-#		  ADL_SDK/readme.txt api-example.php miner.php	\
-#		  API.class API.java api-example.c hexdump.c \
-#		  doc/API doc/FAQ doc/GPU doc/SCRYPT doc/windows-build.txt
-#SUBDIRS		= lib submodules ccan sph include/uthash/libut
-#bin_PROGRAMS     = sgminer
-#sgminer_CPPFLAGS = $(PTHREAD_FLAGS) $(JANSSON_CPPFLAGS)
-#sgminer_LDFLAGS  = $(PTHREAD_FLAGS)
-#sgminer_LDADD    = $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ \
-#		  @OPENCL_LIBS@ @NCURSES_LIBS@ @PDCURSES_LIBS@ @WS2_LIBS@ \
-#		  @MM_LIBS@ @RT_LIBS@ @MATH_LIBS@ lib/libgnu.a ccan/libccan.a sph/libsph.a include/uthash/libut/libut.a
-#sgminer_CPPFLAGS += -I$(top_builddir)/lib -I$(top_srcdir)/lib -I$(top_srcdir)/include/uthash/libut/include @OPENCL_FLAGS@ @LIBCURL_CFLAGS@
-#if HAVE_WINDOWS
-#sgminer_LDFLAGS += -all-static -Wl,--stack,4194304
-#endif
-#sgminer_CPPFLAGS += $(ADL_CPPFLAGS)0
+# Handle Jansson 2.9 as an external project.
+# Considered doing away with the Jansson compile and instead depending on libjansson-dev in the
+# operating system, but my Ubuntu install is on 2.7 and some of the bug fixes and new features
+# in 2.9 could be worth having. We'll compile our own. 
 
-#if USE_GIT_VERSION
-#GIT_VERSION      := $(shell sh -c 'git describe --abbrev=4 --dirty')
-#sgminer_CPPFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
-#endif
-#if USE_BUILD_NUMBER
-#sgminer_CPPFLAGS += -DBUILD_NUMBER=\"$(BUILD_NUMBER)\"
-#endif
-#sgminer_SOURCES := sgminer.c
-#sgminer_SOURCES	+= api/api.c api/api.h
-#sgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h
-#sgminer_SOURCES	+= util.c util.h libut.h
-#sgminer_SOURCES	+= logging.c logging.h
-#sgminer_SOURCES += driver-opencl.c driver-opencl.h
-#sgminer_SOURCES += ocl.c ocl.h
-#sgminer_SOURCES += findnonce.c findnonce.h
-###sgminer_SOURCES += adl.c adl.h adl_functions.h
-#sgminer_SOURCES += pool.c pool.h
-#sgminer_SOURCES += algorithm.c algorithm.h
-#sgminer_SOURCES += config_parser.c config_parser.h
-#sgminer_SOURCES += events.c events.h
-#sgminer_SOURCES += ocl/build_kernel.c ocl/build_kernel.h
-#sgminer_SOURCES += ocl/binary_kernel.c ocl/binary_kernel.h
-#sgminer_SOURCES += kernel/*.cl
-#sgminer_SOURCES += algorithm/scrypt.c algorithm/scrypt.h
-#sgminer_SOURCES += algorithm/darkcoin.c algorithm/darkcoin.h
-#sgminer_SOURCES += algorithm/qubitcoin.c algorithm/qubitcoin.h
-#sgminer_SOURCES += algorithm/quarkcoin.c algorithm/quarkcoin.h
-#sgminer_SOURCES += algorithm/myriadcoin-groestl.c algorithm/myriadcoin-groestl.h
-#sgminer_SOURCES += algorithm/fuguecoin.c algorithm/fuguecoin.h
-#sgminer_SOURCES += algorithm/inkcoin.c algorithm/inkcoin.h
-#sgminer_SOURCES += algorithm/animecoin.c algorithm/animecoin.h
-#sgminer_SOURCES += algorithm/groestlcoin.c algorithm/groestlcoin.h
-#sgminer_SOURCES += algorithm/sibcoin.c algorithm/sibcoin.h
-#sgminer_SOURCES += algorithm/sifcoin.c algorithm/sifcoin.h
-#sgminer_SOURCES += algorithm/twecoin.c algorithm/twecoin.h
-#sgminer_SOURCES += algorithm/marucoin.c algorithm/marucoin.h
-#sgminer_SOURCES += algorithm/maxcoin.c algorithm/maxcoin.h
-#sgminer_SOURCES += algorithm/talkcoin.c algorithm/talkcoin.h
-#sgminer_SOURCES += algorithm/bitblock.c algorithm/bitblock.h
-#sgminer_SOURCES += algorithm/x14.c algorithm/x14.h
-#sgminer_SOURCES += algorithm/fresh.c algorithm/fresh.h
-#sgminer_SOURCES += algorithm/whirlcoin.c algorithm/whirlcoin.h
-#sgminer_SOURCES += algorithm/neoscrypt.c algorithm/neoscrypt.h
-#sgminer_SOURCES += algorithm/whirlpoolx.c algorithm/whirlpoolx.h
-#sgminer_SOURCES += algorithm/lyra2re.c algorithm/lyra2re.h algorithm/lyra2.c algorithm/lyra2.h algorithm/sponge.c algorithm/sponge.h
-#sgminer_SOURCES += algorithm/lyra2rev2.c algorithm/lyra2rev2.h
-#sgminer_SOURCES += algorithm/pluck.c algorithm/pluck.h
-#sgminer_SOURCES += algorithm/sia.c algorithm/sia.h
-#sgminer_SOURCES += algorithm/credits.c algorithm/credits.h
-#sgminer_SOURCES += algorithm/yescrypt.h algorithm/yescrypt.c algorithm/yescrypt_core.h algorithm/yescrypt-opt.c algorithm/yescryptcommon.c algorithm/sysendian.h
-#sgminer_SOURCES += algorithm/blake256.c algorithm/blake256.h
-#sgminer_SOURCES += algorithm/blakecoin.c algorithm/blakecoin.h
-#sgminer_SOURCES += algorithm/decred.c algorithm/decred.h
-#sgminer_SOURCES += algorithm/lbry.c algorithm/lbry.h
-#sgminer_SOURCES += algorithm/ethash.c algorithm/ethgencache.c algorithm/ethash.h algorithm/eth-sha3.c algorithm/eth-sha3.h
-#sgminer_SOURCES += algorithm/cryptonight.c algorithm/cryptonight.h algorithm/cn-aes-tbls.h
-#
-#bin_SCRIPTS	= $(top_srcdir)/kernel/*.cl
+ExternalProject_Add(jansson-master
+  PREFIX jansson
+  GIT_REPOSITORY https://github.com/akheron/jansson.git
+  GIT_TAG master
+  TIMEOUT 60
+  BUILD_DIR=${SGMINER_SOURCE_DIR}
+  BINARY_DIR=${SGMINER_SOURCE_DIR}
+  INSTALL_DIR=${SGMINER_SOURCE_DIR}
+  CONFIGURE_COMMAND CC="clang-4.0" cmake -G Ninja -DJANSSON_BUILD_DOCS=OFF -DCMAKE_INSTALL_PREFIX=../../../ ../jansson-master
+  BUILD_COMMAND cmake --build . --clean-first
+  INSTALL_COMMAND cmake --build . --target install
+)
+#ExternalProject_Get_Property(jansson-master install_dir)
+#add_library(jansson STATIC IMPORTED)
+#set_property(TARGET jansson PROPERTY IMPORTED_LOCATION lib/libjansson.a)
+#add_dependencies(jansson jansson-master)
 
+#add_subdirectory(lib)
+#add_subdirectory(submodules)
 
 # =========================
-# Build Submodules (if any)
+# Build Subdirectories
 # =========================
 
 
