@@ -25,6 +25,15 @@ string(REGEX REPLACE " " "_" My_Project_Title_Caps ${My_Project_Title_Caps} )
 
 project (${My_Project_Title})
 
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_CFLAGS "-pthread")
+
+
+INCLUDE(FindCurses)
+INCLUDE(FindOpenCL)
+INCLUDE(FindCURL)
+
 #
 # Fetch and make use of external project sources
 #
@@ -46,10 +55,10 @@ ExternalProject_Add(jansson-master
   BUILD_COMMAND cmake --build . --clean-first
   INSTALL_COMMAND cmake --build . --target install
 )
-#ExternalProject_Get_Property(jansson-master install_dir)
-#add_library(jansson STATIC IMPORTED)
-#set_property(TARGET jansson PROPERTY IMPORTED_LOCATION lib/libjansson.a)
-#add_dependencies(jansson jansson-master)
+ExternalProject_Get_Property(jansson-master install_dir)
+add_library(jansson STATIC IMPORTED)
+set_property(TARGET jansson PROPERTY IMPORTED_LOCATION lib/libjansson.a)
+add_dependencies(jansson jansson-master)
 
 #add_subdirectory(lib)
 #add_subdirectory(submodules)
@@ -92,7 +101,10 @@ include_directories( ${PROJECT_SOURCE_DIR}/include )
 include_directories( ${PROJECT_SOURCE_DIR}/sph )
 include_directories( ${PROJECT_SOURCE_DIR}/lib )
 include_directories( ${PROJECT_SOURCE_DIR}/ccan )
-include_directories(${PROJECT_BINARY_DIR})
+include_directories( ${PROJECT_BINARY_DIR} )
+include_directories( ${CURSES_INCLUDE_PATH} )
+include_directories( ${CURL_INCLUDE_DIR} )
+include_directories( ${OpenCL_INCLUDE_DIR} )
 
 
 # =================
@@ -288,6 +300,103 @@ algorithm/cryptonight.c
 
 # Primary header files, also for doxygen documentation
 set(header_files
+./algorithm/animecoin.h
+./algorithm/bitblock.h
+./algorithm/blake256.h
+./algorithm/blakecoin.h
+./algorithm/cn-aes-tbls.h
+./algorithm/credits.h
+./algorithm/cryptonight.h
+./algorithm/darkcoin.h
+./algorithm/decred.h
+./algorithm/ethash.h
+./algorithm/eth-sha3.h
+./algorithm/fresh.h
+./algorithm/fuguecoin.h
+./algorithm/groestlcoin.h
+./algorithm.h
+./algorithm/inkcoin.h
+./algorithm/lbry.h
+./algorithm/lyra2.h
+./algorithm/lyra2re.h
+./algorithm/lyra2rev2.h
+./algorithm/marucoin.h
+./algorithm/maxcoin.h
+./algorithm/myriadcoin-groestl.h
+./algorithm/neoscrypt.h
+./algorithm/pluck.h
+./algorithm/quarkcoin.h
+./algorithm/qubitcoin.h
+./algorithm/scrypt.h
+./algorithm/sia.h
+./algorithm/sibcoin.h
+./algorithm/sifcoin.h
+./algorithm/sponge.h
+./algorithm/sysendian.h
+./algorithm/talkcoin.h
+./algorithm/twecoin.h
+./algorithm/whirlcoin.h
+./algorithm/whirlpoolx.h
+./algorithm/x14.h
+./algorithm/yescrypt_core.h
+./algorithm/yescrypt.h
+./api/api.h
+./ccan/compiler/compiler.h
+./ccan/opt/opt.h
+./ccan/opt/private.h
+./ccan/opt/test/utils.h
+./ccan/typesafe_cb/typesafe_cb.h
+./config.h
+./config_parser.h
+./driver-opencl.h
+./events.h
+./findnonce.h
+./include/arg-nonnull.h
+./include/bench_block.h
+./include/c++defs.h
+./include/compat.h
+./include/elist.h
+./include/jansson_config.h
+./include/jansson.h
+./include/uthash/src/libut.h
+./include/uthash/src/ringbuf.h
+./include/uthash/src/utarray.h
+./include/uthash/src/uthash.h
+./include/uthash/src/utlist.h
+./include/uthash/src/utmm.h
+./include/uthash/src/utringbuffer.h
+./include/uthash/src/utstring.h
+./include/uthash/src/utvector.h
+./include/uthash/tests/lru_cache/cache.h
+./include/warn-on-use.h
+./logging.h
+./miner.h
+./ocl/binary_kernel.h
+./ocl/build_kernel.h
+./ocl.h
+./pool.h
+./sph/sha256_Y.h
+./sph/sph_blake.h
+./sph/sph_bmw.h
+./sph/sph_cubehash.h
+./sph/sph_echo.h
+./sph/sph_fugue.h
+./sph/sph_gost.h
+./sph/sph_groestl.h
+./sph/sph_hamsi.h
+./sph/sph_jh.h
+./sph/sph_keccak.h
+./sph/sph_luffa.h
+./sph/sph_panama.h
+./sph/sph_ripemd.h
+./sph/sph_sha2.h
+./sph/sph_shabal.h
+./sph/sph_shavite.h
+./sph/sph_simd.h
+./sph/sph_skein.h
+./sph/sph_types.h
+./sph/sph_whirlpool.h
+./util.h
 )
 
 # Public headers, will be installed in 'include'
@@ -401,9 +510,9 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	# You may wish to disable this.
 	#
 	
-	set (CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-	set (BUILD_SHARED_LIBRARIES OFF)
-	set (CMAKE_EXE_LINKER_FLAGS "-static")
+#	set (CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+#	set (BUILD_SHARED_LIBRARIES OFF)
+#	set (CMAKE_EXE_LINKER_FLAGS "-static")
 
 	# Some libraries need to be linked on some Linux builds
 	if (DEFINED TEST)
@@ -428,18 +537,82 @@ endif (WIN32)
 # remove the extra "lib" from "liblibFOO"
 # SET_TARGET_PROPERTIES(libFOO PROPERTIES PREFIX "")
 
-# Create a command-line app?
-# if (NOT DEFINED TEST)
-# 	add_executable(main
-# 		src/main.c
-# 		src/GLibFacade.c
-# 		src/GLibFacade.h
-# 		${header_files}
-# 	)
-# 
+#Create a command-line app?
+
+
+ if (NOT DEFINED TEST)
+ 	add_executable(sgminer
+algorithm/animecoin.c
+algorithm/bitblock.c
+algorithm/blake256.c
+algorithm/blakecoin.c
+algorithm.c
+algorithm/credits.c
+algorithm/cryptonight.c
+algorithm/darkcoin.c
+algorithm/decred.c
+algorithm/ethash.c
+algorithm/ethgencache.c
+algorithm/eth-sha3.c
+algorithm/fresh.c
+algorithm/fuguecoin.c
+algorithm/groestlcoin.c
+algorithm/inkcoin.c
+algorithm/lbry.c
+algorithm/lyra2.c
+algorithm/lyra2re.c
+algorithm/lyra2rev2.c
+algorithm/marucoin.c
+algorithm/maxcoin.c
+algorithm/myriadcoin-groestl.c
+algorithm/neoscrypt.c
+algorithm/pluck.c
+algorithm/quarkcoin.c
+algorithm/qubitcoin.c
+algorithm/scrypt.c
+algorithm/sia.c
+algorithm/sibcoin.c
+algorithm/sifcoin.c
+algorithm/sponge.c
+algorithm/talkcoin.c
+algorithm/twecoin.c
+algorithm/whirlcoin.c
+algorithm/whirlpoolx.c
+algorithm/x14.c
+algorithm/yescrypt.c
+algorithm/yescryptcommon.c
+algorithm/yescrypt-opt.c
+api/api.c
+config_parser.c
+driver-opencl.c
+events.c
+findnonce.c
+logging.c
+ocl/binary_kernel.c
+ocl/build_kernel.c
+ocl.c
+pool.c
+sgminer.c
+util.c
+${header_files}
+ 	)
+	add_dependencies(sgminer ccan)
+	add_dependencies(sgminer sph)
+	add_dependencies(sgminer jansson)
+
 #	Link the library to the app?
-#	target_link_libraries(main libFOO)
-# endif()
+
+	target_link_libraries(sgminer dl)
+	target_link_libraries(sgminer rt)
+	target_link_libraries(sgminer m)
+	target_link_libraries(sgminer ${OpenCL_LIBRARY})
+	target_link_libraries(sgminer ${CURSES_FORM_LIBRARY})
+	target_link_libraries(sgminer ${CURSES_NCURSES_LIBRARY})
+	target_link_libraries(sgminer ${CURL_LIBRARY})
+	target_link_libraries(sgminer ccan)
+	target_link_libraries(sgminer sph)
+	target_link_libraries(sgminer jansson)
+endif()
 
 # Xcode settings for fat binaries
 # set_target_properties(libFOO PROPERTIES XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO")
