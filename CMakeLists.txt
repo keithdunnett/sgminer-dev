@@ -1,6 +1,5 @@
 cmake_minimum_required (VERSION 3.5)
 
-INCLUDE(ExternalProject)
 
 # ==================
 # Define Our Project
@@ -8,31 +7,39 @@ INCLUDE(ExternalProject)
 
 set (My_Project_Title "sgminer")
 set (My_Project_Description "Ripping sgminer apart and putting it together again")
-set (My_Project_Author "magick777")
+set (My_Project_Author "the many sgminer developers over the years")
 set (My_Project_Revised_Date "2016-11-30")
 set (My_Project_Version_Major 5)
 set (My_Project_Version_Minor 5)
 set (My_Project_Version_Patch 2)
 set (My_Project_Version_Revision "magick")
-
 set (My_Project_Version "${My_Project_Version_Major}.${My_Project_Version_Minor}.${My_Project_Version_Patch}")
-
 set (My_Project_Copyright_Date "2016")
 set (My_Project_Copyright "${My_Project_Copyright_Date} ${My_Project_Author}.")
-
 string(TOUPPER ${My_Project_Title} My_Project_Title_Caps  )
 string(REGEX REPLACE " " "_" My_Project_Title_Caps ${My_Project_Title_Caps} )
-
 project (${My_Project_Title})
 
+# Global CMAKE settings
 
+set(CMAKE_CFLAGS "-pthread -Wall -Wextra")
+set(CMAKE_EXE_LINKER_FLAGS "-lpthread -lm -ldl -lrt -lcurl -lOpenCL -ljansson -L/opt/amdgpu-pro/lib/x86_64-linux-gnu")
+set(CMAKE_VERBOSE_MAKEFILES "0")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
-set(CMAKE_CFLAGS "-pthread")
+set(CMAKE_GENERATOR "ninja")
+#set(CMAKE_C_COMPILER_ID "Clang")
+set(CMAKE_C_COMPILER_ID "GNU")
 
 
+#
+# Define the CMake modules we want
+#
+
+INCLUDE(ExternalProject)
 INCLUDE(FindCurses)
 INCLUDE(FindOpenCL)
 INCLUDE(FindCURL)
+INCLUDE(FindJansson)
 
 #
 # Fetch and make use of external project sources
@@ -43,6 +50,8 @@ INCLUDE(FindCURL)
 # operating system, but my Ubuntu install is on 2.7 and some of the bug fixes and new features
 # in 2.9 could be worth having. We'll compile our own. 
 
+if (NOT ${FOUND_JANSSON})
+
 ExternalProject_Add(jansson-master
   PREFIX jansson
   GIT_REPOSITORY https://github.com/akheron/jansson.git
@@ -51,7 +60,7 @@ ExternalProject_Add(jansson-master
   BUILD_DIR=${SGMINER_SOURCE_DIR}
   BINARY_DIR=${SGMINER_SOURCE_DIR}
   INSTALL_DIR=${SGMINER_SOURCE_DIR}
-  CONFIGURE_COMMAND CC="clang-4.0" cmake -G Ninja -DJANSSON_BUILD_DOCS=OFF -DCMAKE_INSTALL_PREFIX=../../../ ../jansson-master
+  CONFIGURE_COMMAND cmake -G Ninja -DJANSSON_BUILD_DOCS=OFF -DCMAKE_INSTALL_PREFIX=../../../ ../jansson-master
   BUILD_COMMAND cmake --build . --clean-first
   INSTALL_COMMAND cmake --build . --target install
 )
@@ -60,8 +69,7 @@ add_library(jansson STATIC IMPORTED)
 set_property(TARGET jansson PROPERTY IMPORTED_LOCATION lib/libjansson.a)
 add_dependencies(jansson jansson-master)
 
-#add_subdirectory(lib)
-#add_subdirectory(submodules)
+endif()
 
 # =========================
 # Build Subdirectories
@@ -71,22 +79,6 @@ add_dependencies(jansson jansson-master)
 add_subdirectory(ccan)
 add_subdirectory(sph)
 add_subdirectory(include)
-
-# Handle GNUlib source dir as an external project, for now. We likely don't need it in this build.
-#ExternalProject_Add(gnulib
-#  SOURCE_DIR lib
-#  BUILD_IN_SOURCE 1
-#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/lib
-#  CONFIGURE_COMMAND ""
-#  BUILD_COMMAND make
-#  INSTALL_COMMAND make install PREFIX=${CMAKE_CURRENT_BINARY_DIR}/lib
-#)
-#ExternalProject_Get_Property(gnulib install_dir)
-#add_library(gnu STATIC IMPORTED)
-#set_property(TARGET gnu PROPERTY IMPORTED_LOCATION ${install_dir}/lib/libgnu.a)
-#add_dependencies(gnulib gnu)
-#include_directories(${install_dir}/lib)
-#target_link_libraries(gnulib gnu)
 
 #add_subdirectory(lib)
 #add_subdirectory(submodules)
@@ -107,113 +99,9 @@ include_directories( ${CURL_INCLUDE_DIR} )
 include_directories( ${OpenCL_INCLUDE_DIR} )
 
 
-# =================
-# Macro Definitions
-# =================
+#file(READ ${PROJECT_SOURCE_DIR}/COPYING My_Project_License)
 
-MACRO(ADD_PUBLIC_HEADER target filename)
-	# Add filename to public_header_files list, flag it as 
-	# public header for libraries and OS X Frameworks
-
-	# This will work for creating one library/framework with public headers
-	# per project. If you need more than one, you will need to customize
-	# the workflow as appropriate, since there is only one 
-	# public_header_files list.
-
-	SET_TARGET_PROPERTIES(${target} PROPERTIES PUBLIC_HEADER ${filename})
-
-	LIST(APPEND public_header_files ${filename})
-
-	SET_SOURCE_FILES_PROPERTIES(
-		${filename}
-		PROPERTIES
-		MACOSX_PACKAGE_LOCATION
-		PUBLIC_HEADER
-	)
-
-	# Set Xcode project to configure public header location to allow
-	# use when this project is used in another workspace.
-	# NOTE: You must manually add a "Headers" build phase and add
-	# the desired public headers to that list for Xcode to use them.
-	#
-	# TODO: If anyone knows how to automate that in Cmake, I would be very
-	# greatful!!
-
-	SET_TARGET_PROPERTIES(${target} PROPERTIES
-		XCODE_ATTRIBUTE_PUBLIC_HEADERS_FOLDER_PATH
-		"include/$(TARGET_NAME)"
-	)
-
-	SET_TARGET_PROPERTIES(${target} PROPERTIES
-		XCODE_ATTRIBUTE_PRIVATE_HEADERS_FOLDER_PATH
-		"$(PUBLIC_HEADERS_FOLDER_PATH)/Private"
-	)
-	
-	# Set Xcode target to include settings for OS X and iOS
-	
-	SET_TARGET_PROPERTIES(${target} PROPERTIES
-		XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS
-		"macos iphonesimulator iphoneos"
-	)
-
-	SET_TARGET_PROPERTIES(${target} PROPERTIES
-		XCODE_ATTRIBUTE_VALID_ARCHITECTURES
-		"x86_64 i386 armv6 armv7 armv7s arm64"
-	)
-
-ENDMACRO(ADD_PUBLIC_HEADER)
-
-
-# The target should be an OS X Bundle with a PList
-
-MACRO(MAKE_TARGET_BUNDLE targetname)
-
-	set_target_properties(
-		${targetname}
-		PROPERTIES
-		MACOSX_BUNDLE_INFO_PLIST
-		${PROJECT_SOURCE_DIR}/templates/plist.in
-	)
-
-ENDMACRO(MAKE_TARGET_BUNDLE)
-
-
-MACRO(ADD_LINKED_FRAMEWORK frame)
-
-	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGES} -framework ${frame}")
-
-ENDMACRO(ADD_LINKED_FRAMEWORK)
-
-
-# ======================
-# Process Template Files
-# ======================
-
-file(READ ${PROJECT_SOURCE_DIR}/COPYING My_Project_License)
-
-string(REGEX REPLACE "\n" "\n\t" My_Project_License_Indent ${My_Project_License})
-
-#configure_file (
-#	"${PROJECT_SOURCE_DIR}/templates/template.c.in"
-#	"${PROJECT_BINARY_DIR}/template.c"
-#)
-#
-#configure_file (
-#	"${PROJECT_SOURCE_DIR}/templates/template.h.in"
-#	"${PROJECT_BINARY_DIR}/template.h"
-#)
-
-# Update the project README, to pull in new version #, etc.
-#configure_file (
-#	"${PROJECT_SOURCE_DIR}/templates/README.md.in"
-#	"${CMAKE_CURRENT_LIST_DIR}/README.md"
-#)
-
-#configure_file (
-#	"${PROJECT_SOURCE_DIR}/templates/version.h.in"
-#	"${PROJECT_BINARY_DIR}/version.h"
-#)
-
+#string(REGEX REPLACE "\n" "\n\t" My_Project_License_Indent ${My_Project_License})
 
 # ============
 # Source Files
@@ -298,7 +186,7 @@ algorithm/ethash.c
 algorithm/cryptonight.c
 )
 
-# Primary header files, also for doxygen documentation
+# Primary header files
 set(header_files
 ./algorithm/animecoin.h
 ./algorithm/bitblock.h
@@ -401,22 +289,22 @@ set(header_files
 
 # Public headers, will be installed in 'include'
 # Do not manually add files here, use the ADD_PUBLIC_HEADER() macro
-set(public_header_files
-)
+#set(public_header_files
+#)
 
 # Utility source files will not be included in doxygen
-set(src_utility_files
+#set(src_utility_files
 #	src/GLibFacade.c
-)
+#)
 
-set(header_utility_files
+#set(header_utility_files
 #	src/GLibFacade.h
-	${PROJECT_BINARY_DIR}/version.h
-)
+#	${PROJECT_BINARY_DIR}/version.h
+#)
 
 # Generate doxygen configuration file
-string(REPLACE ";" " " doxygen_src_files "${src_files}" )
-string(REPLACE ";" " " doxygen_header_files "${header_files}" )
+#string(REPLACE ";" " " doxygen_src_files "${src_files}" )
+#string(REPLACE ";" " " doxygen_header_files "${header_files}" )
 
 #configure_file (
 #	"${PROJECT_SOURCE_DIR}/templates/doxygen.conf.in"
@@ -596,15 +484,21 @@ sgminer.c
 util.c
 ${header_files}
  	)
+
 	add_dependencies(sgminer ccan)
 	add_dependencies(sgminer sph)
+	add_dependencies(sgminer ut)
+
+if (NOT ${FOUND_JANSSON})
 	add_dependencies(sgminer jansson)
+endif()
 
 #	Link the library to the app?
 
 	target_link_libraries(sgminer dl)
 	target_link_libraries(sgminer rt)
 	target_link_libraries(sgminer m)
+	target_link_libraries(sgminer pthread)
 	target_link_libraries(sgminer ${OpenCL_LIBRARY})
 	target_link_libraries(sgminer ${CURSES_FORM_LIBRARY})
 	target_link_libraries(sgminer ${CURSES_NCURSES_LIBRARY})
@@ -613,50 +507,3 @@ ${header_files}
 	target_link_libraries(sgminer sph)
 	target_link_libraries(sgminer jansson)
 endif()
-
-# Xcode settings for fat binaries
-# set_target_properties(libFOO PROPERTIES XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO")
-# set_target_properties(main PROPERTIES XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO")
-
-
-# ==========================
-# Build Installer with CPack
-# ==========================
-
-# You're largely on your own here
-
-# install (FILES ${CMAKE_CURRENT_LIST_DIR}/README.md ${PROJECT_SOURCE_DIR}/LICENSE.txt
-# 	DESTINATION .
-# )
-
-# Use something like this to install public header files (after adding them
-# with the ADD_PUBLIC_HEADER() macro)
-
-# install (FILES ${public_header_files} DESTINATION local/include/libFoo) 
-
-set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "${My_Project_Description}")
-set (CPACK_PACKAGE_VENDOR "${My_Project_Author}")
-set (CPACK_PACKAGE_VERSION "${My_Project_Version_Major}.${My_Project_Version_Minor}.${My_Project_Version_Patch}")
-set (CPACK_PACKAGE_VERSION_MAJOR "${My_Project_Version_Major}")
-set (CPACK_PACKAGE_VERSION_MINOR "${My_Project_Version_Minor}")
-set (CPACK_PACKAGE_VERSION_PATCH "My_Project_Version_Patch")
-
-set (CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/COPYING")
-
-if (APPLE)
-	set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-Mac-${CPACK_PACKAGE_VERSION}")
-else (APPLE)
-	set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${CMAKE_SYSTEM_NAME}-${CPACK_PACKAGE_VERSION}")
-endif (APPLE)
-
-# Use some default install locations (if appropriate)
-if (WIN32)
-	set (CPACK_INSTALL_PREFIX "")
-	set (CPACK_NSIS_MODIFY_PATH ON)
-else (WIN32)
-	set (CPACK_INSTALL_PREFIX /usr/local)
-endif (WIN32)
-
-set (CPACK_PACKAGE_INSTALL_DIRECTORY ${PROJECT})
-
-include (CPack)
