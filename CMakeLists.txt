@@ -22,13 +22,17 @@ project (${My_Project_Title})
 
 # Global CMAKE settings
 
-set(CMAKE_CFLAGS "-pthread -Wall -Wextra")
-set(CMAKE_EXE_LINKER_FLAGS "-lpthread -lm -ldl -lrt -lcurl -lOpenCL -ljansson -L/opt/amdgpu-pro/lib/x86_64-linux-gnu")
+set(CMAKE_CFLAGS "-pthread -Wall -Wextra -I/opt/AMDAPPSDK-3.0/include/")
+#set(CMAKE_EXE_LINKER_FLAGS "-lpthread -lm -ldl -lrt -lcurl -lOpenCL -ljansson -L/opt/amdgpu-pro/lib/x86_64-linux-gnu")
 set(CMAKE_VERBOSE_MAKEFILES "0")
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 set(CMAKE_GENERATOR "ninja")
 #set(CMAKE_C_COMPILER_ID "Clang")
 set(CMAKE_C_COMPILER_ID "GNU")
+
+set(OPENCL_LIBRARIES "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so")
+set(OPENCL_INCLUDE_PATH "/opt/AMDAPPSDK-3.0/include")
+
 
 
 #
@@ -37,9 +41,12 @@ set(CMAKE_C_COMPILER_ID "GNU")
 
 INCLUDE(ExternalProject)
 INCLUDE(FindCurses)
-INCLUDE(FindOpenCL)
 INCLUDE(FindCURL)
 INCLUDE(FindJansson)
+#INCLUDE(FindAMDGPUOpenCL)
+
+# AMDGPU-PRO only supports OpenCL 1.2 despite shipping a 2.0 platform.
+
 
 #
 # Fetch and make use of external project sources
@@ -94,9 +101,9 @@ include_directories( ${PROJECT_SOURCE_DIR}/sph )
 include_directories( ${PROJECT_SOURCE_DIR}/lib )
 include_directories( ${PROJECT_SOURCE_DIR}/ccan )
 include_directories( ${PROJECT_BINARY_DIR} )
+include_directories( ${OPENCL_INCLUDE_PATH} )
 include_directories( ${CURSES_INCLUDE_PATH} )
 include_directories( ${CURL_INCLUDE_DIR} )
-include_directories( ${OpenCL_INCLUDE_DIR} )
 
 
 #file(READ ${PROJECT_SOURCE_DIR}/COPYING My_Project_License)
@@ -499,10 +506,10 @@ endif()
 	target_link_libraries(sgminer rt)
 	target_link_libraries(sgminer m)
 	target_link_libraries(sgminer pthread)
-	target_link_libraries(sgminer ${OpenCL_LIBRARY})
+	target_link_libraries(sgminer ${OPENCL_LIBRARIES})
 	target_link_libraries(sgminer ${CURSES_FORM_LIBRARY})
 	target_link_libraries(sgminer ${CURSES_NCURSES_LIBRARY})
-	target_link_libraries(sgminer ${CURL_LIBRARY})
+	target_link_libraries(sgminer ${CURL_LIBRARIES})
 	target_link_libraries(sgminer ccan)
 	target_link_libraries(sgminer sph)
 	target_link_libraries(sgminer jansson)

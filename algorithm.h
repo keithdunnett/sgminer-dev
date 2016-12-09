@@ -1,6 +1,8 @@
 #ifndef ALGORITHM_H
 #define ALGORITHM_H
 
+#define CL_USE_DEPRECATED_OPENCL_2_0_APIS
+
 #ifdef __APPLE_CC__
 #include <OpenCL/opencl.h>
 #else
