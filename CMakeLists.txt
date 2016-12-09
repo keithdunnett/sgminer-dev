@@ -233,8 +233,6 @@ set(header_files
 ./algorithm/whirlcoin.h
 ./algorithm/whirlpoolx.h
 ./algorithm/x14.h
-./algorithm/yescrypt_core.h
-./algorithm/yescrypt.h
 ./api/api.h
 ./ccan/compiler/compiler.h
 ./ccan/opt/opt.h
@@ -474,9 +472,6 @@ algorithm/twecoin.c
 algorithm/whirlcoin.c
 algorithm/whirlpoolx.c
 algorithm/x14.c
-algorithm/yescrypt.c
-algorithm/yescryptcommon.c
-algorithm/yescrypt-opt.c
 api/api.c
 config_parser.c
 driver-opencl.c
