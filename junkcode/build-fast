@@ -1,0 +1,50 @@
+#!/bin/bash
+
+logto="tty";
+
+function l {
+	t=`date "+%b %e %T"`;
+	h=`hostname | cut -d "." -f 1`
+	n="sgminer"
+	echo "$t $h $n $1"
+}
+
+l "debug build started at `date`"
+
+l "updating git submodules"
+git submodule init
+git submodule update
+date "+%s" >/dev/shm/build.start
+l "running autoreconf --install"
+autoreconf -vi 2>&1 | tee /dev/$logto 1>build.log 2>build.err
+l "running ./configure"
+
+#CFLAGS="-g -std=gnu99 -march=native -Wall -Wextra";
+CFLAGS="-std=gnu99 -O2";
+CC="clang-4.0" CFLAGS="$CFLAGS" ./configure --prefix=/usr/local/ --disable-shared --enable-static 1>>build.log 2>>build.err
+
+threads=$((`cat /proc/cpuinfo | grep processor | wc -l` - 1)); 
+l "building sgminer using $threads compiler threads" 
+make -j${threads} clean
+bear make -j${threads} | tee /dev/$logto >>build.log 2>&1
+if [[ -x "sgminer" ]]; then
+  ver=$(./sgminer --version 2>/dev/null); 
+  l "built executable: ./${ver}"
+  warn=$(cat build.err | grep warning | wc -l);
+  if [[ "$warn" -gt 0 ]]; then
+  l "compiler warnings:"
+  cat build.err | grep warning | while read line; do l "$line"; done;
+  fi
+else
+  l "something wrong with the build. Here's the error log:"
+  l ""
+  cat build.err #| while read line; do l "$line"; done;
+  exit -1;
+fi
+
+elapsed=$((`date "+%s"` - `cat /dev/shm/build.start`))
+l "debug build finished at `date` ($elapsed seconds)"
+rm -f /dev/shm/build.start
+
+
+

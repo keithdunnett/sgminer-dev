@@ -1,0 +1,34 @@
+
+## ADL 
+Removed. To be replaced with the AMDGPU sysfs interface, or some sort of abstraction layer perhaps.
+
+## API
+Moved into its own subdirectory. Rudimentary bash client script included, uses netcat and jq.
+
+## CMAKE
+Working on it. 
+
+## AUTOTOOLS
+
+
+## GNULIB
+Largely left alone so far, headers have been tidied into the include/ directory. This build mainly
+targets the GNU/Linux platform anyway, so whether and how far we need GNUlib modules is worth thinking
+about. So what is it providing and what does that do?
+
+### sigprocmask noinst_LIBRARIES	= libsph.a
+
+libsph_a_SOURCES	= bmw.c echo.c jh.c luffa.c gost.c simd.c blake.c cubehash.c groestl.c keccak.c shavite.c skein.c sha2.c sha2big.c fugue.c hamsi.c panama.c shabal.c whirlpool.c sha256_Y.c ripemd.c
+
+
+
+
+
+## OpenCL
+Using Khronos OpenCL headers, sticking at version 1.2 to suit amdgpu
+All versions are under include and can be changed at config time.
+
+## UTHASH
+Now imported as a submodule, compiled as libut.a and function definitions from libut.h
+
+

@@ -1,0 +1,51 @@
+#!/bin/bash
+
+logto="null";
+
+function l {
+	t=`date "+%b %e %T"`;
+	h=`hostname | cut -d "." -f 1`
+	n="sgminer"
+	echo "$t $h $n $1"
+}
+
+l "native build started at `date`"
+
+l "updating git submodules"
+git submodule init
+git submodule update
+date "+%s" >/dev/shm/build.start
+l "running autoreconf --install"
+autoreconf -vi 2>&1 | tee /dev/$logto 1>build.log 2>build.err
+l "running ./configure"
+
+[[ -r "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so" ]] && LDFLAGS="-L/opt/amdgpu-pro/lib/x86_64-linux-gnu";
+
+CFLAGS="-O3 -march=native -Wall" LDFLAGS="$LDFLAGS" \
+  ./configure --prefix=/usr/local --disable-shared 1>>build.log 2>>build.err
+
+threads=$((`cat /proc/cpuinfo | grep processor | wc -l` + 1)); 
+l "building sgminer using $threads compiler threads" 
+make -j${threads} clean 1>>build.log 2>>build.err 
+make -j${threads}  1>>build.log 2>>build.err
+if [[ -x "sgminer" ]]; then
+  ver=$(./sgminer --version 2>/dev/null); 
+  l "built executable: ./${ver}" | tee /dev/$logto
+  warn=$(cat build.err | grep warning | wc -l);
+  if [[ "$warn" -gt 0 ]]; then
+  l "compiler warnings:"
+  cat build.err | grep warning | while read line; do l "$line"; done;
+  fi
+else
+  l "something wrong with the build. Here's the error log:"
+  l ""
+  cat build.err | while read line; do l "$line"; done;
+  exit -1;
+fi
+
+elapsed=$((`date "+%s"` - `cat /dev/shm/build.start`))
+l "debug build finished at `date` ($elapsed seconds)"
+rm -f /dev/shm/build.start
+
+
+
