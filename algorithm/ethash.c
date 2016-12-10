@@ -120,7 +120,8 @@ void ethash_regenhash(struct work *work) {
   //0x%016llX.",work->Nonce);
   int idx = work->EpochNumber % 2;
   cg_rlock(&EthCacheLock[idx]);
-  LightEthash(work->hash, work->mixhash, work->data, ((EthCache[idx] + 64)),
+//  const union Node *TmpNode = {((EthCache[idx] + 64))};
+  LightEthash(work->hash, work->mixhash, work->data, (void*)((EthCache[idx] + 64)),
               work->EpochNumber, work->Nonce);
   cg_runlock(&EthCacheLock[idx]);
 

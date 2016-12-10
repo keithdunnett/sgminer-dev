@@ -212,9 +212,6 @@ set(header_files
 ./algorithm.h
 ./algorithm/inkcoin.h
 ./algorithm/lbry.h
-./algorithm/lyra2.h
-./algorithm/lyra2re.h
-./algorithm/lyra2rev2.h
 ./algorithm/marucoin.h
 ./algorithm/maxcoin.h
 ./algorithm/myriadcoin-groestl.h
@@ -452,9 +449,6 @@ algorithm/fuguecoin.c
 algorithm/groestlcoin.c
 algorithm/inkcoin.c
 algorithm/lbry.c
-algorithm/lyra2.c
-algorithm/lyra2re.c
-algorithm/lyra2rev2.c
 algorithm/marucoin.c
 algorithm/maxcoin.c
 algorithm/myriadcoin-groestl.c
