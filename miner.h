@@ -1317,12 +1317,16 @@ typedef struct _dev_blk_ctx {
   struct work *work;
 } dev_blk_ctx;
 
+#ifdef HAVE_LIBCURL
+
 struct curl_ent {
   CURL *curl;
   char curl_err_str[CURL_ERROR_SIZE];
   struct list_head node;
   struct timeval tv;
 };
+
+#endif
 
 /* The lowest enum of a freshly calloced value is the default */
 enum pool_state {

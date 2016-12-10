@@ -527,7 +527,9 @@ err_out:
 #define PROXY_SOCKS5 3
 #define PROXY_SOCKS4A 4
 #define PROXY_SOCKS5H 5
-#endif /* HAVE_LIBCURL */
+
+#endif
+
 
 static struct {
   const char *name;
@@ -535,7 +537,7 @@ static struct {
 } proxynames[] = {{"http:", PROXY_HTTP},       {"http0:", PROXY_HTTP_1_0},
                   {"socks4:", PROXY_SOCKS4},   {"socks5:", PROXY_SOCKS5},
                   {"socks4a:", PROXY_SOCKS4A}, {"socks5h:", PROXY_SOCKS5H},
-                  {NULL, (proxytypes_t)NULL}};
+                  {NULL, (intptr_t)NULL}};
 
 const char *proxytype(proxytypes_t proxytype) {
   int i;

@@ -1867,6 +1867,7 @@ static unsigned char *__gbt_merkleroot(struct pool *pool) {
 
 static bool work_decode(struct pool *pool, struct work *work, json_t *val);
 
+
 static void update_gbt(struct pool *pool) {
   int rolltime;
   json_t *val;
@@ -1904,6 +1905,8 @@ static void update_gbt(struct pool *pool) {
   }
   curl_easy_cleanup(curl);
 }
+
+#endif
 
 /* Return the work coin/network difficulty */
 static double get_work_blockdiff(const struct work *work) {
@@ -1949,6 +1952,8 @@ static double get_work_blockdiff(const struct work *work) {
 
   return numerator / (double)diff64;
 }
+
+#ifdef HAVE_LIBCURL
 
 static void gen_gbt_work(struct pool *pool, struct work *work) {
   unsigned char *merkleroot;
@@ -2105,6 +2110,8 @@ static bool gbt_decode(struct pool *pool, json_t *res_val) {
   return true;
 }
 
+#endif
+
 /* truediffone ==
  * 0x00000000FFFF0000000000000000000000000000000000000000000000000000
  * Generate a 256 bit binary LE target by cutting up diff into 64 bit sized
@@ -2137,6 +2144,10 @@ double le256todouble(const void *target) {
 
   return dcut64;
 }
+
+
+#ifdef HAVE_LIBCURL
+
 
 static bool getwork_decode(json_t *res_val, struct work *work) {
   size_t worklen = 128;
@@ -2926,7 +2937,7 @@ static void show_hash(struct work *work, char *hashshow) {
   suffix_string_double(work->share_diff, diffdisp, sizeof(diffdisp), 0);
   suffix_string_double(work->work_difficulty, wdiffdisp, sizeof(wdiffdisp), 0);
   if (opt_show_coindiff) {
-    snprintf(hashshow, 64, "Coin %.0f Diff %s/%s%s", get_work_blockdiff(work),
+    snprintf(hashshow, 64, "Coin %.0f Diff %s/%s%s", (double)get_work_blockdiff(work),
              diffdisp, wdiffdisp, work->block ? " BLOCK!" : "");
   } else {
     swab256(rhash, work->hash);
@@ -2944,6 +2955,7 @@ static void show_hash(struct work *work, char *hashshow) {
 }
 
 #ifdef HAVE_LIBCURL
+
 static void text_print_status(int thr_id) {
   struct cgpu_info *cgpu;
   char logline[256];
@@ -3631,6 +3643,7 @@ static void push_curl_entry(struct curl_ent *ce, struct pool *pool) {
   pthread_cond_broadcast(&pool->cr_cond);
   mutex_unlock(&pool->pool_lock);
 }
+#endif
 
 static bool stale_work(struct work *work, bool share);
 
@@ -3708,7 +3721,7 @@ static void roll_work(struct work *work) {
    * hashtable */
   work->id = total_work++;
 }
-
+#ifdef HAVE_LIBCURL
 static void *submit_work_thread(void *userdata) {
   struct work *work = (struct work *)userdata;
   struct pool *pool = work->pool;
@@ -5775,8 +5788,9 @@ static bool pool_active(struct pool *pool, bool pinging) {
   struct timeval tv_getwork, tv_getwork_reply;
   bool ret = false;
   json_t *val = NULL, *ethval2 = NULL;
-  CURL *curl;
-  char curl_err_str[CURL_ERROR_SIZE];
+#ifdef HAVE_LIBCURL
+  CURL *curl;  char curl_err_str[CURL_ERROR_SIZE];
+#endif
   int rolltime = 0;
   if (pool->has_gbt)
     applog(LOG_DEBUG, "Retrieving block template from %s", get_pool_name(pool));
@@ -5810,12 +5824,12 @@ retry_stratum:
     return pool->stratum_active;
   }
 
+#ifdef HAVE_LIBCURL
   curl = curl_easy_init();
   if (unlikely(!curl)) {
     applog(LOG_ERR, "CURL initialisation failed");
     return false;
   }
-
   /* Probe for GBT support on first pass */
   if (!pool->probed) {
     applog(LOG_DEBUG, "Probing for GBT support");
@@ -5859,7 +5873,6 @@ retry_stratum:
       applog(LOG_DEBUG,
              "No GBT coinbase + append support found, using getwork protocol");
   }
-
   cgtime(&tv_getwork);
   if (pool->algorithm.type == ALGO_ETHASH) {
     pool->rpc_req = (char *const)eth_getwork_rpc;
@@ -5885,6 +5898,7 @@ retry_stratum:
       goto retry_stratum;
     }
   }
+
 
   /* json_rpc_call() above succeeded */
   if (val) {
@@ -5964,6 +5978,7 @@ retry_stratum:
   }
 out:
   curl_easy_cleanup(curl);
+#endif
   return ret;
 }
 
@@ -7720,6 +7735,8 @@ void reinit_device(struct cgpu_info *cgpu) {
 }
 static struct timeval rotate_tv;
 
+#ifdef HAVE_LIBCURL
+
 /* We reap curls if they are unused for over a minute */
 static void reap_curl(struct pool *pool) {
   struct curl_ent *ent, *iter;
@@ -7744,6 +7761,8 @@ static void reap_curl(struct pool *pool) {
            get_pool_name(pool));
 }
 
+#endif
+
 static void *watchpool_thread(void __maybe_unused *userdata) {
   int intervals = 0;
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -7764,7 +7783,9 @@ static void *watchpool_thread(void __maybe_unused *userdata) {
     // check the status of each pool
     for (i = 0; i < total_pools; ++i) {
       struct pool *pool = pools[i];
+#ifdef HAVE_LIBCURL
       reap_curl(pool);
+#endif
       /* Get a rolling utility per pool over 10 mins */
       if (intervals >= 600) {
         int shares = pool->diff1 - pool->last_shares;

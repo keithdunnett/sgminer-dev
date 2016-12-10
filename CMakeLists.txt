@@ -28,9 +28,9 @@ set(BINARY_NAME "sgminer-dev")
 #set(CMAKE_EXE_LINKER_FLAGS "-lpthread -lm -ldl -lrt -lcurl -lOpenCL -ljansson -L/opt/amdgpu-pro/lib/x86_64-linux-gnu")
 set(CMAKE_VERBOSE_MAKEFILES "0")
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-set(CMAKE_GENERATOR "ninja")
+set(CMAKE_GENERATOR "Unix Makefiles")
 #set(CMAKE_C_COMPILER_ID "Clang")
-set(CMAKE_C_COMPILER_ID "GNU")
+#set(CMAKE_C_COMPILER_ID "GNU")
 
 
 
@@ -38,6 +38,51 @@ set(CMAKE_C_COMPILER_ID "GNU")
 set(OpenCL_LIBRARY "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so")
 set(OPENCL_LIBRARIES ${OpenCL_LIBRARY})
 set(OPENCL_INCLUDE_PATH "/opt/AMDAPPSDK-3.0/include")
+
+
+# Were we asked to clean first? Do the same for projects that we build.
+
+#set(BUILDSWITCHES "")
+if (${CLEAN_FIRST})
+	set(BUILDSWITCHES "--clean-first")
+endif()
+
+OPTION(DEFINE_DEBUG
+  "Build the project using debugging code"
+  OFF)
+IF(DEFINE_DEBUG)
+  MESSAGE("Adding Debug flag...")
+  ADD_DEFINITIONS(-DDEBUG)
+  SET(CMAKE_BUILD_TYPE Debug)
+  MESSAGE("Build type is " ${CMAKE_BUILD_TYPE})
+  set(BINARY_NAME "sgminer-debug")
+ENDIF(DEFINE_DEBUG)
+
+OPTION(DEFINE_MINSIZE
+  "Build the project for smallest binary size"
+  OFF)
+
+IF(DEFINE_MINSIZE)
+  MESSAGE("Adding MinSizeRel flag...")
+  ADD_DEFINITIONS(-DMINSIZEREL)
+  SET(CMAKE_BUILD_TYPE MinSizeRel)
+  MESSAGE("Build type is " ${CMAKE_BUILD_TYPE})
+  set(BINARY_NAME "sgminer-minsizerel")
+ENDIF(DEFINE_MINSIZE)
+
+
+
+#OPTION(DEFINE_RELEASE
+#  "Build the project with optimisation level -O3"
+#  OFF)#######
+
+#IF(DEFINE_RELEASE)
+#  MESSAGE("Adding Release flag...")
+#  ADD_DEFINITIONS(-DRELEASE)
+#  SET(CMAKE_BUILD_TYPE Release)
+#  MESSAGE("Build type is " ${CMAKE_BUILD_TYPE})
+#  set(BINARY_NAME "sgminer-release")
+#ENDIF(DEFINE_RELEASE)
 
 
 #
@@ -62,9 +107,11 @@ INCLUDE(FindAMDGPUOpenCL)
 # operating system, but my Ubuntu install is on 2.7 and some of the bug fixes and new features
 # in 2.9 could be worth having. We'll compile our own. 
 
-if (NOT ${FOUND_JANSSON})
+set(JANSSON_GIT "false")
 
-ExternalProject_Add(jansson-master
+if (${JANSSON_GIT})
+
+ExternalProject_Add(jansson-git
   PREFIX jansson
   GIT_REPOSITORY https://github.com/akheron/jansson.git
   GIT_TAG master
@@ -72,14 +119,15 @@ ExternalProject_Add(jansson-master
   BUILD_DIR=${SGMINER_SOURCE_DIR}
   BINARY_DIR=${SGMINER_SOURCE_DIR}
   INSTALL_DIR=${SGMINER_SOURCE_DIR}
-  CONFIGURE_COMMAND cmake -G Ninja -DJANSSON_BUILD_DOCS=OFF -DCMAKE_INSTALL_PREFIX=../../../ ../jansson-master
-  BUILD_COMMAND cmake --build . --clean-first
+  CONFIGURE_COMMAND cmake -G "Ninja" -DJANSSON_BUILD_DOCS=OFF -DCMAKE_INSTALL_PREFIX=../../../ ../jansson-git
+  BUILD_COMMAND cmake --build . ${BUILDSWITCHES}
   INSTALL_COMMAND cmake --build . --target install
 )
-ExternalProject_Get_Property(jansson-master install_dir)
+ExternalProject_Get_Property(jansson-git install_dir)
 add_library(jansson STATIC IMPORTED)
 set_property(TARGET jansson PROPERTY IMPORTED_LOCATION lib/libjansson.a)
-add_dependencies(jansson jansson-master)
+add_dependencies(jansson jansson-git)
+
 
 endif()
 
@@ -483,13 +531,14 @@ sgminer.c
 util.c
 ${header_files}
  	)
+
+if (${JANSSON_GIT})
+
+	add_dependencies(${BINARY_NAME} jansson)
+endif()
 	add_dependencies(${BINARY_NAME} ccan)
 	add_dependencies(${BINARY_NAME} sph)
 	add_dependencies(${BINARY_NAME} ut)
-
-if (NOT ${FOUND_JANSSON})
-	add_dependencies(${BINARY_NAME} jansson)
-endif()
 
 #	Link the library to the app?
 

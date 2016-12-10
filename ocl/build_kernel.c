@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <limits.h>
 
 #include "build_kernel.h"
 #include "miner.h"
