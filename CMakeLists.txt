@@ -27,7 +27,7 @@ set(BINARY_NAME "sgminer-dev")
 #set(CMAKE_CFLAGS "-pthread -Wall -Wextra")
 #set(CMAKE_EXE_LINKER_FLAGS "-lpthread -lm -ldl -lrt -lcurl -lOpenCL -ljansson -L/opt/amdgpu-pro/lib/x86_64-linux-gnu")
 set(CMAKE_VERBOSE_MAKEFILES "0")
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/Modules")
 set(CMAKE_GENERATOR "Unix Makefiles")
 #set(CMAKE_C_COMPILER_ID "Clang")
 #set(CMAKE_C_COMPILER_ID "GNU")
@@ -38,6 +38,7 @@ set(CMAKE_GENERATOR "Unix Makefiles")
 set(OpenCL_LIBRARY "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so")
 set(OPENCL_LIBRARIES ${OpenCL_LIBRARY})
 set(OPENCL_INCLUDE_PATH "/opt/AMDAPPSDK-3.0/include")
+set(OPENCL_INCLUDE_DIRS ${OPENCL_INCLUDE_PATH})
 
 
 # Were we asked to clean first? Do the same for projects that we build.
@@ -93,7 +94,7 @@ INCLUDE(ExternalProject)
 INCLUDE(FindCurses)
 INCLUDE(FindCURL)
 INCLUDE(FindJansson)
-INCLUDE(FindAMDGPUOpenCL)
+INCLUDE(FindOpenCL)
 
 # AMDGPU-PRO only supports OpenCL 1.2 despite shipping a 2.0 platform.
 
