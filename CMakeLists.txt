@@ -32,7 +32,7 @@ set(CMAKE_C_COMPILER_ID "GNU")
 
 set(OPENCL_LIBRARIES "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so")
 set(OPENCL_INCLUDE_PATH "/opt/AMDAPPSDK-3.0/include")
-
+SET(BINARY_NAME "sgminer-dev")
 
 
 #
@@ -87,8 +87,6 @@ add_subdirectory(ccan)
 add_subdirectory(sph)
 add_subdirectory(include)
 
-#add_subdirectory(lib)
-#add_subdirectory(submodules)
 
 
 # =================
@@ -431,12 +429,11 @@ endif (WIN32)
 
 
  if (NOT DEFINED TEST)
- 	add_executable(sgminer
+add_executable(${BINARY_NAME}
 algorithm/animecoin.c
 algorithm/bitblock.c
 algorithm/blake256.c
 algorithm/blakecoin.c
-algorithm.c
 algorithm/credits.c
 algorithm/cryptonight.c
 algorithm/darkcoin.c
@@ -466,6 +463,7 @@ algorithm/twecoin.c
 algorithm/whirlcoin.c
 algorithm/whirlpoolx.c
 algorithm/x14.c
+algorithm.c
 api/api.c
 config_parser.c
 driver-opencl.c
@@ -480,26 +478,25 @@ sgminer.c
 util.c
 ${header_files}
  	)
-
-	add_dependencies(sgminer ccan)
-	add_dependencies(sgminer sph)
-	add_dependencies(sgminer ut)
+	add_dependencies(${BINARY_NAME} ccan)
+	add_dependencies(${BINARY_NAME} sph)
+	add_dependencies(${BINARY_NAME} ut)
 
 if (NOT ${FOUND_JANSSON})
-	add_dependencies(sgminer jansson)
+	add_dependencies(${BINARY_NAME} jansson)
 endif()
 
 #	Link the library to the app?
 
-	target_link_libraries(sgminer dl)
-	target_link_libraries(sgminer rt)
-	target_link_libraries(sgminer m)
-	target_link_libraries(sgminer pthread)
-	target_link_libraries(sgminer ${OPENCL_LIBRARIES})
-	target_link_libraries(sgminer ${CURSES_FORM_LIBRARY})
-	target_link_libraries(sgminer ${CURSES_NCURSES_LIBRARY})
-	target_link_libraries(sgminer ${CURL_LIBRARIES})
-	target_link_libraries(sgminer ccan)
-	target_link_libraries(sgminer sph)
-	target_link_libraries(sgminer jansson)
+	target_link_libraries(${BINARY_NAME} dl)
+	target_link_libraries(${BINARY_NAME} rt)
+	target_link_libraries(${BINARY_NAME} m)
+	target_link_libraries(${BINARY_NAME} pthread)
+	target_link_libraries(${BINARY_NAME} ${OPENCL_LIBRARIES})
+	target_link_libraries(${BINARY_NAME} ${CURSES_FORM_LIBRARY})
+	target_link_libraries(${BINARY_NAME} ${CURSES_NCURSES_LIBRARY})
+	target_link_libraries(${BINARY_NAME} ${CURL_LIBRARIES})
+	target_link_libraries(${BINARY_NAME} ccan)
+	target_link_libraries(${BINARY_NAME} sph)
+	target_link_libraries(${BINARY_NAME} jansson)
 endif()
