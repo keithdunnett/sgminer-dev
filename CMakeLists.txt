@@ -247,6 +247,7 @@ algorithm/cryptonight.c
 
 # Primary header files
 set(header_files
+./algorithm.h
 ./algorithm/animecoin.h
 ./algorithm/bitblock.h
 ./algorithm/blake256.h
@@ -261,7 +262,6 @@ set(header_files
 ./algorithm/fresh.h
 ./algorithm/fuguecoin.h
 ./algorithm/groestlcoin.h
-./algorithm.h
 ./algorithm/inkcoin.h
 ./algorithm/lbry.h
 ./algorithm/marucoin.h
@@ -275,7 +275,6 @@ set(header_files
 ./algorithm/sia.h
 ./algorithm/sibcoin.h
 ./algorithm/sifcoin.h
-./algorithm/sponge.h
 ./algorithm/sysendian.h
 ./algorithm/talkcoin.h
 ./algorithm/twecoin.h
@@ -511,7 +510,6 @@ algorithm/scrypt.c
 algorithm/sia.c
 algorithm/sibcoin.c
 algorithm/sifcoin.c
-algorithm/sponge.c
 algorithm/talkcoin.c
 algorithm/twecoin.c
 algorithm/whirlcoin.c
