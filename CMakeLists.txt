@@ -13,8 +13,6 @@ set (My_Project_Version_Minor 5)
 set (My_Project_Version_Patch 2)
 set (My_Project_Version_Revision "magick")
 set (My_Project_Version "${My_Project_Version_Major}.${My_Project_Version_Minor}.${My_Project_Version_Patch}")
-set (My_Project_Copyright_Date "2016")
-set (My_Project_Copyright "${My_Project_Copyright_Date} ${My_Project_Author}.")
 string(TOUPPER ${My_Project_Title} My_Project_Title_Caps  )
 string(REGEX REPLACE " " "_" My_Project_Title_Caps ${My_Project_Title_Caps} )
 project (${My_Project_Title})
@@ -22,13 +20,9 @@ set(BINARY_NAME "sgminer-dev")
 
 # Global CMAKE settings
 
-#set(CMAKE_CFLAGS "-pthread -Wall -Wextra -I/opt/AMDAPPSDK-3.0/include/")
-#set(CMAKE_CFLAGS "-pthread -Wall -Wextra")
-#set(CMAKE_EXE_LINKER_FLAGS "-lpthread -lm -ldl -lrt -lcurl -lOpenCL -ljansson -L/opt/amdgpu-pro/lib/x86_64-linux-gnu")
 set(CMAKE_VERBOSE_MAKEFILES "0")
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/Modules")
-set(CMAKE_PREFIX_PATH "/usr /usr/lib/x86_64-linux-gnu")
-#set(CMAKE_INCLUDE_PATH "/usr")
+set(CMAKE_PREFIX_PATH "/usr /usr/lib/x86_64-linux-gnu /opt/amdgpu-pro/lib/x86_64-linux-gnu")
 set(CMAKE_GENERATOR "Unix Makefiles")
 #set(CMAKE_C_COMPILER_ID "Clang")
 #set(CMAKE_C_COMPILER_ID "GNU")
@@ -92,13 +86,39 @@ ENDIF(DEFINE_MINSIZE)
 #
 
 INCLUDE(ExternalProject)
-INCLUDE(FindCurses)
-INCLUDE(FindCURL)
-INCLUDE(FindJansson)
+INCLUDE(FeatureSummary)
+INCLUDE(FindPackageHandleStandardArgs)
+INCLUDE(FindPackageMessage)
 INCLUDE(FindOpenCL)
+INCLUDE(FindCurses)
+INCLUDE(FindJansson)
+INCLUDE(FindCURL)
 
-# AMDGPU-PRO only supports OpenCL 1.2 despite shipping a 2.0 platform.
 
+
+option(USE_CURSES "Compile with the curses-based terminal interface (recommended)" ON)
+add_feature_info(USE_CURSES ${USE_CURSES} "Compile with the curses-based terminal interface (recommended)")
+
+option(USE_LIBSPH "Compile and link the RNRT SAPHIR crypto library (currently needed)" ON)
+add_feature_info(USE_LIBSPH ${USE_LIBSPH} "Compile and link the RNRT SAPHIR crypto library (currently required)")
+
+option(USE_LIBCURL "Build with libcurl for getwork and GBT" OFF)
+add_feature_info(USE_LIBCURL ${USE_LIBCURL} "Dependency on libcurl for gbt/getwork (not needed for stratum)")
+
+
+
+
+feature_summary(WHAT ENABLED_FEATURES
+                INCLUDE_QUIET_PACKAGES
+                DESCRIPTION "Enabled Features:"
+                VAR enabledFeaturesText)
+feature_summary(WHAT DISABLED_FEATURES
+                INCLUDE_QUIET_PACKAGES
+                DESCRIPTION "Disabled Features:"
+                VAR disabledFeaturesText)
+
+message(STATUS "${enabledFeaturesText}")
+message(STATUS "${disabledFeaturesText}")
 
 #
 # Fetch and make use of external project sources

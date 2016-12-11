@@ -2,7 +2,7 @@
 
 #include "algorithm/eth-sha3.h"
 #include "algorithm/ethash.h"
-#include "sph/sph_keccak.h"
+//#include "sph/sph_keccak.h"
 
 typedef union node {
   uint8_t bytes[16 * 4];
