@@ -28,9 +28,6 @@
 #define PROXY_SOCKS5 CURLPROXY_SOCKS5
 #define PROXY_SOCKS4A CURLPROXY_SOCKS4A
 #define PROXY_SOCKS5H CURLPROXY_SOCKS5_HOSTNAME
-//extern json_t *json_rpc_call(CURL *curl, char *curl_err_str, const char *url,
-//                             const char *userpass, const char *rpc_req, bool,
-//                             bool, int *, struct pool *pool, bool);
 
 typedef curl_proxytype proxytypes_t;
 

@@ -26,7 +26,7 @@
 #endif
 #include <ccan/opt/opt.h>
 
-#include "config_parser.h"
+#include "functions/config/config_parser.h"
 #include "driver-opencl.h"
 #include "findnonce.h"
 #include "include/compat.h"

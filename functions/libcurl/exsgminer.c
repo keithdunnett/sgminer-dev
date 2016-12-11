@@ -22,7 +22,7 @@
 #include <sys/types.h>
 
 #include "miner.h"
-#include "config_parser.h"
+#include "functions/config/config_parser.h"
 #include "driver-opencl.h"
 #include "include/bench_block.h"
 #include "include/compat.h"
@@ -40,6 +40,13 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #endif
+
+char eth_getwork_rpc[] =
+    "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getWork\",\"params\":[],\"id\":1}";
+char eth_gethighestblock_rpc[] = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_"
+                                       "getBlockByNumber\",\"params\":["
+                                       "\"latest\", false],\"id\":1}";
+
 
 
 #ifdef HAVE_LIBCURL
@@ -84,7 +91,7 @@ extern bool jobj_binary(const json_t *obj, const char *key, void *buf,
  * transaction, and the hashes of the remaining transactions since these
  * remain constant with an altered coinbase when generating work. Must be
  * entered under gbt_lock */
-static bool __build_gbt_txns(struct pool *pool, json_t *res_val) {
+extern bool __build_gbt_txns(struct pool *pool, json_t *res_val) {
   json_t *txn_array;
   bool ret = false;
   size_t cal_len;
@@ -128,7 +135,7 @@ out:
   return ret;
 }
 
-static unsigned char *__gbt_merkleroot(struct pool *pool) {
+extern unsigned char *__gbt_merkleroot(struct pool *pool) {
   unsigned char *merkle_hash;
   int i, txns;
 
@@ -158,10 +165,10 @@ static unsigned char *__gbt_merkleroot(struct pool *pool) {
   return merkle_hash;
 }
 
-static bool work_decode(struct pool *pool, struct work *work, json_t *val);
+extern bool work_decode(struct pool *pool, struct work *work, json_t *val);
 
 
-static void update_gbt(struct pool *pool) {
+extern void update_gbt(struct pool *pool) {
   int rolltime;
   json_t *val;
   CURL *curl;
@@ -203,7 +210,7 @@ static void update_gbt(struct pool *pool) {
 
 #ifdef HAVE_LIBCURL
 
-static void gen_gbt_work(struct pool *pool, struct work *work) {
+extern void gen_gbt_work(struct pool *pool, struct work *work) {
   unsigned char *merkleroot;
   struct timeval now;
   uint64_t nonce2le;
@@ -262,7 +269,7 @@ static void gen_gbt_work(struct pool *pool, struct work *work) {
   cgtime(&work->tv_staged);
 }
 
-static bool gbt_decode(struct pool *pool, json_t *res_val) {
+extern bool gbt_decode(struct pool *pool, json_t *res_val) {
   const char *previousblockhash;
   const char *target;
   const char *coinbasetxn;
@@ -362,7 +369,7 @@ static bool gbt_decode(struct pool *pool, json_t *res_val) {
 #ifdef HAVE_LIBCURL
 
 
-static bool getwork_decode(json_t *res_val, struct work *work) {
+extern bool getwork_decode(json_t *res_val, struct work *work) {
   size_t worklen = 128;
   if (work->pool->algorithm.type == ALGO_CRE)
     worklen = 168;
@@ -406,11 +413,11 @@ static bool getwork_decode(json_t *res_val, struct work *work) {
 }
 
 /* Returns whether the pool supports local work generation or not. */
-static bool pool_localgen(struct pool *pool) {
+extern bool pool_localgen(struct pool *pool) {
   return (pool->has_stratum || pool->has_gbt);
 }
 
-static bool work_decode(struct pool *pool, struct work *work, json_t *val) {
+extern bool work_decode(struct pool *pool, struct work *work, json_t *val) {
   json_t *res_val = json_object_get(val, "result");
   bool ret = false;
 
@@ -442,7 +449,7 @@ out:
 }
 
 bool parse_diff_ethash(unsigned char *Target, char *TgtStr);
-static bool work_decode_eth(struct pool *pool, struct work *work, json_t *val,
+extern bool work_decode_eth(struct pool *pool, struct work *work, json_t *val,
                             json_t *ethval2) {
   //      int i;
   bool ret = false;
@@ -542,7 +549,7 @@ out:
 
 #ifdef HAVE_LIBCURL
 
-static void text_print_status(int thr_id) {
+extern void text_print_status(int thr_id) {
   struct cgpu_info *cgpu;
   char logline[256];
 
@@ -553,12 +560,12 @@ static void text_print_status(int thr_id) {
   }
 }
 
-static void print_status(int thr_id) {
+extern void print_status(int thr_id) {
   if (!curses_active)
     text_print_status(thr_id);
 }
 
-static bool submit_upstream_work(struct work *work, CURL *curl,
+extern bool submit_upstream_work(struct work *work, CURL *curl,
                                  char *curl_err_str, bool resubmit) {
   char *hexstr = NULL;
   json_t *val, *res, *err;
@@ -770,7 +777,7 @@ out:
   free(hexstr);
   return rc;
 }
-static bool get_upstream_work(struct work *work, CURL *curl,
+extern bool get_upstream_work(struct work *work, CURL *curl,
                               char *curl_err_str) {
   struct pool *pool = work->pool;
   struct sgminer_pool_stats *pool_stats = &(pool->sgminer_pool_stats);
@@ -848,7 +855,7 @@ static bool get_upstream_work(struct work *work, CURL *curl,
 #ifdef HAVE_LIBCURL
 /* Called with pool_lock held. Recruit an extra curl if none are available for
  * this pool. */
-static void recruit_curl(struct pool *pool) {
+extern void recruit_curl(struct pool *pool) {
   struct curl_ent *ce = (struct curl_ent *)calloc(sizeof(struct curl_ent), 1);
 
   if (unlikely(!ce))
@@ -867,7 +874,7 @@ static void recruit_curl(struct pool *pool) {
  * and there are already 5 curls in circulation. Limit total number to the
  * number of mining threads per pool as well to prevent blasting a pool during
  * network delays/outages. */
-static struct curl_ent *pop_curl_entry(struct pool *pool) {
+extern struct curl_ent *pop_curl_entry(struct pool *pool) {
   int curl_limit = opt_delaynet ? 5 : (mining_threads + opt_queue) * 2;
   bool recruited = false;
   struct curl_ent *ce;
@@ -896,7 +903,7 @@ retry:
   return ce;
 }
 
-static void push_curl_entry(struct curl_ent *ce, struct pool *pool) {
+extern void push_curl_entry(struct curl_ent *ce, struct pool *pool) {
   mutex_lock(&pool->pool_lock);
   list_add_tail(&ce->node, &pool->curlring);
   cgtime(&ce->tv);
@@ -951,7 +958,7 @@ extern void *submit_work_thread(void *userdata) {
   return NULL;
 }
 
-static struct work *make_clone(struct work *work) {
+extern struct work *make_clone(struct work *work) {
   struct work *work_clone = copy_work(work);
 
   if (work->pool->algorithm.type == ALGO_DECRED) {
@@ -971,9 +978,9 @@ static struct work *make_clone(struct work *work) {
   return work_clone;
 }
 
-static void stage_work(struct work *work);
+extern void stage_work(struct work *work);
 
-static bool clone_available(void) {
+extern bool clone_available(void) {
   struct work *work_clone = NULL, *work, *tmp;
   bool cloned = false;
 
@@ -1004,7 +1011,7 @@ out_unlock:
 /* Clones work by rolling it if possible, and returning a clone instead of the
  * original work item which gets staged again to possibly be rolled again in
  * the future */
-static struct work *clone_work(struct work *work) {
+extern struct work *clone_work(struct work *work) {
   int mrs = mining_threads + opt_queue - total_staged();
   struct work *work_clone;
   bool cloned;
@@ -1038,7 +1045,7 @@ static struct work *clone_work(struct work *work) {
 
 #ifdef HAVE_LIBCURL
 /* Stage another work item from the work returned in a longpoll */
-static void convert_to_work(json_t *val, int rolltime, struct pool *pool,
+extern void convert_to_work(json_t *val, int rolltime, struct pool *pool,
                             struct timeval *tv_lp,
                             struct timeval *tv_lp_reply) {
   struct work *work;
@@ -1087,7 +1094,7 @@ static void convert_to_work(json_t *val, int rolltime, struct pool *pool,
 /* If we want longpoll, enable it for the chosen default pool, or, if
  * the pool does not support longpoll, find the first one that does
  * and use its longpoll support */
-static struct pool *select_longpoll_pool(struct pool *cp) {
+extern struct pool *select_longpoll_pool(struct pool *cp) {
   int i;
   if (cp->hdr_path || cp->has_gbt)
     return cp;
@@ -1101,7 +1108,7 @@ static struct pool *select_longpoll_pool(struct pool *cp) {
 #endif /* HAVE_LIBCURL */
 
 #ifdef HAVE_LIBCURL
-static void *longpoll_thread(void *userdata) {
+extern void *longpoll_thread(void *userdata) {
   struct pool *cp = (struct pool *)userdata;
   /* This *pool is the source of the actual longpoll, not the pool we've
    * tied it to */
@@ -1226,7 +1233,7 @@ out:
 #ifdef HAVE_LIBCURL
 
 /* We reap curls if they are unused for over a minute */
-static void reap_curl(struct pool *pool) {
+extern void reap_curl(struct pool *pool) {
   struct curl_ent *ent, *iter;
   struct timeval now;
   int reaped = 0;

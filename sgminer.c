@@ -72,7 +72,7 @@ int opt_tcp_keepalive;
 
 #include "algorithm.h"
 #include "algorithm/ethash.h"
-#include "config_parser.h"
+#include "functions/config/config_parser.h"
 #include "events.h"
 #include "pool.h"
 
@@ -124,6 +124,8 @@ int opt_g_threads = -1;
 bool opt_restart = true;
 int opt_vote = 0;
 
+extern char eth_getwork_rpc[];
+
 /*****************************************
  * Xn Algorithm options
  *****************************************/
@@ -155,8 +157,8 @@ bool opt_fail_only;
 int opt_fail_switch_delay = 60;
 int opt_watchpool_refresh = 30;
 static bool opt_fix_protocol;
-static bool opt_lowmem;
-static bool opt_morenotices;
+bool opt_lowmem;
+bool opt_morenotices;
 uint32_t eth_nonce;
 pthread_mutex_t eth_nonce_lock;
 uint32_t EthereumEpochNumber = 0;
@@ -329,7 +331,7 @@ struct sigaction termhandler, inthandler;
 
 struct thread_q *getq;
 
-static int total_work;
+int total_work;
 struct work *staged_work = NULL;
 
 struct schedtime schedstart;
@@ -1736,7 +1738,7 @@ static struct opt_table opt_cmdline_table[] = {
                     "Display version and exit"),
     OPT_ENDTABLE};
 
-static struct work *make_work(void) {
+extern struct work *make_work(void) {
   struct work *w = (struct work *)calloc(1, sizeof(struct work));
 
   if (unlikely(!w))
@@ -1850,10 +1852,11 @@ double le256todouble(const void *target) {
 #ifndef HAVE_LIBCURL
 /* Always true with stratum */
 #define pool_localgen(pool) (true)
+#endif
+
 #define json_rpc_call(curl, curl_err_str, url, userpass, rpc_req, probe, longpoll, rolltime, pool, share) (NULL)
 #define work_decode(pool, work, val) (false)
 #define gen_gbt_work(pool, work) {}
-#endif
 
 int dev_from_id(int thr_id)
 {
@@ -2847,7 +2850,7 @@ static void _set_work_time(struct work *work, uint32_t ntime) {
   (*work_ntime) = ntime;
 }
 
-static void roll_work(struct work *work) {
+extern void roll_work(struct work *work) {
   uint32_t work_ntime;
   uint32_t ntime;
 
@@ -2881,6 +2884,8 @@ static void *submit_work_thread(void __maybe_unused *userdata) {
   pthread_detach(pthread_self());
   return NULL;
 }
+#else
+extern void *submit_work_thread;
 #endif /* HAVE_LIBCURL */
 
 /* Return an adjusted ntime if we're submitting work that a device has

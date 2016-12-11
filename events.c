@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "config_parser.h"
+#include "functions/config/config_parser.h"
 #include "events.h"
 #include "include/compat.h"
 #include "miner.h"

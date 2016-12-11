@@ -21,7 +21,7 @@ struct header_info {
   bool hadexpire;
 };
 
-static void databuf_free(struct data_buffer *db) {
+extern void databuf_free(struct data_buffer *db) {
   if (db) {
     if (db->buf)
       free(db->buf);
@@ -29,13 +29,13 @@ static void databuf_free(struct data_buffer *db) {
   }
 }
 
-static size_t all_data_cb(const void *ptr, size_t size, size_t nmemb,
+extern size_t all_data_cb(const void *ptr, size_t size, size_t nmemb,
                           void *user_data) {
   struct data_buffer *db = (struct data_buffer *)user_data;
   size_t len = size * nmemb;
   size_t oldlen, newlen;
   void *newmem;
-  static const unsigned char zero = 0;
+  extern const unsigned char zero = 0;
 
   if (len > 0) {
     oldlen = db->len;
@@ -54,7 +54,7 @@ static size_t all_data_cb(const void *ptr, size_t size, size_t nmemb,
   return len;
 }
 
-static size_t upload_data_cb(void *ptr, size_t size, size_t nmemb,
+extern size_t upload_data_cb(void *ptr, size_t size, size_t nmemb,
                              void *user_data) {
   struct upload_buffer *ub = (struct upload_buffer *)user_data;
   unsigned int len = size * nmemb;
@@ -71,7 +71,7 @@ static size_t upload_data_cb(void *ptr, size_t size, size_t nmemb,
   return len;
 }
 
-static size_t resp_hdr_cb(void *ptr, size_t size, size_t nmemb,
+extern size_t resp_hdr_cb(void *ptr, size_t size, size_t nmemb,
                           void *user_data) {
   struct header_info *hi = (struct header_info *)user_data;
   size_t remlen, slen, ptrlen = size * nmemb;
@@ -149,21 +149,21 @@ out:
   return ptrlen;
 }
 
-static void last_nettime(struct timeval *last) {
+extern void last_nettime(struct timeval *last) {
   rd_lock(&netacc_lock);
   last->tv_sec = nettime.tv_sec;
   last->tv_usec = nettime.tv_usec;
   rd_unlock(&netacc_lock);
 }
 
-static void set_nettime(void) {
+extern void set_nettime(void) {
   wr_lock(&netacc_lock);
   cgtime(&nettime);
   wr_unlock(&netacc_lock);
 }
 
 #if CURL_HAS_KEEPALIVE
-static void keep_curlalive(CURL *curl) {
+extern void keep_curlalive(CURL *curl) {
   const long int keepalive = 1;
 
   curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, keepalive);
@@ -171,7 +171,7 @@ static void keep_curlalive(CURL *curl) {
   curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, opt_tcp_keepalive);
 }
 #else
-static void keep_curlalive(CURL *curl) {
+extern void keep_curlalive(CURL *curl) {
   SOCKETTYPE sock;
 
   curl_easy_getinfo(curl, CURLINFO_LASTSOCKET, (long *)&sock);
@@ -180,7 +180,7 @@ static void keep_curlalive(CURL *curl) {
 #endif
 
 
-static int curl_debug_cb(__maybe_unused CURL *handle, curl_infotype type,
+extern int curl_debug_cb(__maybe_unused CURL *handle, curl_infotype type,
                          __maybe_unused char *data, size_t size,
                          void *userdata) {
   struct pool *pool = (struct pool *)userdata;

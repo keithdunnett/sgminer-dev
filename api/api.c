@@ -32,7 +32,7 @@
 #include "pool.h"
 #include "util.h"
 
-#include "config_parser.h"
+#include "functions/config/config_parser.h"
 
 #ifdef WIN32
 static char WSAbuf[1024];

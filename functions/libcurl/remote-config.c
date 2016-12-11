@@ -22,7 +22,7 @@
 #include <sys/types.h>
 
 #include "miner.h"
-#include "config_parser.h"
+#include "functions/config/config_parser.h"
 #include "driver-opencl.h"
 #include "include/bench_block.h"
 #include "include/compat.h"
@@ -118,7 +118,7 @@ static char *fetch_remote_config(const char *url) {
 }
 
 
-char *load_config_withlibcurl(const char *arg, const char *parentkey, void __maybe_unused *unused) {
+extern char *load_config_withlibcurl(const char *arg, const char *parentkey, void __maybe_unused *unused) {
   json_error_t err;
   json_t *config;
 
