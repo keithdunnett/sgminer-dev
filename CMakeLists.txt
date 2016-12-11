@@ -28,6 +28,8 @@ set(BINARY_NAME "sgminer-dev")
 #set(CMAKE_EXE_LINKER_FLAGS "-lpthread -lm -ldl -lrt -lcurl -lOpenCL -ljansson -L/opt/amdgpu-pro/lib/x86_64-linux-gnu")
 set(CMAKE_VERBOSE_MAKEFILES "0")
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/Modules")
+set(CMAKE_PREFIX_PATH "/usr /usr/lib/x86_64-linux-gnu")
+#set(CMAKE_INCLUDE_PATH "/usr")
 set(CMAKE_GENERATOR "Unix Makefiles")
 #set(CMAKE_C_COMPILER_ID "Clang")
 #set(CMAKE_C_COMPILER_ID "GNU")
@@ -148,14 +150,15 @@ add_subdirectory(include)
 # =================
 
 # Search for included files here
-include_directories( ${PROJECT_SOURCE_DIR}/include )
+include_directories( ${JANSSON_INCLUDE_DIR} )
+#include_directories( ${PROJECT_SOURCE_DIR}/include )
 include_directories( ${PROJECT_SOURCE_DIR}/sph )
 include_directories( ${PROJECT_SOURCE_DIR}/lib )
 include_directories( ${PROJECT_SOURCE_DIR}/ccan )
 include_directories( ${PROJECT_BINARY_DIR} )
 include_directories( ${OPENCL_INCLUDE_PATH} )
 include_directories( ${CURSES_INCLUDE_PATH} )
-include_directories( ${CURL_INCLUDE_DIR} )
+#include_directories( ${CURL_INCLUDE_DIR} )
 
 
 #file(READ ${PROJECT_SOURCE_DIR}/COPYING My_Project_License)
@@ -297,8 +300,6 @@ set(header_files
 ./include/c++defs.h
 ./include/compat.h
 ./include/elist.h
-./include/jansson_config.h
-./include/jansson.h
 ./include/uthash/src/libut.h
 ./include/uthash/src/ringbuf.h
 ./include/uthash/src/utarray.h
@@ -535,7 +536,6 @@ ${header_files}
  	)
 
 if (${JANSSON_GIT})
-
 	add_dependencies(${BINARY_NAME} jansson)
 endif()
 	add_dependencies(${BINARY_NAME} ccan)
@@ -548,11 +548,11 @@ endif()
 	target_link_libraries(${BINARY_NAME} rt)
 	target_link_libraries(${BINARY_NAME} m)
 	target_link_libraries(${BINARY_NAME} pthread)
+	target_link_libraries(${BINARY_NAME} ccan)
+	target_link_libraries(${BINARY_NAME} sph)
 	target_link_libraries(${BINARY_NAME} ${OPENCL_LIBRARIES})
 	target_link_libraries(${BINARY_NAME} ${CURSES_FORM_LIBRARY})
 	target_link_libraries(${BINARY_NAME} ${CURSES_NCURSES_LIBRARY})
 	target_link_libraries(${BINARY_NAME} ${CURL_LIBRARIES})
-	target_link_libraries(${BINARY_NAME} ccan)
-	target_link_libraries(${BINARY_NAME} sph)
-	target_link_libraries(${BINARY_NAME} jansson)
+	target_link_libraries(${BINARY_NAME} ${JANSSON_LIBRARIES})
 endif()

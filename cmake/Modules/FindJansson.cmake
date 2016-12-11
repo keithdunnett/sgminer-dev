@@ -19,11 +19,10 @@ else (JANSSON_LIBRARIES AND JANSSON_INCLUDE_DIRS)
   find_path(JANSSON_INCLUDE_DIR
     NAMES
       jansson.h
+      jansson-config.h
     PATHS
       /usr/include
-      /usr/local/include
-      /opt/local/include
-      /sw/include
+    NO_DEFAULT_PATH
   )
 
 find_library(JANSSON_LIBRARY
@@ -31,9 +30,6 @@ find_library(JANSSON_LIBRARY
       jansson
     PATHS
       /usr/lib
-      /usr/local/lib
-      /opt/local/lib
-      /sw/lib
   )
 
 set(JANSSON_INCLUDE_DIRS

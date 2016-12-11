@@ -26,7 +26,6 @@
 #include "driver-opencl.h"
 #include "include/bench_block.h"
 #include "include/compat.h"
-#include "include/jansson.h"
 
 #include "algorithm.h"
 #include "pool.h"
