@@ -768,4 +768,12 @@ void EthGenerateCache(void *cache_nodes_in, const uint8_t *seedhash,
 void ethash_regenhash(struct work *work);
 uint32_t EthCalcEpochNumber(uint8_t *SeedHash);
 
+//char eth_getwork_rpc[] =
+//    "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getWork\",\"params\":[],\"id\":1}";
+//char eth_gethighestblock_rpc[] = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_"
+ //                                      "getBlockByNumber\",\"params\":["
+//                                       "\"latest\", false],\"id\":1}";
+
+
+
 #endif // __ETHASH_H

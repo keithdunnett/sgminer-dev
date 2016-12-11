@@ -2,6 +2,15 @@
 #define MINER_H
 
 #include "config.h"
+#include "include/elist.h"
+#ifdef STDC_HEADERS
+#include <stddef.h>
+#include <stdlib.h>
+#else
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#endif
 
 #include <ccan/opt/opt.h>
 #include <jansson.h>
@@ -9,11 +18,39 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/time.h>
+
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
+
+#define PROXY_HTTP CURLPROXY_HTTP
+#define PROXY_HTTP_1_0 CURLPROXY_HTTP_1_0
+#define PROXY_SOCKS4 CURLPROXY_SOCKS4
+#define PROXY_SOCKS5 CURLPROXY_SOCKS5
+#define PROXY_SOCKS4A CURLPROXY_SOCKS4A
+#define PROXY_SOCKS5H CURLPROXY_SOCKS5_HOSTNAME
+//extern json_t *json_rpc_call(CURL *curl, char *curl_err_str, const char *url,
+//                             const char *userpass, const char *rpc_req, bool,
+//                             bool, int *, struct pool *pool, bool);
+
+typedef curl_proxytype proxytypes_t;
+
+struct curl_ent {
+  CURL *curl;
+  char curl_err_str[CURL_ERROR_SIZE];
+  struct list_head node;
+  struct timeval tv;
+};
+
+
+
 #else
-typedef char CURL;
-extern char *curly;
+
+#define PROXY_HTTP 0
+#define PROXY_HTTP_1_0 1
+#define PROXY_SOCKS4 2
+#define PROXY_SOCKS5 3
+#define PROXY_SOCKS4A 4
+#define PROXY_SOCKS5H 5
 #define curl_easy_init(curl) (curly)
 #define curl_easy_cleanup(curl)                                                \
   {}
@@ -21,7 +58,18 @@ extern char *curly;
   {}
 #define CURL_GLOBAL_ALL 0
 #define curl_global_init(X) (0)
+
+typedef char CURL;
+extern char *curly;
+typedef int proxytypes_t;
+
 #endif
+
+
+
+
+
+
 #include <sched.h>
 
 //#if defined(USE_GIT_VERSION) && defined(GIT_VERSION)
@@ -36,7 +84,6 @@ extern char *curly;
 #endif
 
 #include "algorithm.h"
-#include "include/elist.h"
 #include "include/uthash/libut/include/libut.h"
 #include "logging.h"
 #include "util.h"
@@ -47,14 +94,6 @@ extern char *curly;
 #include <sys/socket.h>
 #endif
 
-#ifdef STDC_HEADERS
-#include <stddef.h>
-#include <stdlib.h>
-#else
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#endif
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #elif defined __GNUC__
@@ -279,6 +318,8 @@ extern int opt_remoteconf_retry;
 extern int opt_remoteconf_wait;
 extern bool opt_remoteconf_usecache;
 
+//extern void *submit_work_thread;
+
 enum alive {
   LIFE_WELL,
   LIFE_SICK,
@@ -305,7 +346,8 @@ struct strategies {
 
 extern enum pool_strategy pool_strategy;
 extern struct strategies strategies[];
-
+extern struct work *staged_work;
+extern pthread_mutex_t *stgd_lock;
 struct cgpu_info;
 
 #ifdef HAVE_ADL
@@ -1129,11 +1171,6 @@ extern pthread_mutex_t lockstat_lock;
 extern pthread_rwlock_t netacc_lock;
 
 extern const uint32_t sha256_init_state[];
-#ifdef HAVE_LIBCURL
-extern json_t *json_rpc_call(CURL *curl, char *curl_err_str, const char *url,
-                             const char *userpass, const char *rpc_req, bool,
-                             bool, int *, struct pool *pool, bool);
-#endif
 extern const char *proxytype(proxytypes_t proxytype);
 extern char *get_proxy(char *url, struct pool *pool);
 extern void __bin2hex(char *s, const unsigned char *p, size_t len);
@@ -1317,16 +1354,6 @@ typedef struct _dev_blk_ctx {
   struct work *work;
 } dev_blk_ctx;
 
-#ifdef HAVE_LIBCURL
-
-struct curl_ent {
-  CURL *curl;
-  char curl_err_str[CURL_ERROR_SIZE];
-  struct list_head node;
-  struct timeval tv;
-};
-
-#endif
 
 /* The lowest enum of a freshly calloced value is the default */
 enum pool_state {

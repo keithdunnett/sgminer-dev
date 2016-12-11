@@ -1,5 +1,30 @@
 # sgminer-stripdown
 
+
+## Major changes
+
+- Removes ADL (doesn't work with amdgpu-pro)
+- Uses jansson-dev from distro; doesn't build jansson by default; option to build with jansson-2.9
+- Uses libcurl-dev from distro if required. 
+- Restores option to build without libcurl / gbt / getwork (not needed for stratum)
+- TODO: separate out gbt/getwork code currentlyisolated by ifdefs 
+
+### Implement cmake build system; remove GNU autotools
+
+- builds the project with GCC and GNU make in ~7 seconds
+- TODO: config.h
+- TODO: install procedures
+
+## Other changes of note
+
+- Removes a few algorithms that were buggy or simply not useful to GPU mining
+
+
+
+
+## Old thinking aloud
+
+
 This branch is for stripping sgminer down to what I want to keep. The code base is an eclectic mix of many years of 
 good work that I feel loath to rip out, but not all of it is useful any more. This is primarily for my own use and 
 interest (refreshing some rusty skills) so whilst it'll be on Github, it's not claimed to be fit for or capable of

@@ -60,13 +60,6 @@ static inline bool interrupted(void) {
 #define JSON_LOADS(str, err_ptr) json_loads((str), (err_ptr))
 #endif
 
-#ifdef HAVE_LIBCURL
-#include <curl/curl.h>
-typedef curl_proxytype proxytypes_t;
-#else
-typedef int proxytypes_t;
-#endif /* HAVE_LIBCURL */
-
 /* sgminer locks, a write biased variant of rwlocks */
 struct cglock {
   pthread_mutex_t mutex;

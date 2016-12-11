@@ -35,7 +35,7 @@ extern char *default_config;
 extern bool config_loaded;
 
 extern int json_array_index;
-
+extern char *set_last_json_error(const char *fmt, ...);
 extern struct profile default_profile;
 extern struct profile **profiles;
 extern int total_profiles;

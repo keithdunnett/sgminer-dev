@@ -528,8 +528,11 @@ ocl/binary_kernel.c
 ocl/build_kernel.c
 ocl.c
 pool.c
-sgminer.c
 util.c
+functions/libcurl/util.c
+functions/libcurl/remote-config.c
+functions/libcurl/exsgminer.c
+sgminer.c
 ${header_files}
  	)
 

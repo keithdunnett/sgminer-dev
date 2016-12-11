@@ -1,7 +1,8 @@
 #!/bin/bash
 
 
-rm -rf CMakeFiles CMakeCache.txt
+rm -rf CMakeFiles
+rm -f CMakeCache.txt
 
 CMAKE_ARGS="$1"
 CLEAN_FIRST=""
