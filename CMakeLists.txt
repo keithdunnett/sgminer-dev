@@ -34,12 +34,22 @@ set(CMAKE_GENERATOR "Unix Makefiles")
 #set(CMAKE_C_COMPILER_ID "GNU")
 
 
-
+# Set default target OpenCL platforms
 
 set(OpenCL_LIBRARY "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so")
 set(OPENCL_LIBRARIES ${OpenCL_LIBRARY})
 set(OPENCL_INCLUDE_PATH "/opt/AMDAPPSDK-3.0/include")
 set(OPENCL_INCLUDE_DIRS ${OPENCL_INCLUDE_PATH})
+
+# The desired OpenCL GPU platform can be fed into config.h, allowing the program to cope with
+# changes of platform numbering where the user did not (or did not want to) specify a static
+# platform number with --gpu-platform. Used only where --gpu-platform is not specified, so it
+# provides a default that may be overridden.
+
+# Not presently used as a hint to cmake itself (those are in the variables above) but it could
+# usefully be later.
+
+set(OPENCL_TARGET_PLATFORM_NAME "AMD Accelerated Parallel Processing")
 
 
 # Were we asked to clean first? Do the same for projects that we build.

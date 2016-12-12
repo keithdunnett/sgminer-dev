@@ -53,12 +53,14 @@ bool get_opencl_platform(int preferred_platform_id, cl_platform_id *platform) {
   cl_platform_id *platforms = NULL;
   unsigned int i;
   bool ret = false;
-
+  char *preferred_platform_name = NULL;
+  char pbuff[256];
   status = clGetPlatformIDs(0, NULL, &numPlatforms);
+
   /* If this fails, assume no GPUs. */
   if (status != CL_SUCCESS) {
     applog(LOG_ERR,
-           "Error %d: clGetPlatformsIDs failed (no OpenCL SDK installed?)",
+           "Error %d: clGetPlatformIDs failed (no OpenCL loader installed?)",
            status);
     goto out;
   }
@@ -66,27 +68,62 @@ bool get_opencl_platform(int preferred_platform_id, cl_platform_id *platform) {
   if (numPlatforms == 0) {
     applog(
         LOG_ERR,
-        "clGetPlatformsIDs returned no platforms (no OpenCL SDK installed?)");
+        "clGetPlatformIDs returned no OpenCL platforms (no OpenCL ICDs installed?)");
     goto out;
   }
 
   if (preferred_platform_id >= (int)numPlatforms) {
-    applog(LOG_ERR, "Specified platform that does not exist");
+    applog(LOG_ERR, "Specified an OpenCL platform that does not exist (check --gpu-platform flag?)");
     goto out;
   }
 
   platforms = (cl_platform_id *)malloc(numPlatforms * sizeof(cl_platform_id));
   status = clGetPlatformIDs(numPlatforms, platforms, NULL);
   if (status != CL_SUCCESS) {
-    applog(LOG_ERR, "Error %d: Getting Platform Ids. (clGetPlatformsIDs)",
+    applog(LOG_ERR, "Error %d: Getting OpenCL platform IDs. (clGetPlatformIDs)",
            status);
     goto out;
   }
 
-  for (i = 0; i < numPlatforms; i++) {
-    if (preferred_platform_id >= 0 && (int)i != preferred_platform_id)
-      continue;
+  /* Set the preferred platform ID by name if multiple platforms exist and no preference given - magick */
 
+  if (numPlatforms > 1 && preferred_platform_id < 0) {
+
+    applog(LOG_INFO, "Note: found %d OpenCL platform IDs, but no --gpu-platform number was given.",
+           numPlatforms);
+
+  #ifdef OPENCL_TARGET_PLATFORM_NAME
+    preferred_platform_name = OPENCL_TARGET_PLATFORM_NAME;
+    applog(LOG_INFO, "Note: trying to auto-select OpenCL platform by preferred name: %s",
+           OPENCL_TARGET_PLATFORM_NAME);
+  #endif
+
+  }
+
+
+  for (i = 0; i < numPlatforms; i++) {
+    if (preferred_platform_name != NULL) {
+      status =
+        clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(pbuff), pbuff, NULL);
+        if (status == CL_SUCCESS) {
+
+	  if (strcmp(pbuff, preferred_platform_name) != 0) {
+            applog(LOG_INFO, "Note: ignoring OpenCL platform %d with name: %s (no match)", i, pbuff);
+            continue;
+          } else {
+            applog(LOG_INFO, "Note: selecting OpenCL platform %d with name: %s", i, pbuff);
+            *platform = platforms[i];
+            ret = true;
+            goto out;
+          }
+        } else {
+          applog(LOG_ERR, "Error: error %d while getting OpenCL platform info for platform %d",
+           status, i);
+          goto out;
+        }
+    } else if (preferred_platform_id >= 0 && (int)i != preferred_platform_id) {
+      continue;
+   }
     *platform = platforms[i];
     ret = true;
     break;
@@ -116,30 +153,30 @@ int clDevicesNum(void) {
     goto out;
   }
 
-  applog(LOG_INFO, "CL Platform vendor: %s", pbuff);
+  applog(LOG_INFO, "OpenCL platform vendor: %s", pbuff);
   status =
       clGetPlatformInfo(platform, CL_PLATFORM_NAME, sizeof(pbuff), pbuff, NULL);
   if (status == CL_SUCCESS)
-    applog(LOG_INFO, "CL Platform name: %s", pbuff);
+    applog(LOG_INFO, "OpenCL platform name: %s", pbuff);
   status = clGetPlatformInfo(platform, CL_PLATFORM_VERSION, sizeof(pbuff),
                              pbuff, NULL);
   if (status == CL_SUCCESS)
-    applog(LOG_INFO, "CL Platform version: %s", pbuff);
+    applog(LOG_INFO, "OpenCL platform version: %s", pbuff);
   status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
   if (status != CL_SUCCESS) {
     applog(LOG_INFO, "Error %d: Getting Device IDs (num)", status);
     goto out;
   }
-  applog(LOG_INFO, "Platform devices: %d", numDevices);
+//  applog(LOG_INFO, "Platform devices: %d", numDevices);
   if (numDevices) {
-    unsigned int j;
+   unsigned int j;
     cl_device_id *devices =
         (cl_device_id *)malloc(numDevices * sizeof(cl_device_id));
 
     clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
     for (j = 0; j < numDevices; j++) {
       clGetDeviceInfo(devices[j], CL_DEVICE_NAME, sizeof(pbuff), pbuff, NULL);
-      applog(LOG_INFO, "\t%i\t%s", j, pbuff);
+//      applog(LOG_INFO, "\t%i\t%s", j, pbuff);
     }
     free(devices);
   }
