@@ -42,7 +42,9 @@
 #endif
 #include <ccan/opt/opt.h>
 #include <jansson.h>
+typedef void (*sighandler_t)(int);
 
+sighandler_t sigset(int sig, sighandler_t disp);
 
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>

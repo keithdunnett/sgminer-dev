@@ -74,11 +74,7 @@ typedef int proxytypes_t;
 //#define VERSION GIT_VERSION
 //#endif
 
-#ifdef BUILD_NUMBER
-#define CGMINER_VERSION VERSION "-" BUILD_NUMBER
-#else
-#define CGMINER_VERSION VERSION
-#endif
+#define CGMINER_VERSION PACKAGE_VERSION
 
 #include "algorithm.h"
 #include "include/uthash/libut/include/libut.h"
