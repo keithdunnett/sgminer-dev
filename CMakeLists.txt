@@ -23,6 +23,7 @@ project (${My_Project_Title})
 set(BINARY_NAME "sgminer-dev")
 set(EXECV_2ND_ARG_TYPE "char* const*")
 set(SGMINER_PREFIX /usr/local/bin)
+
 # Global CMAKE settings
 
 set(CMAKE_VERBOSE_MAKEFILES "0")
@@ -78,15 +79,6 @@ ENDIF(DEFINE_DEBUG)
 
 INCLUDE(ExternalProject)
 INCLUDE(FeatureSummary)
-INCLUDE(FindPackageHandleStandardArgs)
-INCLUDE(FindPackageMessage)
-INCLUDE(FindThreads)
-INCLUDE(FindOpenCL)
-#INCLUDE(FindVulkan)
-#INCLUDE(FindCUDA)
-INCLUDE(FindCurses)
-INCLUDE(FindJansson)
-INCLUDE(FindCURL)
 
 
 
@@ -178,6 +170,18 @@ check_symbol_exists(sighandler_t signal.h HAVE_SIGHANDLER_T)
 configure_file(cmake/config.h.cmake config.h)
 
 
+INCLUDE(FindPackageHandleStandardArgs)
+INCLUDE(FindPackageMessage)
+INCLUDE(FindThreads)
+INCLUDE(FindOpenCL)
+#INCLUDE(FindVulkan)
+#INCLUDE(FindCUDA)
+INCLUDE(FindCurses)
+INCLUDE(FindJansson)
+INCLUDE(FindCURL)
+
+
+
 feature_summary(WHAT ENABLED_FEATURES
                 INCLUDE_QUIET_PACKAGES
                 DESCRIPTION "Enabled Features:"
@@ -187,8 +191,14 @@ feature_summary(WHAT DISABLED_FEATURES
                 DESCRIPTION "Disabled Features:"
                 VAR disabledFeaturesText)
 
+
+
+
 message(STATUS "${enabledFeaturesText}")
 message(STATUS "${disabledFeaturesText}")
+
+
+#END CONFIG STAGE
 
 #
 # Fetch and make use of external project sources
