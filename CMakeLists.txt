@@ -90,6 +90,8 @@ INCLUDE(FeatureSummary)
 INCLUDE(FindPackageHandleStandardArgs)
 INCLUDE(FindPackageMessage)
 INCLUDE(FindOpenCL)
+#INCLUDE(FindVulkan)
+#INCLUDE(FindCUDA)
 INCLUDE(FindCurses)
 INCLUDE(FindJansson)
 INCLUDE(FindCURL)
@@ -502,6 +504,8 @@ endif (WIN32)
 
 
  if (NOT DEFINED TEST)
+
+if(${USE_LIBCURL})
 add_executable(${BINARY_NAME}
 #algorithm/animecoin.c
 #algorithm/bitblock.c
@@ -554,6 +558,59 @@ functions/libcurl/exsgminer.c
 sgminer.c
 ${header_files}
  	)
+
+else()
+
+add_executable(${BINARY_NAME}
+#algorithm/animecoin.c
+#algorithm/bitblock.c
+#algorithm/blake256.c
+#algorithm/blakecoin.c
+#algorithm/credits.c
+#algorithm/cryptonight.c
+#algorithm/darkcoin.c
+#algorithm/decred.c
+algorithm/ethash.c
+algorithm/ethgencache.c
+algorithm/eth-sha3.c
+#algorithm/fresh.c
+#algorithm/fuguecoin.c
+#algorithm/groestlcoin.c
+#algorithm/inkcoin.c
+#algorithm/lbry.c
+#algorithm/marucoin.c
+#algorithm/maxcoin.c
+#algorithm/myriadcoin-groestl.c
+#algorithm/neoscrypt.c
+#algorithm/pluck.c
+#algorithm/qubitcoin.c
+#algorithm/scrypt.c
+#algorithm/sia.c
+#algorithm/sibcoin.c
+#algorithm/sifcoin.c
+#algorithm/talkcoin.c
+#algorithm/twecoin.c
+#algorithm/whirlcoin.c
+#algorithm/whirlpoolx.c
+#algorithm/x14.c
+algorithm.c
+api/api.c
+driver-opencl.c
+events.c
+findnonce.c
+logging.c
+ocl/binary_kernel.c
+ocl/build_kernel.c
+ocl.c
+pool.c
+util.c
+functions/config/config_parser.c
+functions/config/config_writer.c
+sgminer.c
+${header_files}
+ 	)
+
+endif()
 
 if (${JANSSON_GIT})
 	add_dependencies(${BINARY_NAME} jansson)
