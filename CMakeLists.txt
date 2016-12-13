@@ -27,7 +27,8 @@ set(SGMINER_PREFIX /usr/local/bin)
 # Global CMAKE settings
 
 set(CMAKE_VERBOSE_MAKEFILES "0")
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/Modules")
+#set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/Modules" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 set(CMAKE_PREFIX_PATH "/usr /usr/lib/x86_64-linux-gnu /opt/amdgpu-pro/lib/x86_64-linux-gnu")
 set(CMAKE_GENERATOR "Unix Makefiles")
 #set(CMAKE_C_COMPILER_ID "Clang")
@@ -35,22 +36,7 @@ set(CMAKE_GENERATOR "Unix Makefiles")
 
 
 # Set default target OpenCL platforms
-
-set(OpenCL_LIBRARY "/opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so")
-set(OPENCL_LIBRARIES ${OpenCL_LIBRARY})
-set(OPENCL_INCLUDE_PATH "/opt/AMDAPPSDK-3.0/include")
-set(OPENCL_INCLUDE_DIRS ${OPENCL_INCLUDE_PATH})
-
-# The desired OpenCL GPU platform can be fed into config.h, allowing the program to cope with
-# changes of platform numbering where the user did not (or did not want to) specify a static
-# platform number with --gpu-platform. Used only where --gpu-platform is not specified, so it
-# provides a default that may be overridden.
-
-# Not presently used as a hint to cmake itself (those are in the variables above) but it could
-# usefully be later.
-
-set(OPENCL_TARGET_PLATFORM_NAME "AMD Accelerated Parallel Processing")
-
+# Moved to cmake/Modules/FindOpenCL.cmake
 
 # Were we asked to clean first? Do the same for projects that we build.
 
@@ -265,7 +251,7 @@ include_directories( ${PROJECT_SOURCE_DIR}/sph )
 include_directories( ${PROJECT_SOURCE_DIR}/lib )
 include_directories( ${PROJECT_SOURCE_DIR}/ccan )
 include_directories( ${PROJECT_BINARY_DIR} )
-include_directories( ${OPENCL_INCLUDE_PATH} )
+include_directories( ${OPENCL_INCLUDE_DIRS} )
 include_directories( ${CURSES_INCLUDE_PATH} )
 #include_directories( ${CURL_INCLUDE_DIR} )
 

@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <ccan/opt/opt.h>
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -32,6 +33,7 @@
 #include "algorithm.h"
 #include "algorithm/neoscrypt.h"
 #include "algorithm/pluck.h"
+
 #include "findnonce.h"
 #include "ocl.h"
 #include "ocl/binary_kernel.h"
@@ -89,7 +91,7 @@ bool get_opencl_platform(int preferred_platform_id, cl_platform_id *platform) {
 
   if (numPlatforms > 1 && preferred_platform_id < 0) {
 
-    applog(LOG_INFO, "Note: found %d OpenCL platform IDs, but no --gpu-platform number was given.",
+    applog(LOG_INFO, "Note: found %d OpenCL platforms, but no --gpu-platform number was given.",
            numPlatforms);
 
   #ifdef OPENCL_TARGET_PLATFORM_NAME
@@ -101,7 +103,7 @@ bool get_opencl_platform(int preferred_platform_id, cl_platform_id *platform) {
   }
 
 
-  for (i = 0; i < numPlatforms; i++) {
+  for (int i = 0; i < numPlatforms; i++) {
     if (preferred_platform_name != NULL) {
       status =
         clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(pbuff), pbuff, NULL);

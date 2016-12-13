@@ -56,6 +56,7 @@
 #cmakedefine HAVE_CTIME_R
 #cmakedefine HAVE_CYBERGARAGE_UPNP_MEDIASERVER_H
 #cmakedefine HAVE_D3D9_H
+#cmakedefine HAVE_CURSES
 #cmakedefine HAVE_DAEMON
 #cmakedefine HAVE_DBUS
 #cmakedefine HAVE_DCGETTEXT

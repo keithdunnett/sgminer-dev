@@ -1,32 +1,30 @@
 # sgminer-stripdown
 
-
 ## About
 
 This is a stripped down fork of sgminer, which is being optimised to work with amdgpu-pro under Linux, with a focus
-on Ubuntu 16.04.1 in particular. It will probably compile and run on other things, but portability is not a priority
-whilst the code is in a state of flux.  
+on Ubuntu 16.04.1 in particular. It will probably compile and run on other things, but portability is not too high
+on my priority list while the code is in a state of flux. This may well be improved later, or can form a basis for
+others (you?) to implement what you want.
 
 ## Major changes
 
-- Removes ADL (it doesn't work with amdgpu-pro)
-- Uses jansson-dev from distro; doesn't build jansson by default; option to build with jansson-2.9
-- Build without libcurl / gbt / getwork support (not needed for stratum)
+- Removed ADL (doesn't work with amdgpu-pro)
+- Use jansson-dev from distro; doesn't build jansson by default; option to build with jansson-2.9
+- Build without libcurl / gbt / getwork support as default (it's not needed for stratum)
 
 
-
-- TODO: separate out gbt/getwork code currentlyisolated by ifdefs 
-
-### Implement cmake build system; remove GNU autotools
+### Implement the cmake build system; remove GNU autotools
 
 - builds the project with GCC and GNU make in ~7 seconds
 - TODO: config.h
 - TODO: install procedures
 
-## Other changes of note
+## Other changes
 
-- Removes a few algorithms that were buggy or simply not useful to GPU mining
-
+- Removed a few algorithms that were buggy or simply not useful to GPU mining
+- Define default target OpenCL platform name
+- Select the correct platform automatically when we find multiple ICDs and don't have --gpu-platform set 
 
 
 

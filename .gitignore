@@ -59,7 +59,6 @@ include/uthash/*
 .ninja_*
 CMakeFiles/
 CMakeCache.txt
-*.cmake
 include/jansson*.h
 jansson
 compile_commands.json

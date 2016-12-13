@@ -31,9 +31,6 @@ ARGS="-k ethash -w 256 -I 23 -g 1 -s 14 -E 42"
 date "+%s" > /dev/shm/miner.start
 
 
-nice -n 10 ./sgminer-dev --protocol-dump --default-config=/dev/null --verbose --debug --load-balance -g1 -I20 -w256 -s7 -E28 -k ethash --queue 0 -p x -U "5;$POOL4" -O $WALLET.$WORKER:x --no-extranonce 2>/dev/shm/debug.log $1
-#nice -n 10 ./sgminer --default-config=/dev/null --text-only --verbose --debug --load-balance -g2 -I21 -w256 -s14 -E56 -k ethash --queue 2 -p x -U "5;daggerhashimoto.eu.nicehash.com:3353" -O 1G9J3Ngq3ezoMcKqMDcQjRPP6D1KpUjUfD.precision:x 2>/dev/shm/sgminer.log
-#nice -n 10 sgminer --default-config=/dev/null --remote-config-wait 0 -g1 -I5 -w64 -s7 -E28 -k cryptonight --queue 0 --verbose -o stratum+tcp://fcn-xmr.pool.minergate.com:45590 -u keith@dunnett.name -p x
-
-/usr/bin/amdgpus set fans 127
+#nice -n 10 ./sgminer-dev --protocol-dump --default-config=/dev/null --verbose --debug --load-balance -g1 -I20 -w256 -s7 -E28 -k ethash --queue 0 -p x -U "5;$POOL4" -O $WALLET.$WORKER:x --no-extranonce 2>/dev/shm/debug.log $1
+nice -n 10 ./sgminer-dev --default-config=/dev/null --load-balance -g1 -I20 -w256 -s7 -E28 -k ethash --queue 0 -p x -U "5;$POOL4" -O $WALLET.$WORKER:x --no-extranonce 2>/dev/shm/debug.log $1
 

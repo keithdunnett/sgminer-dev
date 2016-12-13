@@ -250,7 +250,7 @@ macro( opencl_find_amd )
     HINTS
       $ENV{AMDAPPSDKROOT}
     PATH_SUFFIXES include
-    PATHS /opt/AMDAPP
+    PATHS /opt/AMDAPPSDK-3.0
     NO_DEFAULT_PATH
   )
 
@@ -260,10 +260,8 @@ macro( opencl_find_amd )
   if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     find_library( OPENCL_AMD_LIBRARY
       NAMES OpenCL
-      HINTS
-        $ENV{AMDAPPSDKROOT}
-      PATH_SUFFIXES lib/x86_64
-      PATHS /opt/AMDAPP/lib
+      PATH_SUFFIXES lib/x86_64-linux-gnu lib/x86_64
+      PATHS /opt/amdgpu-pro /opt/AMDAPPSDK-3.0
       NO_DEFAULT_PATH
     )
   else()
@@ -282,7 +280,8 @@ macro( opencl_find_amd )
 
   if( NOT (${OPENCL_AMD_INCLUDE_DIR} STREQUAL OPENCL_AMD_INCLUDE_DIR-NOTFOUND)
       AND NOT (${OPENCL_AMD_LIBRARY} STREQUAL OPENCL_AMD_LIBRARY-NOTFOUND))
-    set( OPENCL_AMD_FOUND TRUE CACHE INTERNAL "AMD OpenCL SDK has not been found on this system." )
+    set( OPENCL_AMD_FOUND TRUE CACHE INTERNAL "AMD OpenCL SDK has been found on this system." )
+#    set( OPENCL_C_VERSION_1_2 TRUE CACHE INTERNAL "AMD OpenCL SDK supports OpenCL C v1.2" )
   endif()
 endmacro()
 
@@ -307,7 +306,7 @@ macro( opencl_define_avaliable_sdk )
   if( NOT DEFINED OPENCL_USE_NVIDIA_SDK AND OPENCL_NVIDIA_FOUND )
     if( NOT OPENCL_USE_INTEL_SDK AND NOT OPENCL_USE_AMD_SDK )
       set( OPENCL_USE_NVIDIA_SDK FALSE CACHE BOOL
-        "Use NVidia implementation of the OpenCL." )
+        "Use NVidia implementation of OpenCL." )
     endif()
   elseif( DEFINED OPENCL_USE_NVIDIA_SDK )
     if( OPENCL_USE_INTEL_SDK OR OPENCL_USE_AMD_SDK )
@@ -321,12 +320,15 @@ macro( opencl_define_avaliable_sdk )
       set( OPENCL_USE_AMD_SDK FALSE CACHE BOOL
         "Use AMD implementation of the OpenCL." )
       set( OPENCL_USE_AMD_SDK_GPU_CPU TRUE CACHE BOOL
-        "Use AMD GPU or CPU implementation of the OpenCL. On use GPU, Off use CPU." )
+        "Use AMD GPU or CPU implementation of OpenCL. On use GPU, Off use CPU." )
+      set( OPENCL_C_VERSION_1_2 TRUE CACHE BOOL
+        "AMD OpenCL SDK supports OpenCL C version 1.2" )
     endif()
   elseif( DEFINED OPENCL_USE_AMD_SDK )
     if( OPENCL_USE_INTEL_SDK OR OPENCL_USE_NVIDIA_SDK )
       unset( OPENCL_USE_AMD_SDK CACHE )
       unset( OPENCL_USE_AMD_SDK_GPU_CPU CACHE )
+      unset( OPENCL_C_VERSION_1_2 CACHE )
     endif()
   endif()
 endmacro()
@@ -360,6 +362,8 @@ macro( opencl_select_sdk )
     # Set CMAKE_CXX_FLAGS
     if( OPENCL_USE_AMD_SDK_GPU_CPU )
       set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOPENCL_USE_AMD_GPU" )
+      set( OPENCL_TARGET_PLATFORM_NAME "AMD Accelerated Parallel Processing")
+
     else()
       set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOPENCL_USE_AMD_CPU" )
     endif()
@@ -462,7 +466,7 @@ macro( opencl_define_options )
     # OpenCL Options Controlling the OpenCL C Version
     set( OPENCL_C_VERSION_1_1 CACHE BOOL
       "This option determine the OpenCL C language version to use. Support all OpenCL C programs that use the OpenCL C language 1.1 specification." )
-    set( OPENCL_C_VERSION_1_2 CACHE BOOL
+    set( OPENCL_C_VERSION_1_2 ON CACHE BOOL
       "This option determine the OpenCL C language version to use. Support all OpenCL C programs that use the OpenCL C language 1.2 specification." )
     set( OPENCL_C_VERSION_2_0 CACHE BOOL
       "This option determine the OpenCL C language version to use. Support all OpenCL C programs that use the OpenCL C language 2.0 specification." )
@@ -499,7 +503,7 @@ macro( opencl_append_options_to_cxx_flags )
   # Add extra options for AMD
   if( OPENCL_USE_AMD_SDK )
     # Set OPENCL_MATH_SINGLE_PRECISION_CONSTANT obligingly for AMD
-    set( OPENCL_MATH_SINGLE_PRECISION_CONSTANT ON CACHE BOOL
+    set( OPENCL_MATH_SINGLE_PRECISION_CONSTANT OFF CACHE BOOL
       "Treat double precision floating-point constant as single precision constant." FORCE )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOPENCL_MATH_SINGLE_PRECISION_CONSTANT" )
   else()
